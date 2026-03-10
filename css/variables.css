@@ -1,0 +1,158 @@
+/* ============================================
+   ProCode EduPulse — Design Tokens
+   ============================================ */
+
+:root {
+  /* ── Brand Colors ── */
+  --brand-primary: #6C5CE7;
+  --brand-primary-light: #A29BFE;
+  --brand-primary-dark: #4834D4;
+  --brand-accent: #00D2D3;
+  --brand-accent-light: #55EFC4;
+  --brand-gradient: linear-gradient(135deg, #6C5CE7 0%, #00D2D3 100%);
+  --brand-gradient-hover: linear-gradient(135deg, #4834D4 0%, #00B8B9 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(108, 92, 231, 0.15) 0%, rgba(0, 210, 211, 0.15) 100%);
+
+  /* ── Semantic Colors ── */
+  --color-success: #00B894;
+  --color-success-light: rgba(0, 184, 148, 0.15);
+  --color-warning: #FDCB6E;
+  --color-warning-light: rgba(253, 203, 110, 0.15);
+  --color-error: #E17055;
+  --color-error-light: rgba(225, 112, 85, 0.15);
+  --color-info: #74B9FF;
+  --color-info-light: rgba(116, 185, 255, 0.15);
+
+  /* ── Typography ── */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-4xl: 2.25rem;    /* 36px */
+  --text-5xl: 3rem;       /* 48px */
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ── Spacing Scale (4px base) ── */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+
+  /* ── Border Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 30px rgba(108, 92, 231, 0.3);
+  --shadow-glow-accent: 0 0 30px rgba(0, 210, 211, 0.3);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Z-Index Scale ── */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+
+  /* ── Layout ── */
+  --container-max: 1280px;
+  --container-sm: 768px;
+  --sidebar-width: 280px;
+  --navbar-height: 64px;
+}
+
+/* ============================================
+   Dark Theme (Default)
+   ============================================ */
+:root,
+[data-theme="dark"] {
+  --bg-primary: #0F0F1A;
+  --bg-secondary: #1A1A2E;
+  --bg-tertiary: #222240;
+  --bg-elevated: #2A2A4A;
+  --bg-card: rgba(26, 26, 46, 0.8);
+  --bg-card-hover: rgba(42, 42, 74, 0.9);
+  --bg-glass: rgba(15, 15, 26, 0.7);
+  --bg-input: rgba(34, 34, 64, 0.6);
+
+  --border-primary: rgba(108, 92, 231, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(108, 92, 231, 0.4);
+
+  --text-primary: #F0F0F8;
+  --text-secondary: #A0A0C0;
+  --text-muted: #6B6B8D;
+  --text-inverse: #0F0F1A;
+
+  --scrollbar-track: #1A1A2E;
+  --scrollbar-thumb: #3A3A5A;
+  --scrollbar-thumb-hover: #4A4A6A;
+}
+
+/* ============================================
+   Light Theme
+   ============================================ */
+[data-theme="light"] {
+  --bg-primary: #F8F9FC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F0F1F5;
+  --bg-elevated: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: rgba(255, 255, 255, 1);
+  --bg-glass: rgba(248, 249, 252, 0.85);
+  --bg-input: rgba(240, 241, 245, 0.8);
+
+  --border-primary: rgba(108, 92, 231, 0.25);
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(108, 92, 231, 0.5);
+
+  --text-primary: #1A1A2E;
+  --text-secondary: #5A5A7A;
+  --text-muted: #9A9AB0;
+  --text-inverse: #F0F0F8;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.15);
+
+  --scrollbar-track: #F0F1F5;
+  --scrollbar-thumb: #C8C8D8;
+  --scrollbar-thumb-hover: #A8A8C0;
+}

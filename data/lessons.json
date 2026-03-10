@@ -1,0 +1,114 @@
+{
+    "lessons": [
+        {
+            "id": "html-intro",
+            "courseId": "html-fundamentals",
+            "title": "Introduction to HTML",
+            "order": 1,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "15 min",
+            "content": "<h3>What is HTML?</h3><p>HTML (HyperText Markup Language) is the standard language used to create web pages. It provides the <strong>structure</strong> and <strong>content</strong> of a webpage using a system of <em>tags</em> and <em>attributes</em>.</p><h3>How HTML Works</h3><p>Every HTML document follows a basic structure. Tags are written in angle brackets like <code>&lt;tagname&gt;</code> and usually come in pairs: an opening tag and a closing tag.</p><pre><code>&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n  &lt;head&gt;\n    &lt;title&gt;My Page&lt;/title&gt;\n  &lt;/head&gt;\n  &lt;body&gt;\n    &lt;h1&gt;Hello, World!&lt;/h1&gt;\n    &lt;p&gt;This is my first page.&lt;/p&gt;\n  &lt;/body&gt;\n&lt;/html&gt;</code></pre><h3>Key Concepts</h3><ul><li><strong>DOCTYPE</strong>: Tells the browser this is an HTML5 document</li><li><strong>html</strong>: Root element of the page</li><li><strong>head</strong>: Contains metadata (title, links, meta tags)</li><li><strong>body</strong>: Contains visible content</li></ul>",
+            "cheatSheet": "## HTML Basics Cheat Sheet\n\n| Tag | Purpose |\n|-----|--------|\n| `<html>` | Root element |\n| `<head>` | Document metadata |\n| `<title>` | Page title |\n| `<body>` | Visible content |\n| `<h1>` to `<h6>` | Headings |\n| `<p>` | Paragraph |\n| `<br>` | Line break |\n| `<hr>` | Horizontal rule |\n| `<!-- -->` | Comment |",
+            "resources": [
+                {
+                    "name": "MDN HTML Introduction",
+                    "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML"
+                },
+                {
+                    "name": "W3Schools HTML Tutorial",
+                    "url": "https://www.w3schools.com/html/"
+                }
+            ],
+            "assessment": {
+                "type": "quiz",
+                "id": "html-intro-quiz"
+            }
+        },
+        {
+            "id": "html-elements",
+            "courseId": "html-fundamentals",
+            "title": "HTML Elements & Tags",
+            "order": 2,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "20 min",
+            "content": "<h3>HTML Elements</h3><p>An HTML element consists of a <strong>start tag</strong>, <strong>content</strong>, and an <strong>end tag</strong>. Some elements are self-closing (void elements).</p><h3>Common Elements</h3><pre><code>&lt;h1&gt;Main Heading&lt;/h1&gt;\n&lt;h2&gt;Sub Heading&lt;/h2&gt;\n&lt;p&gt;A paragraph of text.&lt;/p&gt;\n&lt;strong&gt;Bold text&lt;/strong&gt;\n&lt;em&gt;Italic text&lt;/em&gt;\n&lt;br&gt;\n&lt;img src=\"photo.jpg\" alt=\"Description\"&gt;</code></pre><h3>Block vs Inline</h3><p><strong>Block elements</strong> (div, p, h1-h6) take full width. <strong>Inline elements</strong> (span, strong, em, a) only take as much width as needed.</p>",
+            "cheatSheet": "## Elements Cheat Sheet\n\n**Block Elements:** `<div>`, `<p>`, `<h1>`-`<h6>`, `<ul>`, `<ol>`, `<table>`, `<form>`\n\n**Inline Elements:** `<span>`, `<a>`, `<strong>`, `<em>`, `<img>`, `<code>`\n\n**Void Elements:** `<br>`, `<hr>`, `<img>`, `<input>`, `<meta>`, `<link>`",
+            "resources": [
+                {
+                    "name": "MDN HTML Elements Reference",
+                    "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element"
+                }
+            ],
+            "assessment": {
+                "type": "challenge",
+                "id": "html-elements-challenge"
+            }
+        },
+        {
+            "id": "html-lists-links",
+            "courseId": "html-fundamentals",
+            "title": "Lists, Links & Images",
+            "order": 3,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "25 min",
+            "content": "<h3>Lists</h3><p>HTML supports <strong>unordered lists</strong> (<code>&lt;ul&gt;</code>) with bullet points and <strong>ordered lists</strong> (<code>&lt;ol&gt;</code>) with numbers.</p><pre><code>&lt;ul&gt;\n  &lt;li&gt;Item one&lt;/li&gt;\n  &lt;li&gt;Item two&lt;/li&gt;\n  &lt;li&gt;Item three&lt;/li&gt;\n&lt;/ul&gt;</code></pre><h3>Links</h3><pre><code>&lt;a href=\"https://example.com\" target=\"_blank\"&gt;Visit Example&lt;/a&gt;</code></pre><h3>Images</h3><pre><code>&lt;img src=\"photo.jpg\" alt=\"A beautiful photo\" width=\"300\"&gt;</code></pre>",
+            "cheatSheet": "## Lists & Links Cheat Sheet\n\n`<ul>` → Unordered list (bullets)\n`<ol>` → Ordered list (numbers)\n`<li>` → List item\n`<a href=\"url\">` → Hyperlink\n`<img src=\"url\" alt=\"desc\">` → Image\n\n**Attributes:**\n- `target=\"_blank\"` → Open in new tab\n- `alt` → Image description (accessibility)\n- `width/height` → Image dimensions",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "html-lists-challenge"
+            }
+        },
+        {
+            "id": "html-forms",
+            "courseId": "html-fundamentals",
+            "title": "HTML Forms & Inputs",
+            "order": 4,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "20 min",
+            "content": "<h3>Forms</h3><p>HTML forms collect user input. The <code>&lt;form&gt;</code> element wraps input controls and typically includes <code>&lt;input&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;select&gt;</code>, and <code>&lt;button&gt;</code> elements.</p><pre><code>&lt;form action=\"/submit\" method=\"POST\"&gt;\n  &lt;label for=\"name\"&gt;Name:&lt;/label&gt;\n  &lt;input type=\"text\" id=\"name\" name=\"name\" placeholder=\"Your name\"&gt;\n  \n  &lt;label for=\"email\"&gt;Email:&lt;/label&gt;\n  &lt;input type=\"email\" id=\"email\" name=\"email\"&gt;\n  \n  &lt;button type=\"submit\"&gt;Send&lt;/button&gt;\n&lt;/form&gt;</code></pre><h3>Input Types</h3><p>HTML5 provides many input types: <code>text</code>, <code>email</code>, <code>password</code>, <code>number</code>, <code>checkbox</code>, <code>radio</code>, <code>date</code>, <code>file</code>, and more.</p>",
+            "cheatSheet": "## Forms Cheat Sheet\n\n| Element | Purpose |\n|---------|--------|\n| `<form>` | Form container |\n| `<input>` | User input |\n| `<textarea>` | Multi-line text |\n| `<select>` | Dropdown |\n| `<button>` | Clickable button |\n| `<label>` | Input label |\n\n**Input Types:** text, email, password, number, checkbox, radio, date, file, submit",
+            "resources": [],
+            "assessment": {
+                "type": "quiz",
+                "id": "html-forms-quiz"
+            }
+        },
+        {
+            "id": "html-semantic",
+            "courseId": "html-fundamentals",
+            "title": "Semantic HTML",
+            "order": 5,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "15 min",
+            "content": "<h3>What is Semantic HTML?</h3><p>Semantic HTML uses meaningful tags that describe the <strong>purpose</strong> of content, not just its appearance. This improves accessibility, SEO, and code readability.</p><h3>Semantic Elements</h3><pre><code>&lt;header&gt;Site header / navigation&lt;/header&gt;\n&lt;nav&gt;Navigation links&lt;/nav&gt;\n&lt;main&gt;Primary page content&lt;/main&gt;\n&lt;article&gt;Self-contained content&lt;/article&gt;\n&lt;section&gt;Thematic grouping&lt;/section&gt;\n&lt;aside&gt;Sidebar content&lt;/aside&gt;\n&lt;footer&gt;Site footer&lt;/footer&gt;</code></pre>",
+            "cheatSheet": "## Semantic HTML Cheat Sheet\n\n`<header>` → Page/section header\n`<nav>` → Navigation\n`<main>` → Primary content\n`<article>` → Independent content\n`<section>` → Thematic section\n`<aside>` → Sidebar\n`<footer>` → Page/section footer\n`<figure>` → Self-contained media\n`<figcaption>` → Figure caption\n`<time>` → Date/time",
+            "resources": [],
+            "assessment": {
+                "type": "quiz",
+                "id": "html-semantic-quiz"
+            }
+        },
+        {
+            "id": "html-project",
+            "courseId": "html-fundamentals",
+            "title": "Final Project: Build a Profile Page",
+            "order": 6,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "project",
+            "duration": "30 min",
+            "content": "<h3>🎯 Project: Personal Profile Page</h3><p>Apply everything you've learned to build a complete HTML profile page!</p><h3>Requirements</h3><ul><li>Use proper HTML5 document structure</li><li>Include a header with your name as an <code>h1</code></li><li>Add a navigation with at least 3 links</li><li>Create an 'About Me' section with a paragraph</li><li>Include an unordered list of your skills (at least 4 items)</li><li>Add a contact form with name, email, and message fields</li><li>Use semantic HTML elements throughout</li><li>Include at least one image</li></ul>",
+            "cheatSheet": "",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "html-project-challenge"
+            }
+        }
+    ]
+}

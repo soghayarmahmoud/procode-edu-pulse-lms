@@ -1,0 +1,119 @@
+{
+    "challenges": {
+        "html-elements-challenge": {
+            "title": "Create a Web Page Structure",
+            "difficulty": "Easy",
+            "instructions": "Create a simple web page with the following requirements:\n1. An <h1> heading with the text \"My Web Page\"\n2. An <h2> subheading with the text \"Welcome\"\n3. A paragraph (<p>) with any text\n4. A <strong> element inside the paragraph to bold some text",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>My Web Page</title>\n</head>\n<body>\n  <!-- Write your code here -->\n  \n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "h1",
+                    "errorMessage": "Missing <h1> heading. Add an <h1> element with your main title."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "My Web Page",
+                    "errorMessage": "The <h1> heading should contain the text \"My Web Page\"."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "h2",
+                    "errorMessage": "Missing <h2> subheading. Add an <h2> element with the text \"Welcome\"."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "p",
+                    "errorMessage": "Missing paragraph. Add a <p> element with some text."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "p strong",
+                    "errorMessage": "Missing <strong> inside your paragraph. Wrap some text in <strong> tags inside your <p>."
+                }
+            ]
+        },
+        "html-lists-challenge": {
+            "title": "Build a Navigation with Lists",
+            "difficulty": "Easy",
+            "instructions": "Create a page with:\n1. An <h1> heading with text \"My Favorite Things\"\n2. An unordered list (<ul>) with exactly 3 list items (<li>)\n3. An ordered list (<ol>) with exactly 3 list items (<li>)\n4. A link (<a>) with href=\"https://google.com\" and text \"Visit Google\"",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Lists and Links</title>\n</head>\n<body>\n  <!-- Build your lists and links here -->\n  \n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "h1",
+                    "errorMessage": "Missing <h1> heading."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "ul > li",
+                    "count": 3,
+                    "errorMessage": "Your unordered list (<ul>) should have exactly 3 <li> items."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "ol > li",
+                    "count": 3,
+                    "errorMessage": "Your ordered list (<ol>) should have exactly 3 <li> items."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "a[href='https://google.com']",
+                    "errorMessage": "Add a link (<a>) with href=\"https://google.com\"."
+                }
+            ]
+        },
+        "html-project-challenge": {
+            "title": "Build a Personal Profile Page",
+            "difficulty": "Medium",
+            "instructions": "Build a complete personal profile page with:\n1. Proper HTML5 structure (DOCTYPE, html, head, body)\n2. A <header> element containing an <h1> with your name\n3. A <nav> element with at least 3 links (<a>)\n4. A <main> element containing:\n   - A <section> with an 'About Me' heading (<h2>) and a paragraph\n   - A <section> with a 'Skills' heading (<h2>) and an unordered list with at least 4 items\n5. A <footer> element with a paragraph",
+            "starterCode": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>My Profile</title>\n</head>\n<body>\n  <!-- Build your profile page here -->\n  \n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "header h1",
+                    "errorMessage": "Add a <header> element containing an <h1> with your name."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "nav",
+                    "errorMessage": "Add a <nav> element for navigation."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "nav a",
+                    "count": 3,
+                    "errorMessage": "Your <nav> should contain at least 3 links (<a> elements). Currently checking for exactly 3."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "main",
+                    "errorMessage": "Add a <main> element for primary content."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "main section",
+                    "errorMessage": "Add at least one <section> inside <main>."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "main h2",
+                    "errorMessage": "Add <h2> subheadings inside your main content sections."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "ul",
+                    "errorMessage": "Add an unordered list (<ul>) for your skills."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "footer",
+                    "errorMessage": "Add a <footer> element at the bottom of your page."
+                }
+            ]
+        }
+    }
+}

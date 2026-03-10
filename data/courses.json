@@ -1,0 +1,40 @@
+{
+  "courses": [
+    {
+      "id": "html-fundamentals",
+      "title": "HTML Fundamentals",
+      "description": "Master the building blocks of the web. Learn HTML from the ground up with hands-on coding challenges.",
+      "thumbnail": "assets/images/html.png",
+      "icon": "📄",
+      "difficulty": "Beginner",
+      "estimatedHours": 8,
+      "lessons": ["html-intro", "html-elements", "html-lists-links", "html-forms", "html-semantic", "html-project"],
+      "totalLessons": 6,
+      "tags": ["HTML", "Web Basics"]
+    },
+    {
+      "id": "css-essentials",
+      "title": "CSS Essentials",
+      "description": "Transform plain HTML into stunning web pages. Learn selectors, layouts, animations, and responsive design.",
+      "thumbnail": "",
+      "icon": "🎨",
+      "difficulty": "Beginner",
+      "estimatedHours": 12,
+      "lessons": ["css-intro", "css-selectors", "css-box-model", "css-flexbox", "css-grid", "css-animations", "css-responsive", "css-project"],
+      "totalLessons": 8,
+      "tags": ["CSS", "Styling", "Responsive"]
+    },
+    {
+      "id": "javascript-basics",
+      "title": "JavaScript Basics",
+      "description": "Bring your web pages to life with JavaScript. Learn variables, functions, DOM manipulation, and events.",
+      "thumbnail": "",
+      "icon": "⚡",
+      "difficulty": "Beginner",
+      "estimatedHours": 16,
+      "lessons": ["js-intro", "js-variables", "js-functions", "js-dom", "js-events", "js-arrays", "js-objects", "js-async", "js-project"],
+      "totalLessons": 9,
+      "tags": ["JavaScript", "Programming", "DOM"]
+    }
+  ]
+}

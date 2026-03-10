@@ -1,0 +1,166 @@
+{
+    "quizzes": {
+        "html-intro-quiz": {
+            "title": "HTML Introduction Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "What does HTML stand for?",
+                    "options": [
+                        "Hyper Text Markup Language",
+                        "High Tech Modern Language",
+                        "Hyper Transfer Markup Language",
+                        "Home Tool Markup Language"
+                    ],
+                    "correctIndex": 0,
+                    "explanation": "HTML stands for HyperText Markup Language. It's the standard language for creating web pages."
+                },
+                {
+                    "id": "q2",
+                    "question": "Which tag is used for the largest heading?",
+                    "options": [
+                        "<heading>",
+                        "<h6>",
+                        "<h1>",
+                        "<head>"
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "<h1> is the largest heading. Headings range from <h1> (largest) to <h6> (smallest)."
+                },
+                {
+                    "id": "q3",
+                    "question": "Where does the <title> element go?",
+                    "options": [
+                        "Inside the <body> element",
+                        "Inside the <head> element",
+                        "Before the <html> element",
+                        "Inside the <footer> element"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "The <title> element goes inside the <head> section. It defines the title shown in the browser tab."
+                },
+                {
+                    "id": "q4",
+                    "question": "What does the <!DOCTYPE html> declaration do?",
+                    "options": [
+                        "It defines a link to an external stylesheet",
+                        "It tells the browser this is an HTML5 document",
+                        "It creates a new HTML element",
+                        "It adds a comment to the page"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "<!DOCTYPE html> tells the browser that this document is an HTML5 document."
+                },
+                {
+                    "id": "q5",
+                    "question": "Which element contains the visible content of a web page?",
+                    "options": [
+                        "<head>",
+                        "<meta>",
+                        "<body>",
+                        "<html>"
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "The <body> element contains all the visible content that users see on the web page."
+                }
+            ]
+        },
+        "html-forms-quiz": {
+            "title": "HTML Forms Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "Which input type creates a password field?",
+                    "options": [
+                        "type=\"hidden\"",
+                        "type=\"secret\"",
+                        "type=\"password\"",
+                        "type=\"pass\""
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "type=\"password\" creates an input that masks the characters as dots."
+                },
+                {
+                    "id": "q2",
+                    "question": "What is the purpose of the <label> element?",
+                    "options": [
+                        "To style input fields",
+                        "To associate text with a form control for accessibility",
+                        "To validate form data",
+                        "To create a submit button"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "The <label> element associates descriptive text with a form control, improving accessibility."
+                },
+                {
+                    "id": "q3",
+                    "question": "Which attribute specifies where to send form data?",
+                    "options": [
+                        "method",
+                        "action",
+                        "target",
+                        "name"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "The 'action' attribute specifies the URL where form data should be sent when submitted."
+                },
+                {
+                    "id": "q4",
+                    "question": "What element is used for multi-line text input?",
+                    "options": [
+                        "<input type=\"text\">",
+                        "<textbox>",
+                        "<textarea>",
+                        "<multiline>"
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "<textarea> creates a multi-line text input area, unlike <input> which is single-line."
+                }
+            ]
+        },
+        "html-semantic-quiz": {
+            "title": "Semantic HTML Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "Which semantic element is best for the main navigation?",
+                    "options": [
+                        "<div id=\"nav\">",
+                        "<nav>",
+                        "<menu>",
+                        "<navigation>"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "<nav> is the semantic element designed specifically for navigation links."
+                },
+                {
+                    "id": "q2",
+                    "question": "What is the primary benefit of semantic HTML?",
+                    "options": [
+                        "It makes pages load faster",
+                        "It adds visual styling",
+                        "It improves accessibility, SEO, and code readability",
+                        "It enables JavaScript functionality"
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "Semantic HTML improves accessibility (screen readers), SEO (search engines), and makes code more readable."
+                },
+                {
+                    "id": "q3",
+                    "question": "Which element represents self-contained content?",
+                    "options": [
+                        "<section>",
+                        "<article>",
+                        "<div>",
+                        "<content>"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "<article> represents self-contained content that could be independently distributed or reused."
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ProCode EduPulse — A professional Learning Management System for coding education. Learn HTML, CSS, and JavaScript with interactive coding challenges, AI-powered hints, and progress tracking.">
+  <meta name="keywords" content="learn coding, HTML, CSS, JavaScript, LMS, coding challenges, programming education">
+  <meta name="author" content="ProCode EduPulse">
+  <meta name="theme-color" content="#0F0F1A">
+  
+  <meta property="og:title" content="ProCode EduPulse — Learn to Code, Build Real Projects">
+  <meta property="og:description" content="Transform from a YouTube viewer into a confident developer with structured courses, interactive challenges, and AI-powered hints.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://soghayarmahmoud.github.io/procode-edu-pulse-lms/">
+  
+  <title>ProCode EduPulse — Learn to Code | Interactive LMS</title>
+  
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/lesson.css">
+</head>
+<body>
+  <!-- App Mount Point -->
+  <div id="app" class="page-wrapper">
+    <!-- Loading State -->
+    <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px">
+      <div style="width:40px;height:40px;border:3px solid var(--border-subtle);border-top-color:var(--brand-primary);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      <p style="color:var(--text-muted);font-size:14px">Loading ProCode EduPulse...</p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
