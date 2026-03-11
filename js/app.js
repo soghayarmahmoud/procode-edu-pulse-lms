@@ -844,7 +844,7 @@ async function initApp() {
   .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params)))
   .on('/portfolio', () => transitionPage(renderPortfolio))
   .on('/profile', () => transitionPage(renderProfile))
-  .on('*', () => transitionPage(renderLanding));
+  .on('*', () => transitionPage(renderLanding))
         .on('/', () => renderLanding())
         .on('/courses', () => renderCoursesPage())
         .on('/course/:courseId', (params) => renderCourse(params))
