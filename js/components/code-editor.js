@@ -40,12 +40,13 @@ export class CodeEditor {
 
             if (this.options.onChange) {
                 const { ViewPlugin } = await import('https://esm.sh/@codemirror/view@6.12.0');
+                const onChangeFn = this.options.onChange;
                 extensions.push(
                     ViewPlugin.fromClass(class {
                         constructor(view) { this.view = view; }
                         update(update) {
-                            if (update.docChanged && this.options?.onChange) {
-                                this.options.onChange(update.state.doc.toString());
+                            if (update.docChanged) {
+                                onChangeFn(update.state.doc.toString());
                             }
                         }
                     })

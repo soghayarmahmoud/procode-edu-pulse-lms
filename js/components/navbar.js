@@ -12,10 +12,13 @@ export function renderNavbar() {
 
     const currentHash = window.location.hash.slice(1) || '/';
 
+    const _p = window.location.pathname;
+    const _s = _p.split('/').filter(Boolean);
+    const _base = (_p !== '/' && _p !== '/index.html' && _s.length > 0 && _s[0] !== 'index.html') ? '/' + _s[0] + '/' : './';
     navbar.innerHTML = `
     <div class="container">
       <a href="#/" class="nav-brand" id="nav-brand">
-        <img src="logo.png" alt="ProCode" onerror="this.style.display='none'">
+        <img src="${_base}logo.png" alt="ProCode" onerror="this.style.display='none'">
         <span class="nav-brand-text">
           <span class="nav-brand-pro">Pro</span>Code
         </span>

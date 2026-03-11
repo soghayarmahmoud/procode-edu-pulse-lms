@@ -9,6 +9,20 @@ import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
 import { PortfolioComponent } from './components/portfolio.js';
 
+// ── Base Path Helper (GitHub Pages compatibility) ──
+function getBasePath() {
+    const path = window.location.pathname;
+    // If deployed to a subdirectory (e.g. /procode-edu-pulse-lms/), use that as base
+    if (path !== '/' && path !== '/index.html') {
+        // Extract the first path segment as repo name
+        const segments = path.split('/').filter(Boolean);
+        if (segments.length > 0 && segments[0] !== 'index.html') {
+            return '/' + segments[0] + '/';
+        }
+    }
+    return './';
+}
+
 // ── Data Cache ──
 let coursesData = null;
 let lessonsData = null;
@@ -16,11 +30,12 @@ let quizzesData = null;
 let challengesData = null;
 
 async function loadData() {
+    const base = getBasePath();
     const [courses, lessons, quizzes, challenges] = await Promise.all([
-        fetch('data/courses.json').then(r => r.json()),
-        fetch('data/lessons.json').then(r => r.json()),
-        fetch('data/quizzes.json').then(r => r.json()),
-        fetch('data/challenges.json').then(r => r.json())
+        fetch(`${base}data/courses.json`).then(r => r.json()),
+        fetch(`${base}data/lessons.json`).then(r => r.json()),
+        fetch(`${base}data/quizzes.json`).then(r => r.json()),
+        fetch(`${base}data/challenges.json`).then(r => r.json())
     ]);
     coursesData = courses.courses;
     lessonsData = lessons.lessons;
@@ -330,7 +345,7 @@ function renderLanding() {
         <div class="footer-grid">
           <div class="footer-brand">
             <div class="footer-logo">
-              <img src="logo.png" alt="ProCode" onerror="this.style.display='none'">
+              <img src="${getBasePath()}logo.png" alt="ProCode" onerror="this.style.display='none'">
               <span><span style="color:var(--brand-primary-light)">Pro</span>Code</span>
             </div>
             <p class="footer-desc">
@@ -838,20 +853,13 @@ async function initApp() {
     const router = new Router();
 
     router
-.on('/', () => transitionPage(renderLanding))
-  .on('/courses', () => transitionPage(renderCoursesPage))
-  .on('/course/:courseId', (params) => transitionPage(() => renderCourse(params)))
-  .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params)))
-  .on('/portfolio', () => transitionPage(renderPortfolio))
-  .on('/profile', () => transitionPage(renderProfile))
-  .on('*', () => transitionPage(renderLanding))
-        .on('/', () => renderLanding())
-        .on('/courses', () => renderCoursesPage())
-        .on('/course/:courseId', (params) => renderCourse(params))
-        .on('/lesson/:courseId/:lessonId', (params) => renderLesson(params))
-        .on('/portfolio', () => renderPortfolio())
-        .on('/profile', () => renderProfile())
-        .on('*', () => renderLanding());
+        .on('/', () => transitionPage(renderLanding))
+        .on('/courses', () => transitionPage(renderCoursesPage))
+        .on('/course/:courseId', (params) => transitionPage(() => renderCourse(params)))
+        .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params)))
+        .on('/portfolio', () => transitionPage(renderPortfolio))
+        .on('/profile', () => transitionPage(renderProfile))
+        .on('*', () => transitionPage(renderLanding));
 
     // Back to Top button
     window.addEventListener('scroll', () => {
@@ -908,12 +916,8 @@ async function initApp() {
             if (tooltip) tooltip.classList.remove('visible');
         }
     }, true);
-}
-
-
-    
-}
-
+  } // end else (onboarding done)
+} // end initApp
 // Boot
 initApp().catch(err => {
     console.error('Failed to initialize app:', err);
