@@ -23,7 +23,7 @@ export class QuizComponent {
       <div class="assessment-section">
         <div class="assessment-header">
           <div class="assessment-title">
-            📝 <span>${this.quiz.title}</span>
+            <i class="fa-solid fa-pen-to-square"></i> <span>${this.quiz.title}</span>
           </div>
           ${existingScore ? `<span class="badge badge-success">Best: ${existingScore.score}%</span>` : ''}
         </div>
@@ -36,7 +36,7 @@ export class QuizComponent {
           <div class="quiz-score" id="quiz-score"></div>
           <div style="display:flex;gap:var(--space-3)">
             <button class="btn btn-secondary btn-sm" id="quiz-reset" style="display:none">
-              ↻ Retry
+              <i class="fa-solid fa-rotate-left"></i> Retry
             </button>
             <button class="btn btn-primary" id="quiz-submit">
               Submit Answers
@@ -65,7 +65,7 @@ export class QuizComponent {
           `).join('')}
         </div>
         <div class="quiz-explanation" id="explanation-${question.id}">
-          💡 ${question.explanation}
+          <i class="fa-solid fa-lightbulb"></i> ${question.explanation}
         </div>
       </div>
     `;
@@ -133,7 +133,7 @@ export class QuizComponent {
 
         $('#quiz-score', this.container).innerHTML = `
       <span style="color: ${passed ? 'var(--color-success)' : 'var(--color-error)'}">
-        ${passed ? '🎉' : '😔'} Score: ${score}% (${correct}/${this.quiz.questions.length})
+        <i class="fa-solid ${passed ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> Score: ${score}% (${correct}/${this.quiz.questions.length})
       </span>
     `;
 

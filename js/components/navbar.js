@@ -4,6 +4,7 @@
 
 import { $, $$ } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
+import { authService } from '../services/auth-service.js';
 
 export function renderNavbar() {
     const navbar = document.createElement('nav');
@@ -15,6 +16,11 @@ export function renderNavbar() {
     const _p = window.location.pathname;
     const _s = _p.split('/').filter(Boolean);
     const _base = (_p !== '/' && _p !== '/index.html' && _s.length > 0 && _s[0] !== 'index.html') ? '/' + _s[0] + '/' : './';
+
+    const user = authService.getCurrentUser();
+    const displayName = authService.getDisplayName();
+    const initial = displayName.charAt(0).toUpperCase();
+
     navbar.innerHTML = `
     <div class="container">
       <a href="#/" class="nav-brand" id="nav-brand">
@@ -33,10 +39,23 @@ export function renderNavbar() {
 
       <div class="nav-actions">
         <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark/light theme">
-          ${storage.getTheme() === 'dark' ? '☀️' : '🌙'}
+          <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
         </button>
+        ${user ? `
+          <div class="user-menu">
+            <div class="user-avatar-sm">${initial}</div>
+            <span class="user-name-display">${displayName}</span>
+            <button class="logout-btn" id="logout-btn" title="Sign out">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
+        ` : `
+          <a href="#/login" class="btn btn-sm btn-primary" style="font-size:var(--text-xs)">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </a>
+        `}
         <button class="nav-mobile-toggle" id="nav-mobile-toggle" aria-label="Toggle menu">
-          ☰
+          <i class="fa-solid fa-bars"></i>
         </button>
       </div>
     </div>
@@ -59,8 +78,20 @@ export function renderNavbar() {
         const current = storage.getTheme();
         const next = current === 'dark' ? 'light' : 'dark';
         storage.setTheme(next);
-        $('#theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        const icon = $('#theme-toggle').querySelector('i');
+        icon.className = `fa-solid ${next === 'dark' ? 'fa-sun' : 'fa-moon'}`;
     });
+
+    // Event: logout
+    const logoutBtn = $('#logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await authService.signOut();
+            localStorage.removeItem('procode_onboarding_done');
+            window.location.hash = '/login';
+            renderNavbar();
+        });
+    }
 
     // Event: mobile toggle
     $('#nav-mobile-toggle').addEventListener('click', () => {

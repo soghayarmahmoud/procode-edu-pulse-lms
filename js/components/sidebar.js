@@ -38,13 +38,13 @@ export class SidebarComponent {
         ${this.lessons.map((lesson, i) => {
             const isCompleted = courseProgress.completedLessons.includes(lesson.id);
             const isActive = lesson.id === this.currentLessonId;
-            const icon = lesson.type === 'theory' ? '📖' : lesson.type === 'practice' ? '💻' : '🎯';
+            const icon = lesson.type === 'theory' ? '<i class="fa-solid fa-book"></i>' : lesson.type === 'practice' ? '<i class="fa-solid fa-laptop-code"></i>' : '<i class="fa-solid fa-bullseye"></i>';
 
             return `
             <div class="lesson-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
                  data-lesson-id="${lesson.id}" data-course-id="${this.course.id}">
               <div class="lesson-item-status">
-                ${isCompleted ? '✓' : isActive ? '▶' : i + 1}
+                ${isCompleted ? '<i class="fa-solid fa-check"></i>' : isActive ? '<i class="fa-solid fa-play"></i>' : i + 1}
               </div>
               <div class="lesson-item-title" title="${lesson.title}">
                 ${icon} ${lesson.title}

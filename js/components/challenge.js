@@ -25,17 +25,17 @@ export class ChallengeComponent {
       <div class="assessment-section">
         <div class="assessment-header">
           <div class="assessment-title">
-            🚀 <span>Coding Challenge: ${this.challenge.title}</span>
+            <i class="fa-solid fa-rocket"></i> <span>Coding Challenge: ${this.challenge.title}</span>
           </div>
           <div style="display:flex;align-items:center;gap:var(--space-3)">
             <span class="badge badge-primary">${this.challenge.difficulty}</span>
-            ${existingSub?.passed ? '<span class="badge badge-success">✓ Completed</span>' : ''}
+            ${existingSub?.passed ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>' : ''}
           </div>
         </div>
         
         <div class="challenge-container">
           <div class="challenge-instructions">
-            <h4>📋 Instructions</h4>
+            <h4><i class="fa-solid fa-clipboard"></i> Instructions</h4>
             <p>${this.challenge.instructions.replace(/\n/g, '<br>')}</p>
           </div>
 
@@ -46,10 +46,10 @@ export class ChallengeComponent {
               </div>
               <div class="editor-actions">
                 <button class="editor-action-btn" id="challenge-reset-code" title="Reset code">
-                  ↻ Reset
+                  <i class="fa-solid fa-rotate-left"></i> Reset
                 </button>
                 <button class="editor-action-btn" id="challenge-copy-code" title="Copy code">
-                  📋 Copy
+                  <i class="fa-solid fa-clipboard"></i> Copy
                 </button>
               </div>
             </div>
@@ -58,7 +58,7 @@ export class ChallengeComponent {
 
           <div class="preview-panel">
             <div class="preview-header">
-              <span class="preview-title">👁 Live Preview</span>
+              <span class="preview-title"><i class="fa-solid fa-eye"></i> Live Preview</span>
             </div>
             <iframe class="preview-iframe" id="challenge-preview" sandbox="allow-scripts" title="Code preview"></iframe>
           </div>
@@ -66,16 +66,16 @@ export class ChallengeComponent {
           <div class="challenge-result" id="challenge-result"></div>
 
           <div class="hint-container" id="hint-container">
-            <div class="hint-header">💡 Hint</div>
+            <div class="hint-header"><i class="fa-solid fa-lightbulb"></i> Hint</div>
             <div class="hint-content" id="hint-content"></div>
           </div>
 
           <div class="challenge-actions">
             <button class="btn btn-outline btn-sm" id="challenge-hint-btn">
-              💡 Get a Hint
+              <i class="fa-solid fa-lightbulb"></i> Get a Hint
             </button>
             <button class="btn btn-primary" id="challenge-submit-btn">
-              ✓ Submit Solution
+              <i class="fa-solid fa-check"></i> Submit Solution
             </button>
           </div>
         </div>
@@ -134,7 +134,7 @@ export class ChallengeComponent {
         const resultEl = $('#challenge-result', this.container);
         resultEl.className = `challenge-result visible ${result.pass ? 'success' : 'failure'}`;
         resultEl.innerHTML = `
-      <span style="font-size:1.5rem">${result.pass ? '🎉' : '❌'}</span>
+      <span style="font-size:1.5rem"><i class="fa-solid ${result.pass ? 'fa-circle-check' : 'fa-circle-xmark'}"></i></span>
       <div>
         <strong>${result.pass ? 'All checks passed!' : 'Some checks failed'}</strong>
         <div style="margin-top:var(--space-2);white-space:pre-line">${result.feedback}</div>

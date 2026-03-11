@@ -47,14 +47,14 @@ export function showToast(message, type = 'info', duration = 3500) {
   }
 
   const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ'
+    success: '<i class="fa-solid fa-check"></i>',
+    error: '<i class="fa-solid fa-xmark"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+    info: '<i class="fa-solid fa-circle-info"></i>'
   };
 
   const toast = createElement('div', { className: `toast toast-${type}` }, [
-    createElement('span', { className: 'toast-icon', textContent: icons[type] || icons.info }),
+    createElement('span', { className: 'toast-icon', innerHTML: icons[type] || icons.info }),
     createElement('span', { className: 'toast-message', textContent: message })
   ]);
 
