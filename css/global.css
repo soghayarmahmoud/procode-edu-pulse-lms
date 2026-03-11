@@ -12,7 +12,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+#app {
+  transition: opacity 0.25s ease;
+}
 html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;

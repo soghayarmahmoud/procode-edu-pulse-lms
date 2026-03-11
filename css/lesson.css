@@ -310,6 +310,7 @@
 .editor-actions {
     display: flex;
     gap: var(--space-2);
+    position: relative;
 }
 
 .editor-action-btn {
