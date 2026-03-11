@@ -9,6 +9,21 @@ import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
 import { PortfolioComponent } from './components/portfolio.js';
 
+// ── Back to Top Button ──
+function initBackToTop() {
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('back-to-top');
+        if (btn) btn.classList.toggle('visible', window.scrollY > 400);
+    });
+    const btn = document.getElementById('back-to-top');
+    if (btn) {
+        btn.onclick = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    }
+}
+initBackToTop();
+
 // ── Data Cache ──
 let coursesData = null;
 let lessonsData = null;
