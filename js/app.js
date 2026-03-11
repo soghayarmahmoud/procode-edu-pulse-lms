@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from './utils/router.js';
-import { $, animateOnScroll } from './utils/dom.js';
+import { $, animateOnScroll, showToast } from './utils/dom.js';
 import { storage } from './services/storage.js';
 import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
@@ -40,6 +40,125 @@ function transitionPage(renderFn) {
 }
 
 // ── Page Renderers ──
+function showWelcomeModel() {
+  const app = $('#app');
+
+  if (localStorage.getItem('procode_onboarding_done') === 'true') return;
+
+  let slide = 0;
+
+  const slides = [
+    {
+      title: "Welcome to ProCode 🚀",
+      text: "Learn web development with structured lessons, projects, and interactive coding."
+    },
+    {
+      title: "Interactive Coding 💻",
+      text: "Practice directly in the browser using the built-in code editor with live preview."
+    },
+    {
+      title: "Track Your Progress 📊",
+      text: "Courses remember your progress and show completion percentages."
+    },
+    {
+      title: "Build Your Portfolio 🎯",
+      text: "Every challenge you complete becomes part of your developer portfolio."
+    }
+  ];
+
+  function renderSlide() {
+    const s = slides[slide];
+
+    app.innerHTML = `
+      <div class="modal-overlay active">
+
+        <div class="modal animate-scaleIn text-center">
+
+          <div class="mb-6">
+            <span class="badge badge-primary mb-4">Getting Started</span>
+            <h3 class="mb-2">${s.title}</h3>
+            <p class="text-muted">${s.text}</p>
+          </div>
+
+          <div class="flex justify-center gap-2 mb-6">
+            ${slides.map((_, i) => `
+              <span 
+                style="
+                  width:10px;
+                  height:10px;
+                  border-radius:var(--radius-full);
+                  background:${i === slide ? 'var(--brand-primary)' : 'var(--border-subtle)'};
+                  display:inline-block;
+                ">
+              </span>
+            `).join('')}
+          </div>
+
+          ${slide === slides.length - 1 ? `
+            <div class="input-group mb-6">
+              <label>Your Name</label>
+              <input 
+                id="welcome-name"
+                class="input"
+                placeholder="Enter your name"
+                type="text"
+                required
+              />
+            </div>
+          ` : ''}
+
+          <div class="flex justify-center gap-3">
+            ${slide > 0 ? `
+              <button id="welcome-prev" class="btn btn-ghost">
+                Back
+              </button>
+            ` : ``}
+
+            <button id="welcome-next" class="btn btn-primary">
+              ${slide === slides.length - 1 ? 'Get Started →' : 'Next →'}
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    const next = $('#welcome-next');
+    const prev = $('#welcome-prev');
+
+    if (prev) {
+      prev.onclick = () => {
+        slide--;
+        renderSlide();
+      };
+    }
+
+     next.onclick = async() => {
+      if (slide === slides.length - 1) {
+        const name = $('#welcome-name')?.value?.trim();
+
+        if (name) {
+          localStorage.setItem('procode_user_name', name);
+        }
+
+        localStorage.setItem('procode_onboarding_done', 'true');  
+        // remove modal UI
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.remove();
+        await initApp();
+        location.hash = "/courses";
+
+      } else {
+        slide++;
+        renderSlide();
+      }
+    };
+  }
+
+  renderSlide();
+}
+
 
 function renderLanding() {
     const app = $('#app');
@@ -379,7 +498,7 @@ async function renderLesson(params) {
               </div>
               <div class="content-tab-panel" data-panel="cheatsheet">
                 <div class="lesson-notes-content">
-                  ${lesson.cheatSheet ? `<pre style="white-space:pre-wrap">${lesson.cheatSheet}</pre>` : '<p class="text-muted">No cheat sheet available for this lesson.</p>'}
+                  ${lesson.cheatSheet ? `<pre style="white-space:pre-wrap">${lesson.cheatSheet.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>` : '<p class="text-muted">No cheat sheet available for this lesson.</p>'}
                 </div>
               </div>
               <div class="content-tab-panel" data-panel="resources">
@@ -409,6 +528,15 @@ async function renderLesson(params) {
                   <button class="editor-action-btn" id="lesson-run-code">▶ Run</button>
                   <button class="editor-action-btn" id="lesson-reset-code">↻ Reset</button>
                   <button class="editor-action-btn" id="lesson-copy-code">📋 Copy</button>
+                  <button class="editor-action-btn" id="shortcuts-help-btn" title="Keyboard Shortcuts">⌨️</button>
+                  <div class="shortcuts-tooltip" id="shortcuts-tooltip">
+                    <div class="shortcuts-tooltip-title">⌨️ Keyboard Shortcuts</div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Enter</kbd><span>Run code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+S</kbd><span>Save (prevented)</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Shift+C</kbd><span>Copy code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Shift+R</kbd><span>Reset code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Escape</kbd><span>Close modal/hint</span></div>
+                  </div>
                 </div>
               </div>
               <div class="editor-body" id="lesson-editor"></div>
@@ -418,7 +546,7 @@ async function renderLesson(params) {
               <div class="preview-header">
                 <span class="preview-title">👁 Live Preview</span>
               </div>
-              <iframe class="preview-iframe" id="lesson-preview" sandbox="allow-scripts" title="Live preview"></iframe>
+              <iframe class="preview-iframe" id="lesson-preview" sandbox="allow-scripts allow-same-origin" title="Live preview"></iframe>
             </div>
           </div>
         </div>
@@ -533,6 +661,12 @@ async function renderLesson(params) {
     // ── Sidebar Toggle (Mobile) ──
     $('#sidebar-toggle')?.addEventListener('click', () => {
         $('#course-sidebar').classList.toggle('open');
+    });
+
+    // ── Shortcuts Help Button ──
+    $('#shortcuts-help-btn')?.addEventListener('click', () => {
+        const tooltip = document.getElementById('shortcuts-tooltip');
+        if (tooltip) tooltip.classList.toggle('visible');
     });
 }
 
@@ -692,14 +826,15 @@ function renderProfile() {
 async function initApp() {
     // Init theme
     initTheme();
+    
+    const onboardingDone = localStorage.getItem("procode_onboarding_done") === "true";
 
-    // Render navbar
-    renderNavbar();
-
-    // Load data
-    await loadData();
-
-    // Setup router
+    if (!onboardingDone) {
+      showWelcomeModel();
+    } else {
+  renderNavbar();
+  await loadData();
+  // Setup router
     const router = new Router();
 
     router
@@ -710,6 +845,65 @@ async function initApp() {
   .on('/portfolio', () => transitionPage(renderPortfolio))
   .on('/profile', () => transitionPage(renderProfile))
   .on('*', () => transitionPage(renderLanding));
+        .on('/', () => renderLanding())
+        .on('/courses', () => renderCoursesPage())
+        .on('/course/:courseId', (params) => renderCourse(params))
+        .on('/lesson/:courseId/:lessonId', (params) => renderLesson(params))
+        .on('/portfolio', () => renderPortfolio())
+        .on('/profile', () => renderProfile())
+        .on('*', () => renderLanding());
+
+    // ── Global Keyboard Shortcuts ──
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+S — Prevent browser save, show toast
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 's') {
+            e.preventDefault();
+            showToast('Auto-saved! ✓', 'success');
+            return;
+        }
+
+        // Ctrl+Enter — Run code (update preview)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const runBtn = document.getElementById('lesson-run-code');
+            if (runBtn) {
+                e.preventDefault();
+                runBtn.click();
+            }
+            return;
+        }
+
+        // Ctrl+Shift+C — Copy code to clipboard
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
+            const copyBtn = document.getElementById('lesson-copy-code');
+            if (copyBtn) {
+                e.preventDefault();
+                copyBtn.click();
+            }
+            return;
+        }
+
+        // Ctrl+Shift+R — Reset code
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+            const resetBtn = document.getElementById('lesson-reset-code');
+            if (resetBtn) {
+                e.preventDefault();
+                resetBtn.click();
+            }
+            return;
+        }
+
+        // Escape — Close modal/hint
+        if (e.key === 'Escape') {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) modal.remove();
+            const tooltip = document.querySelector('.shortcuts-tooltip.visible');
+            if (tooltip) tooltip.classList.remove('visible');
+        }
+    }, true);
+}
+
+
+    
 }
 
 // Boot
