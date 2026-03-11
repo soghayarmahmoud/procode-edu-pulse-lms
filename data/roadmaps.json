@@ -1,0 +1,54 @@
+{
+  "roadmaps": [
+    {
+      "id": "frontend-developer",
+      "title": "Frontend Web Developer",
+      "description": "The complete path to becoming a modern frontend developer. Start with the basics and move up to advanced frameworks.",
+      "icon": "fa-solid fa-code",
+      "courses": [
+        { "id": "html-fundamentals", "status": "available" },
+        { "id": "css-essentials", "status": "available" },
+        { "id": "javascript-basics", "status": "available" },
+        { "id": "react-mastery", "title": "React Mastery", "status": "coming_soon" },
+        { "id": "nextjs-advanced", "title": "Next.js Advanced", "status": "coming_soon" }
+      ]
+    },
+    {
+      "id": "full-stack-developer",
+      "title": "Full Stack Developer",
+      "description": "Master both the frontend and backend. Learn how to build databases, APIs, and beautiful user interfaces.",
+      "icon": "fa-solid fa-server",
+      "courses": [
+        { "id": "html-fundamentals", "status": "available" },
+        { "id": "javascript-basics", "status": "available" },
+        { "id": "nodejs-backend", "title": "Node.js & Express", "status": "coming_soon" },
+        { "id": "database-design", "title": "SQL & MongoDB", "status": "coming_soon" },
+        { "id": "firebase-auth", "title": "Firebase Integrations", "status": "coming_soon" }
+      ]
+    },
+    {
+      "id": "mobile-developer",
+      "title": "Mobile App Developer",
+      "description": "Build cross-platform applications for iOS and Android using modern technologies like Flutter.",
+      "icon": "fa-solid fa-mobile-screen-button",
+      "courses": [
+        { "id": "dart-basics", "title": "Dart Programming", "status": "coming_soon" },
+        { "id": "flutter-ui", "title": "Flutter UI & Layouts", "status": "coming_soon" },
+        { "id": "flutter-state", "title": "State Management", "status": "coming_soon" },
+        { "id": "mobile-deployment", "title": "App Store Deployment", "status": "coming_soon" }
+      ]
+    },
+    {
+      "id": "systems-engineering",
+      "title": "Systems & DevOps",
+      "description": "Get closer to the metal. Learn Linux distributions, command line operations, and system-level programming.",
+      "icon": "fa-brands fa-linux",
+      "courses": [
+        { "id": "linux-fundamentals", "status": "available" },
+        { "id": "cpp-basics", "status": "available" },
+        { "id": "docker-kubernetes", "title": "Docker & Kubernetes", "status": "coming_soon" },
+        { "id": "ci-cd-pipelines", "title": "CI/CD Pipelines", "status": "coming_soon" }
+      ]
+    }
+  ]
+}

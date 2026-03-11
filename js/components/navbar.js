@@ -32,9 +32,11 @@ export function renderNavbar() {
 
       <div class="nav-links" id="nav-links">
         <a href="#/" class="nav-link ${currentHash === '/' ? 'active' : ''}" data-route="/">Home</a>
-        <a href="#/courses" class="nav-link ${currentHash === '/courses' ? 'active' : ''}" data-route="/courses">Courses</a>
+        <a href="#/courses" class="nav-link ${currentHash.startsWith('/course') ? 'active' : ''}" data-route="/courses">Courses</a>
+        <a href="#/roadmaps" class="nav-link ${currentHash.startsWith('/roadmap') ? 'active' : ''}" data-route="/roadmaps">Roadmaps</a>
+        <a href="#/docs" class="nav-link ${currentHash.startsWith('/docs') ? 'active' : ''}" data-route="/docs">Docs</a>
         <a href="#/portfolio" class="nav-link ${currentHash === '/portfolio' ? 'active' : ''}" data-route="/portfolio">Portfolio</a>
-        <a href="#/profile" class="nav-link ${currentHash === '/profile' ? 'active' : ''}" data-route="/profile">Profile</a>
+        <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
       </div>
 
       <div class="nav-actions">
@@ -63,8 +65,10 @@ export function renderNavbar() {
     <div class="nav-mobile-menu" id="nav-mobile-menu">
       <a href="#/" class="nav-link" data-route="/">Home</a>
       <a href="#/courses" class="nav-link" data-route="/courses">Courses</a>
+      <a href="#/roadmaps" class="nav-link" data-route="/roadmaps">Roadmaps</a>
+      <a href="#/docs" class="nav-link" data-route="/docs">Docs</a>
       <a href="#/portfolio" class="nav-link" data-route="/portfolio">Portfolio</a>
-      <a href="#/profile" class="nav-link" data-route="/profile">Profile</a>
+      <a href="#/about" class="nav-link" data-route="/about">About</a>
     </div>
   `;
 

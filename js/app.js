@@ -29,19 +29,25 @@ let coursesData = null;
 let lessonsData = null;
 let quizzesData = null;
 let challengesData = null;
+let roadmapsData = null;
+let docsData = null;
 
 async function loadData() {
     const base = getBasePath();
-    const [courses, lessons, quizzes, challenges] = await Promise.all([
+    const [courses, lessons, quizzes, challenges, roadmaps, docs] = await Promise.all([
         fetch(`${base}data/courses.json`).then(r => r.json()),
         fetch(`${base}data/lessons.json`).then(r => r.json()),
         fetch(`${base}data/quizzes.json`).then(r => r.json()),
-        fetch(`${base}data/challenges.json`).then(r => r.json())
+        fetch(`${base}data/challenges.json`).then(r => r.json()),
+        fetch(`${base}data/roadmaps.json`).then(r => r.json()).catch(() => ({ roadmaps: [] })),
+        fetch(`${base}data/docs.json`).then(r => r.json()).catch(() => ({ categories: [] }))
     ]);
     coursesData = courses.courses;
     lessonsData = lessons.lessons;
     quizzesData = quizzes.quizzes;
     challengesData = challenges.challenges;
+    roadmapsData = roadmaps.roadmaps || [];
+    docsData = docs.categories || [];
 }
 
 function transitionPage(renderFn) {
@@ -304,22 +310,17 @@ function showWelcomeModel() {
     let slide = 0;
     const slides = [
         {
-            icon: '<i class="fa-solid fa-rocket fa-2x" style="color:var(--brand-primary)"></i>',
-            title: "Welcome to ProCode",
+            icon: '<i class="fa-solid fa-rocket fa-3x"></i>',
+            title: "Welcome to ProCode EduPulse",
             text: "Learn web development with structured lessons, projects, and interactive coding."
         },
         {
-            icon: '<i class="fa-solid fa-laptop-code fa-2x" style="color:var(--brand-primary)"></i>',
+            icon: '<i class="fa-solid fa-laptop-code fa-3x"></i>',
             title: "Interactive Coding",
             text: "Practice directly in the browser using the built-in code editor with live preview."
         },
         {
-            icon: '<i class="fa-solid fa-chart-bar fa-2x" style="color:var(--brand-primary)"></i>',
-            title: "Track Your Progress",
-            text: "Courses remember your progress and show completion percentages."
-        },
-        {
-            icon: '<i class="fa-solid fa-bullseye fa-2x" style="color:var(--brand-primary)"></i>',
+            icon: '<i class="fa-solid fa-user-graduate fa-3x"></i>',
             title: "Build Your Portfolio",
             text: "Every challenge you complete becomes part of your developer portfolio."
         }
@@ -327,34 +328,44 @@ function showWelcomeModel() {
 
     function renderSlide() {
         const s = slides[slide];
+        const isLast = slide === slides.length - 1;
+        
         app.innerHTML = `
-      <div class="modal-overlay active">
-        <div class="modal animate-scaleIn text-center">
-          <div class="mb-6">
-            <div class="mb-4">${s.icon}</div>
-            <span class="badge badge-primary mb-4">Getting Started</span>
-            <h3 class="mb-2">${s.title}</h3>
-            <p class="text-muted">${s.text}</p>
+      <div class="wizard-overlay">
+        <div class="wizard-left">
+          <div class="wizard-left-content">
+            <h1 style="font-size:3rem;margin-bottom:var(--space-6);line-height:1.2;">Your Journey<br>Starts Here.</h1>
+            <p style="font-size:1.2rem;opacity:0.9">Join thousands of students building real-world projects and mastering modern web technologies.</p>
           </div>
-
-          <div class="flex justify-center gap-2 mb-6">
-            ${slides.map((_, i) => `
-              <span style="width:10px;height:10px;border-radius:var(--radius-full);background:${i === slide ? 'var(--brand-primary)' : 'var(--border-subtle)'};display:inline-block;"></span>
-            `).join('')}
-          </div>
-
-          ${slide === slides.length - 1 ? `
-            <div class="input-group mb-6">
-              <label>Your Name</label>
-              <input id="welcome-name" class="input" placeholder="Enter your name" type="text" required />
+        </div>
+        <div class="wizard-right">
+          <div style="max-width:400px;margin:0 auto;width:100%">
+            <div class="wizard-dots">
+              ${slides.map((_, i) => `<div class="wizard-dot ${i === slide ? 'active' : ''}"></div>`).join('')}
             </div>
-          ` : ''}
+            
+            <div class="wizard-slide active">
+              <div style="color:var(--brand-primary);margin-bottom:var(--space-6)">${s.icon}</div>
+              <h2 style="font-size:2rem;margin-bottom:var(--space-4)">${s.title}</h2>
+              <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:var(--space-8);line-height:1.6">${s.text}</p>
+              
+              ${isLast ? `
+                <div class="input-group" style="margin-bottom:var(--space-8)">
+                  <label>What should we call you?</label>
+                  <div style="position:relative">
+                    <i class="fa-solid fa-user" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
+                    <input id="welcome-name" class="input" style="padding-left:48px;font-size:1.1rem" placeholder="Enter your display name" type="text" required />
+                  </div>
+                </div>
+              ` : ''}
 
-          <div class="flex justify-center gap-3">
-            ${slide > 0 ? `<button id="welcome-prev" class="btn btn-ghost">Back</button>` : ''}
-            <button id="welcome-next" class="btn btn-primary">
-              ${slide === slides.length - 1 ? 'Get Started <i class="fa-solid fa-arrow-right"></i>' : 'Next <i class="fa-solid fa-arrow-right"></i>'}
-            </button>
+              <div style="display:flex;gap:var(--space-4);align-items:center">
+                ${slide > 0 ? `<button id="welcome-prev" class="btn btn-ghost" style="padding:var(--space-3)">Back</button>` : ''}
+                <button id="welcome-next" class="btn btn-primary" style="flex:1;padding:var(--space-3) var(--space-6);font-size:1.1rem">
+                  ${isLast ? 'Complete Setup <i class="fa-solid fa-check" style="margin-left:8px"></i>' : 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:8px"></i>'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -368,12 +379,11 @@ function showWelcomeModel() {
         }
 
         next.onclick = async () => {
-            if (slide === slides.length - 1) {
+            if (isLast) {
                 const name = $('#welcome-name')?.value?.trim();
                 if (name) {
                     localStorage.setItem('procode_user_name', name);
                     storage.updateProfile({ name });
-                    // Sync name to Firebase if logged in
                     const uid = authService.getUid();
                     if (uid) {
                         await authService.updateDisplayName(name);
@@ -381,8 +391,6 @@ function showWelcomeModel() {
                     }
                 }
                 localStorage.setItem('procode_onboarding_done', 'true');
-                const overlay = document.querySelector('.modal-overlay');
-                if (overlay) overlay.remove();
                 await startMainApp();
             } else {
                 slide++;
@@ -1070,12 +1078,365 @@ function renderProfile() {
 }
 
 // ══════════════════════════════════════════════
+// NEW PAGES (Roadmaps, Docs, About, Careers)
+// ══════════════════════════════════════════════
+
+function renderRoadmapsPage() {
+    const app = $('#app');
+    
+    app.innerHTML = `
+      <div class="container roadmap-container">
+        <div class="text-center" style="margin-bottom:var(--space-10)">
+          <span class="badge badge-primary mb-4">Learning Paths</span>
+          <h1 style="font-size:2.5rem;margin-bottom:var(--space-4)">Developer Roadmaps</h1>
+          <p class="text-muted" style="font-size:1.1rem;max-width:600px;margin:0 auto">
+            Follow our structured learning tracks to go from absolute beginner to job-ready professional.
+          </p>
+        </div>
+
+        <div>
+          ${roadmapsData.map(track => {
+              const allCoursesText = track.courses.map(c => {
+                  const courseData = coursesData.find(cd => cd.id === c.id);
+                  const title = courseData ? courseData.title : c.title;
+                  const isAvailable = c.status === 'available';
+                  return `
+                    <div class="roadmap-node ${isAvailable ? 'available' : 'locked'}" ${isAvailable ? `onclick="window.location.hash='/course/${c.id}'"` : ''}>
+                      <div class="node-dot"><i class="fa-solid ${isAvailable ? 'fa-check' : 'fa-lock'}"></i></div>
+                      <div style="flex:1">
+                        <strong style="color:var(--text-primary)">${title}</strong>
+                        ${!isAvailable ? '<span class="badge badge-error" style="font-size:10px;margin-left:8px">Coming Soon</span>' : ''}
+                      </div>
+                      ${isAvailable ? '<i class="fa-solid fa-chevron-right text-muted"></i>' : ''}
+                    </div>
+                  `;
+              }).join('');
+
+              return `
+                <div class="roadmap-track animate-scaleIn">
+                  <div class="roadmap-header">
+                    <div class="roadmap-icon"><i class="${track.icon}"></i></div>
+                    <div>
+                      <h2>${track.title}</h2>
+                      <p class="text-muted" style="margin-top:var(--space-2)">${track.description}</p>
+                    </div>
+                  </div>
+                  <div class="roadmap-nodes">
+                    ${allCoursesText}
+                  </div>
+                </div>
+              `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+}
+
+function renderDocsPage(params) {
+    const app = $('#app');
+    const docId = params?.docId || (docsData[0]?.docs[0]?.id);
+    
+    let activeDoc = null;
+    let activeCategory = null;
+
+    docsData.forEach(cat => {
+        const found = cat.docs.find(d => d.id === docId);
+        if (found) {
+            activeDoc = found;
+            activeCategory = cat;
+        }
+    });
+
+    if (!activeDoc && docsData.length > 0) {
+        activeDoc = docsData[0].docs[0];
+    }
+
+    const sidebarHtml = docsData.map(cat => `
+        <div class="docs-category">
+            <div class="docs-category-title"><i class="${cat.icon}"></i> ${cat.title}</div>
+            ${cat.docs.map(doc => `
+                <a href="#/docs/${doc.id}" class="docs-nav-link ${doc.id === activeDoc?.id ? 'active' : ''}">
+                    ${doc.title}
+                </a>
+            `).join('')}
+        </div>
+    `).join('');
+
+    app.innerHTML = `
+      <div class="docs-layout">
+        <aside class="docs-sidebar">
+          <div style="margin-bottom:var(--space-6)">
+            <input type="text" class="input" placeholder="Search docs..." style="width:100%" id="docs-search">
+          </div>
+          ${sidebarHtml}
+        </aside>
+        <main class="docs-main animate-slideUp">
+          ${activeDoc ? `
+            <div class="mb-4 text-muted" style="font-size:var(--text-sm)">
+              ${activeCategory?.title} / <span style="color:var(--text-primary)">${activeDoc.title}</span>
+            </div>
+            <div class="docs-content">
+              ${activeDoc.content}
+            </div>
+          ` : `
+            <div class="empty-state text-center" style="padding:var(--space-16) 0">
+              <div class="empty-state-icon"><i class="fa-solid fa-book-open"></i></div>
+              <h3>Documentation Not Found</h3>
+              <p class="text-muted">The requested document could not be found.</p>
+            </div>
+          `}
+        </main>
+      </div>
+    `;
+}
+
+function renderAboutPage() {
+    const app = $('#app');
+    const base = getBasePath();
+    
+    app.innerHTML = `
+      <div class="container" style="max-width:800px;padding-bottom:var(--space-16)">
+        <div class="about-hero animate-scaleIn">
+          <div class="about-avatar">M</div>
+          <h1 style="font-size:2.5rem;margin-bottom:var(--space-2)">Mahmoud ElSoghayar</h1>
+          <p class="text-gradient" style="font-size:1.2rem;font-weight:600">Electrical & Electronics Engineer | Software Developer</p>
+          
+          <div class="tech-stack-tags">
+            <span class="tech-tag">HTML5</span>
+            <span class="tech-tag">CSS3</span>
+            <span class="tech-tag">JavaScript</span>
+            <span class="tech-tag">React.js</span>
+            <span class="tech-tag">Next.js</span>
+            <span class="tech-tag">SCSS</span>
+            <span class="tech-tag">Flutter</span>
+            <span class="tech-tag">Dart</span>
+            <span class="tech-tag">Firebase</span>
+            <span class="tech-tag">Databases</span>
+            <span class="tech-tag">Linux</span>
+            <span class="tech-tag">Testing (DEPI)</span>
+          </div>
+        </div>
+
+        <div class="card animate-slideUp" style="padding:var(--space-8);font-size:1.1rem;line-height:1.8;color:var(--text-secondary)">
+          <p style="margin-bottom:var(--space-4)">
+            Hello! I'm <strong>Mahmoud ElSoghayar</strong>, an ambitious Electrical and Electronics Engineer with a deep passion for software development.
+            Since starting my programming journey in 2021, I have dedicated myself to mastering both frontend web technologies and mobile application development.
+          </p>
+          <p style="margin-bottom:var(--space-4)">
+            My technical foundation spans across modern web stacks (React, Next.js) and cross-platform mobile development (Flutter, Dart). Having completed rigorous training in software testing with DEPI, I approach every project with a "quality-first" mentality, striving to produce bug-free, highly optimized code for production environments.
+          </p>
+          <p>
+            The <strong>ProCode EduPulse LMS</strong> is a testament to my commitment to education and building premium, professional user experiences.
+          </p>
+        </div>
+
+        <h3 class="text-center" style="margin-top:var(--space-10)">Let's Connect</h3>
+        <div class="social-links-grid animate-slideUp" style="animation-delay:0.1s">
+          <a href="https://linkedin.com/in/elsoghayar" target="_blank" class="social-card">
+            <i class="fa-brands fa-linkedin"></i>
+            <div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted)">Connect on</div>
+              <div style="font-weight:600">LinkedIn</div>
+            </div>
+          </a>
+          <a href="https://github.com/soghayarmahmoud" target="_blank" class="social-card">
+            <i class="fa-brands fa-github"></i>
+            <div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted)">Follow on</div>
+              <div style="font-weight:600">GitHub</div>
+            </div>
+          </a>
+          <a href="https://youtube.com/@procode4u" target="_blank" class="social-card">
+            <i class="fa-brands fa-youtube"></i>
+            <div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted)">Subscribe to</div>
+              <div style="font-weight:600">@procode4u</div>
+            </div>
+          </a>
+          <a href="https://wa.me/201019593092" target="_blank" class="social-card">
+            <i class="fa-brands fa-whatsapp"></i>
+            <div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted)">Chat on</div>
+              <div style="font-weight:600">+20 1019593092</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    `;
+}
+
+function renderCareersPage() {
+    const app = $('#app');
+    
+    app.innerHTML = `
+      <div class="container" style="max-width:800px;padding:var(--space-16) 0">
+        <div class="careers-banner animate-scaleIn">
+          <i class="fa-solid fa-briefcase fa-3x" style="color:var(--brand-primary);margin-bottom:var(--space-6)"></i>
+          <h1 style="margin-bottom:var(--space-4)">Join Our Mission</h1>
+          <p style="font-size:1.1rem;color:var(--text-secondary);max-width:500px;margin:0 auto">
+            We are building the future of interactive developer education.
+          </p>
+        </div>
+
+        <div class="card animate-slideUp text-center" style="padding:var(--space-10)">
+          <div style="font-size:4rem;color:var(--border-subtle);margin-bottom:var(--space-4)"><i class="fa-solid fa-mug-hot"></i></div>
+          <h3 style="margin-bottom:var(--space-2)">No open roles right now</h3>
+          <p class="text-muted" style="margin-bottom:var(--space-6)">
+            We're currently a small, focused team. However, we're always on the lookout for passionate contributors to our open-source projects!
+          </p>
+          <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" class="btn btn-outline">View GitHub Repo</a>
+        </div>
+      </div>
+    `;
+}
+
+// ══════════════════════════════════════════════
+// GLOBAL SEARCH (Ctrl+K)
+// ══════════════════════════════════════════════
+
+function setupGlobalSearch() {
+    // Inject modal into body
+    const modalHtml = `
+        <div class="search-modal-overlay" id="global-search-overlay">
+            <div class="search-modal">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" class="global-search-input" id="global-search-input" placeholder="Search courses, lessons, docs..." autocomplete="off">
+                    <button class="btn btn-ghost btn-sm" id="close-global-search"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="search-results" id="global-search-results"></div>
+                <div class="search-footer">
+                    <span><kbd style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;border:1px solid var(--border-subtle)">↑↓</kbd> to navigate</span>
+                    <span><kbd style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;border:1px solid var(--border-subtle)">Enter</kbd> to select</span>
+                    <span><kbd style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;border:1px solid var(--border-subtle)">Esc</kbd> to close</span>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const overlay = document.getElementById('global-search-overlay');
+    const input = document.getElementById('global-search-input');
+    const resultsContainer = document.getElementById('global-search-results');
+    const closeBtn = document.getElementById('close-global-search');
+
+    function openSearch() {
+        overlay.classList.add('active');
+        input.value = '';
+        resultsContainer.innerHTML = '';
+        setTimeout(() => input.focus(), 100);
+    }
+
+    function closeSearch() {
+        overlay.classList.remove('active');
+        input.blur();
+    }
+
+    closeBtn.addEventListener('click', closeSearch);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeSearch();
+    });
+
+    let selectedIndex = -1;
+
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            resultsContainer.innerHTML = '';
+            return;
+        }
+
+        const results = [];
+        
+        // Search Courses
+        coursesData.forEach(c => {
+            if (c.title.toLowerCase().includes(query) || c.description.toLowerCase().includes(query)) {
+                results.push({ title: c.title, desc: 'Course', icon: c.icon, link: `#/course/${c.id}` });
+            }
+        });
+
+        // Search Lessons
+        lessonsData.forEach(l => {
+            if (l.title.toLowerCase().includes(query)) {
+                results.push({ title: l.title, desc: 'Lesson', icon: 'fa-solid fa-book-open', link: `#/lesson/${l.courseId}/${l.id}` });
+            }
+        });
+
+        // Search Docs
+        docsData.forEach(cat => {
+            cat.docs.forEach(d => {
+                if (d.title.toLowerCase().includes(query)) {
+                    results.push({ title: d.title, desc: 'Documentation: ' + cat.title, icon: cat.icon, link: `#/docs/${d.id}` });
+                }
+            });
+        });
+
+        // Render limits
+        const topResults = results.slice(0, 8);
+        selectedIndex = -1;
+
+        if (topResults.length === 0) {
+            resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
+        } else {
+            resultsContainer.innerHTML = topResults.map((r, i) => `
+                <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
+                    <div class="search-result-title"><i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> ${r.title}</div>
+                    <div class="search-result-desc">${r.desc}</div>
+                </a>
+            `).join('');
+        }
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = resultsContainer.querySelectorAll('.search-result-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            items[selectedIndex].click();
+        }
+    });
+
+    function updateSelection(items) {
+        items.forEach((item, i) => {
+            if (i === selectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    // Attach to global keydown
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            if (overlay.classList.contains('active')) closeSearch();
+            else openSearch();
+        }
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+            closeSearch();
+        }
+    });
+}
+
+// ══════════════════════════════════════════════
 // APP INITIALIZATION
 // ══════════════════════════════════════════════
 
 async function startMainApp() {
     renderNavbar();
     await loadData();
+    setupGlobalSearch();
 
     const router = new Router();
     router
@@ -1083,8 +1444,13 @@ async function startMainApp() {
         .on('/courses', () => transitionPage(renderCoursesPage))
         .on('/course/:courseId', (params) => transitionPage(() => renderCourse(params)))
         .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params)))
+        .on('/roadmaps', () => transitionPage(renderRoadmapsPage))
+        .on('/docs', () => transitionPage(renderDocsPage))
+        .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params)))
         .on('/portfolio', () => transitionPage(renderPortfolio))
         .on('/profile', () => transitionPage(renderProfile))
+        .on('/about', () => transitionPage(renderAboutPage))
+        .on('/careers', () => transitionPage(renderCareersPage))
         .on('/login', () => transitionPage(renderLoginPage))
         .on('/signup', () => transitionPage(renderSignupPage))
         .on('*', () => transitionPage(renderLanding));

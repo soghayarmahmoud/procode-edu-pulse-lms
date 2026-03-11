@@ -1,0 +1,38 @@
+{
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "fa-solid fa-rocket",
+      "docs": [
+        {
+          "id": "welcome",
+          "title": "Welcome to ProCode",
+          "content": "<h2>Welcome to ProCode EduPulse</h2><p>Our platform is designed to take you from a passive watcher to an active, job-ready developer. Here you will find all the documentation needed to navigate the platform.</p><h3>The ProCode Methodology</h3><p>We believe in learning by doing. Every course is packed with interactive challenges. Pass the tests, clear the levels, and watch your portfolio grow.</p>"
+        },
+        {
+          "id": "how-to-use",
+          "title": "How to Use the Editor",
+          "content": "<h2>The Integrated Code Editor</h2><p>Our browser-based editor is powered by CodeMirror 6, offering syntax highlighting and live previews.</p><ul><li><strong>Run Code:</strong> Click the Play button or hit <code>Ctrl+Enter</code></li><li><strong>Copy Code:</strong> Click the Copy button or hit <code>Ctrl+Shift+C</code></li><li><strong>Reset:</strong> Stuck? Hit reset to restore the starter code.</li></ul>"
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "title": "Community & Support",
+      "icon": "fa-solid fa-users",
+      "docs": [
+        {
+          "id": "discord-rules",
+          "title": "Community Guidelines",
+          "content": "<h2>Be Respectful</h2><p>We are a community of learners. Answer questions patiently, avoid sharing full challenge solutions directly, and use the AI hints when completely stuck!</p>"
+        },
+        {
+          "id": "contributing",
+          "title": "How to Contribute",
+          "content": "<h2>Open Source</h2><p>ProCode EduPulse is an open-source project. If you find a bug or want to translate a lesson, visit our GitHub page, read the <code>CONTRIBUTING.md</code> file, and open a Pull Request!</p>"
+        }
+      ]
+    }
+  ]
+}
