@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from './utils/router.js';
-import { $, animateOnScroll } from './utils/dom.js';
+import { $, animateOnScroll, showToast } from './utils/dom.js';
 import { storage } from './services/storage.js';
 import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
@@ -368,7 +368,7 @@ async function renderLesson(params) {
               </div>
               <div class="content-tab-panel" data-panel="cheatsheet">
                 <div class="lesson-notes-content">
-                  ${lesson.cheatSheet ? `<pre style="white-space:pre-wrap">${lesson.cheatSheet}</pre>` : '<p class="text-muted">No cheat sheet available for this lesson.</p>'}
+                  ${lesson.cheatSheet ? `<pre style="white-space:pre-wrap">${lesson.cheatSheet.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>` : '<p class="text-muted">No cheat sheet available for this lesson.</p>'}
                 </div>
               </div>
               <div class="content-tab-panel" data-panel="resources">
@@ -398,6 +398,15 @@ async function renderLesson(params) {
                   <button class="editor-action-btn" id="lesson-run-code">▶ Run</button>
                   <button class="editor-action-btn" id="lesson-reset-code">↻ Reset</button>
                   <button class="editor-action-btn" id="lesson-copy-code">📋 Copy</button>
+                  <button class="editor-action-btn" id="shortcuts-help-btn" title="Keyboard Shortcuts">⌨️</button>
+                  <div class="shortcuts-tooltip" id="shortcuts-tooltip">
+                    <div class="shortcuts-tooltip-title">⌨️ Keyboard Shortcuts</div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Enter</kbd><span>Run code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+S</kbd><span>Save (prevented)</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Shift+C</kbd><span>Copy code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Ctrl+Shift+R</kbd><span>Reset code</span></div>
+                    <div class="shortcuts-tooltip-row"><kbd>Escape</kbd><span>Close modal/hint</span></div>
+                  </div>
                 </div>
               </div>
               <div class="editor-body" id="lesson-editor"></div>
@@ -407,7 +416,7 @@ async function renderLesson(params) {
               <div class="preview-header">
                 <span class="preview-title">👁 Live Preview</span>
               </div>
-              <iframe class="preview-iframe" id="lesson-preview" sandbox="allow-scripts" title="Live preview"></iframe>
+              <iframe class="preview-iframe" id="lesson-preview" sandbox="allow-scripts allow-same-origin" title="Live preview"></iframe>
             </div>
           </div>
         </div>
@@ -522,6 +531,12 @@ async function renderLesson(params) {
     // ── Sidebar Toggle (Mobile) ──
     $('#sidebar-toggle')?.addEventListener('click', () => {
         $('#course-sidebar').classList.toggle('open');
+    });
+
+    // ── Shortcuts Help Button ──
+    $('#shortcuts-help-btn')?.addEventListener('click', () => {
+        const tooltip = document.getElementById('shortcuts-tooltip');
+        if (tooltip) tooltip.classList.toggle('visible');
     });
 }
 
@@ -699,6 +714,54 @@ async function initApp() {
         .on('/portfolio', () => renderPortfolio())
         .on('/profile', () => renderProfile())
         .on('*', () => renderLanding());
+
+    // ── Global Keyboard Shortcuts ──
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+S — Prevent browser save, show toast
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 's') {
+            e.preventDefault();
+            showToast('Auto-saved! ✓', 'success');
+            return;
+        }
+
+        // Ctrl+Enter — Run code (update preview)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const runBtn = document.getElementById('lesson-run-code');
+            if (runBtn) {
+                e.preventDefault();
+                runBtn.click();
+            }
+            return;
+        }
+
+        // Ctrl+Shift+C — Copy code to clipboard
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
+            const copyBtn = document.getElementById('lesson-copy-code');
+            if (copyBtn) {
+                e.preventDefault();
+                copyBtn.click();
+            }
+            return;
+        }
+
+        // Ctrl+Shift+R — Reset code
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+            const resetBtn = document.getElementById('lesson-reset-code');
+            if (resetBtn) {
+                e.preventDefault();
+                resetBtn.click();
+            }
+            return;
+        }
+
+        // Escape — Close modal/hint
+        if (e.key === 'Escape') {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) modal.remove();
+            const tooltip = document.querySelector('.shortcuts-tooltip.visible');
+            if (tooltip) tooltip.classList.remove('visible');
+        }
+    }, true);
 }
 
 // Boot
