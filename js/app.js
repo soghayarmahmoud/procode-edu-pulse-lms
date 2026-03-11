@@ -853,6 +853,14 @@ async function initApp() {
         .on('/profile', () => renderProfile())
         .on('*', () => renderLanding());
 
+    // Back to Top button
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('back-to-top');
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
+    document.getElementById('back-to-top').onclick = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
     // ── Global Keyboard Shortcuts ──
     document.addEventListener('keydown', (e) => {
         // Ctrl+S — Prevent browser save, show toast
