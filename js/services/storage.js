@@ -37,6 +37,8 @@ class StorageService {
             this._set('profile', {
                 name: 'Student',
                 avatar: '',
+                bio: 'Passionate learner on ProCode.',
+                role: 'Frontend Developer',
                 joinDate: new Date().toISOString(),
                 theme: 'dark'
             });

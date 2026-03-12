@@ -942,27 +942,36 @@ function renderProfile() {
         </div>
 
         <!-- Top Overview -->
-        <div class="grid" style="grid-template-columns: 300px 1fr; gap:var(--space-6); margin-bottom:var(--space-6);">
+        <div class="grid" style="grid-template-columns: 350px 1fr; gap:var(--space-6); margin-bottom:var(--space-6);">
           
           <!-- Identity Card -->
-          <div class="card" style="text-align:center; padding:var(--space-8) var(--space-6);">
-            <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); width: 80px; height: 80px; font-size: 2rem; box-shadow: var(--shadow-glow);">
+          <div class="card" style="text-align:center; padding:var(--space-8) var(--space-6); display:flex; flex-direction:column;">
+            <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); width: 100px; height: 100px; font-size: 2.5rem; box-shadow: var(--shadow-glow);">
               ${profile.name.charAt(0).toUpperCase()}
             </div>
             <h3 style="font-size:var(--text-xl); margin-bottom:var(--space-1)">${profile.name}</h3>
+            <p class="text-sm" style="color:var(--brand-primary-light); font-weight:600; margin-bottom:var(--space-2)">${profile.role || 'Frontend Developer'}</p>
             ${email ? `<p class="text-sm text-muted" style="margin-bottom:var(--space-4)">${email}</p>` : ''}
             
-            <div class="badge badge-primary" style="margin-bottom:var(--space-6)">ProCode Student</div>
+            <p class="text-sm text-secondary" style="margin-bottom:var(--space-6); line-height:1.6; padding:0 var(--space-2)">
+              ${profile.bio || 'Passionate learner building projects on ProCode EduPulse.'}
+            </p>
             
-            <div class="divider"></div>
+            <div class="badge badge-primary" style="margin:auto auto var(--space-6)">ProCode Student</div>
             
-            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm);">
+            <div class="divider" style="width:100%"></div>
+            
+            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm); width:100%">
                 <span class="text-muted">Member Since</span>
                 <span style="font-weight:600">${new Date(profile.joinDate).toLocaleDateString([], {month: 'short', year: 'numeric'})}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm); margin-top:var(--space-2);">
+            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm); margin-top:var(--space-3); width:100%">
                 <span class="text-muted">Global Rank</span>
                 <span style="font-weight:600; color:var(--brand-primary-light);">Top 15%</span>
+            </div>
+            <div style="display:flex; gap:var(--space-3); justify-content:center; margin-top:var(--space-6); width:100%">
+                <a href="https://github.com" target="_blank" class="btn btn-icon btn-secondary" title="GitHub Profile"><i class="fa-brands fa-github"></i></a>
+                <a href="https://linkedin.com" target="_blank" class="btn btn-icon btn-secondary" title="LinkedIn Profile"><i class="fa-brands fa-linkedin"></i></a>
             </div>
           </div>
 
@@ -1076,9 +1085,17 @@ function renderProfile() {
                 <h3 class="modal-title">Edit Profile</h3>
                 <button class="modal-close" id="close-profile-modal"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="input-group mb-6">
+            <div class="input-group mb-4">
                 <label>Display Name</label>
                 <input type="text" class="input" id="profile-name" value="${profile.name}" placeholder="Your name">
+            </div>
+            <div class="input-group mb-4">
+                <label>Professional Role</label>
+                <input type="text" class="input" id="profile-role" value="${profile.role || ''}" placeholder="e.g. Frontend Developer">
+            </div>
+            <div class="input-group mb-6">
+                <label>Bio</label>
+                <textarea class="input textarea" id="profile-bio" placeholder="Tell us about yourself...">${profile.bio || ''}</textarea>
             </div>
             <div class="flex justify-end gap-3">
                 <button class="btn btn-ghost" id="cancel-profile-modal">Cancel</button>
@@ -1148,8 +1165,11 @@ function renderProfile() {
     // Save Profile
     $('#save-profile')?.addEventListener('click', async () => {
         const name = $('#profile-name').value.trim();
+        const role = $('#profile-role').value.trim();
+        const bio = $('#profile-bio').value.trim();
+        
         if (name) {
-            storage.updateProfile({ name });
+            storage.updateProfile({ name, role, bio });
             showToast('Profile updated!', 'success');
             renderNavbar();
             modal.classList.remove('active');
@@ -1159,7 +1179,7 @@ function renderProfile() {
             const uid = authService.getUid();
             if (uid) {
                 await authService.updateDisplayName(name);
-                await firestoreService.saveUserProfile(uid, { name });
+                await firestoreService.saveUserProfile(uid, { name, role, bio });
             }
         }
     });

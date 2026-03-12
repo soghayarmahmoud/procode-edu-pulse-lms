@@ -44,10 +44,12 @@ export function renderNavbar() {
           <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
         </button>
         ${user ? `
-          <div class="user-menu">
-            <div class="user-avatar-sm">${initial}</div>
-            <span class="user-name-display">${displayName}</span>
-            <button class="logout-btn" id="logout-btn" title="Sign out">
+          <div class="user-menu" style="display:flex; align-items:center; gap:var(--space-2);">
+            <a href="#/profile" style="display:flex; align-items:center; gap:var(--space-2); text-decoration:none;">
+              <div class="user-avatar-sm">${initial}</div>
+              <span class="user-name-display" style="color:var(--text-primary); font-weight:500;">${displayName}</span>
+            </a>
+            <button class="logout-btn" id="logout-btn" title="Sign out" style="margin-left:var(--space-2);">
               <i class="fa-solid fa-right-from-bracket"></i>
             </button>
           </div>
