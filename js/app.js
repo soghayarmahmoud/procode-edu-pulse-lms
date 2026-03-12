@@ -538,11 +538,11 @@ function renderLanding() {
               <div class="course-body">
                 <div class="course-meta">
                   <span class="badge badge-primary">${course.difficulty}</span>
-                  <span class="text-sm text-muted">${course.estimatedHours}h estimated</span>
+                  ${percent === 100 ? '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-check"></i> Completed</span>' : `<span class="text-sm text-muted">${course.estimatedHours}h estimated</span>`}
                 </div>
                 <h3 class="course-title">${course.title}</h3>
                 <p class="course-desc">${course.description}</p>
-                ${percent > 0 ? `
+                ${percent > 0 && percent < 100 ? `
                 <div style="margin-bottom:var(--space-3)">
                   <div class="progress-track" style="height:4px">
                     <div class="progress-fill" style="width:${percent}%"></div>
@@ -552,7 +552,7 @@ function renderLanding() {
                 ` : ''}
                 <div class="course-footer">
                   <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
-                  <span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>
+                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : '<span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>'}
                 </div>
               </div>
             </div>
@@ -647,11 +647,11 @@ function renderCoursesPage() {
               <div class="course-body">
                 <div class="course-meta">
                   <span class="badge badge-primary">${course.difficulty}</span>
-                  <span class="text-sm text-muted">${course.estimatedHours}h</span>
+                  ${percent === 100 ? '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-check"></i> Completed</span>' : `<span class="text-sm text-muted">${course.estimatedHours}h</span>`}
                 </div>
                 <h3 class="course-title">${course.title}</h3>
                 <p class="course-desc">${course.description}</p>
-                ${percent > 0 ? `
+                ${percent > 0 && percent < 100 ? `
                 <div style="margin-bottom:var(--space-3)">
                   <div class="progress-track" style="height:4px">
                     <div class="progress-fill" style="width:${percent}%"></div>
@@ -660,7 +660,7 @@ function renderCoursesPage() {
                 </div>` : ''}
                 <div class="course-footer">
                   <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
-                  <span class="btn btn-sm btn-primary">${percent > 0 ? 'Continue' : 'Start'} <i class="fa-solid fa-arrow-right"></i></span>
+                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : `<span class="btn btn-sm btn-primary">${percent > 0 ? 'Continue' : 'Start'} <i class="fa-solid fa-arrow-right"></i></span>`}
                 </div>
               </div>
             </div>`;
@@ -673,18 +673,172 @@ function renderCoursesPage() {
     animateOnScroll();
 }
 
-function renderCourse(params) {
+async function renderCourse(params) {
+    const app = $('#app');
+    const base = getBasePath();
     const course = coursesData.find(c => c.id === params.courseId);
+    
     if (!course) {
-        $('#app').innerHTML = '<div class="container" style="padding:var(--space-16)"><h1>Course not found</h1><a href="#/courses"><i class="fa-solid fa-arrow-left"></i> Back to courses</a></div>';
+        app.innerHTML = '<div class="container" style="padding:var(--space-16)"><h1>Course not found</h1><a href="#/courses"><i class="fa-solid fa-arrow-left"></i> Back to courses</a></div>';
         return;
     }
 
     const courseLessons = lessonsData.filter(l => l.courseId === course.id).sort((a, b) => a.order - b.order);
-    const firstLesson = courseLessons[0];
+    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+    const isEnrolled = percent > 0;
+    const isCompleted = percent === 100;
+    
+    // Fetch reviews
+    const { firestoreService } = await import('./services/firestore-service.js');
+    let reviews = await firestoreService.getCourseReviews(course.id);
+    
+    // Fallback to local
+    if (reviews.length === 0) {
+        reviews = storage.getReviews(course.id);
+    }
 
-    if (firstLesson) {
-        window.location.hash = `/lesson/${course.id}/${firstLesson.id}`;
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:800px;">
+        
+        <!-- Course Meta Header -->
+        <div style="margin-bottom:var(--space-8); text-align:center;">
+          <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); background:var(--bg-tertiary); color:var(--brand-primary); font-size:3rem; width:100px; height:100px;">
+            <i class="${course.icon}"></i>
+          </div>
+          <span class="badge ${isCompleted ? 'badge-success' : 'badge-primary'}" style="margin-bottom:var(--space-4)">
+            ${isCompleted ? '<i class="fa-solid fa-check"></i> Course Completed' : isEnrolled ? 'In Progress' : course.difficulty}
+          </span>
+          <h1 style="font-size:2.5rem; margin-bottom:var(--space-2)">${course.title}</h1>
+          <p class="text-muted" style="font-size:1.1rem; max-width:600px; margin:0 auto;">${course.description}</p>
+        </div>
+
+        <!-- Progress Overview -->
+        ${isEnrolled ? `
+        <div class="card" style="margin-bottom:var(--space-8);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+            <h3 style="font-size:var(--text-md)"><i class="fa-solid fa-chart-line"></i> Your Progress</h3>
+            <span style="font-weight:bold; color:var(--brand-primary);">${percent}%</span>
+          </div>
+          <div class="progress-track" style="height:8px; border-radius:4px; overflow:hidden;">
+             <div class="progress-fill" style="width:${percent}%; background:var(--brand-primary); box-shadow:0 0 10px var(--brand-primary-light);"></div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Course Syllabus -->
+        <div class="card" style="margin-bottom:var(--space-8);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+            <h3 style="font-size:var(--text-lg)"><i class="fa-solid fa-list-ol"></i> Curriculum Overview</h3>
+            <span class="text-sm text-muted">${course.totalLessons} Lessons</span>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+            ${courseLessons.map((lesson, idx) => {
+              const lessonCompleted = storage.isLessonCompleted(course.id, lesson.id);
+              return `
+              <a href="#/lesson/${course.id}/${lesson.id}" class="card-glass" style="display:flex; align-items:center; padding:var(--space-4); text-decoration:none; color:inherit; transition:transform 0.2s border-color 0.2s;">
+                <div style="width:32px; height:32px; border-radius:50%; background:var(--bg-tertiary); display:flex; align-items:center; justify-content:center; margin-right:var(--space-4); flex-shrink:0;">
+                  ${lessonCompleted ? '<i class="fa-solid fa-check" style="color:var(--color-success)"></i>' : `<span style="font-weight:600; font-size:0.9rem;">${idx + 1}</span>`}
+                </div>
+                <div style="flex:1;">
+                  <h4 style="font-size:1rem; margin-bottom:4px; ${lessonCompleted ? 'color:var(--text-primary);' : ''}">${lesson.title}</h4>
+                  <div style="font-size:0.8rem; color:var(--text-muted); display:flex; gap:12px;">
+                    <span>${lesson.type === 'theory' ? '<i class="fa-solid fa-book"></i> Theory' : lesson.type === 'practice' ? '<i class="fa-solid fa-laptop-code"></i> Practice' : '<i class="fa-solid fa-bullseye"></i> Challenge'}</span>
+                    <span><i class="fa-regular fa-clock"></i> ${lesson.duration || 'N/A'}</span>
+                  </div>
+                </div>
+                <div style="color:var(--text-muted);">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </div>
+              </a>`;
+            }).join('')}
+          </div>
+          
+          <div style="margin-top:var(--space-6); text-align:center;">
+            ${isEnrolled ? 
+              `<a href="#/lesson/${course.id}/${courseLessons[0].id}" class="btn btn-primary btn-lg" style="width:100%">${isCompleted ? 'Review Material <i class="fa-solid fa-rotate-right"></i>' : 'Continue Learning <i class="fa-solid fa-play"></i>'}</a>` :
+              `<a href="#/lesson/${course.id}/${courseLessons[0].id}" class="btn btn-primary btn-lg" style="width:100%">Start Course <i class="fa-solid fa-arrow-right"></i></a>`
+            }
+          </div>
+        </div>
+
+        <!-- Course Reviews -->
+        <div class="card">
+          <h3 style="font-size:var(--text-lg); margin-bottom:var(--space-6);"><i class="fa-solid fa-star"></i> Student Reviews</h3>
+          
+          ${isEnrolled ? `
+          <div class="review-form-container" style="margin-bottom:var(--space-8); padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md);">
+            <h4 style="margin-bottom:var(--space-3); font-size:var(--text-sm);">Leave a Review</h4>
+            <div style="display:flex; gap:10px; margin-bottom:var(--space-3);" id="review-stars-input">
+                <i class="fa-regular fa-star cursor-pointer star-input" data-rating="1"></i>
+                <i class="fa-regular fa-star cursor-pointer star-input" data-rating="2"></i>
+                <i class="fa-regular fa-star cursor-pointer star-input" data-rating="3"></i>
+                <i class="fa-regular fa-star cursor-pointer star-input" data-rating="4"></i>
+                <i class="fa-regular fa-star cursor-pointer star-input" data-rating="5"></i>
+            </div>
+            <textarea id="review-text-input" class="input textarea" placeholder="What did you think of the course?" rows="3" style="width:100%; margin-bottom:var(--space-4);"></textarea>
+            <button id="submit-review-btn" class="btn btn-primary btn-sm">Submit Review</button>
+            <input type="hidden" id="current-rating" value="0">
+          </div>
+          ` : `<div style="text-align:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); margin-bottom:var(--space-8); font-size:0.9rem; color:var(--text-muted);">Enroll in this course to leave a review.</div>`}
+          
+          <div id="reviews-list" style="display:flex; flex-direction:column; gap:var(--space-4);">
+            ${reviews.length > 0 ? reviews.map(r => `
+                <div style="border-bottom:1px solid var(--border-subtle); padding-bottom:var(--space-4);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-2);">
+                       <div style="font-weight:600;">${r.userName || 'Anonymous'}</div>
+                       <div>
+                          ${Array(5).fill(0).map((_, i) => `<i class="${i < r.rating ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f; font-size:0.8rem;"></i>`).join('')}
+                       </div>
+                    </div>
+                    <p style="font-size:0.95rem; color:var(--text-secondary); line-height:1.5;">${r.text}</p>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:var(--space-2);">${new Date(r.createdAt).toLocaleDateString()}</div>
+                </div>
+            `).join('') : '<div class="text-center text-muted" style="padding:var(--space-8);">No reviews yet. Be the first!</div>'}
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+
+    // Attach Review Handlers
+    if (isEnrolled) {
+        const stars = app.querySelectorAll('.star-input');
+        const ratingInput = document.getElementById('current-rating');
+        const textInput = document.getElementById('review-text-input');
+        const submitBtn = document.getElementById('submit-review-btn');
+
+        stars.forEach(star => {
+            star.addEventListener('click', (e) => {
+                const r = parseInt(e.target.dataset.rating, 10);
+                ratingInput.value = r;
+                stars.forEach(s => {
+                    const sr = parseInt(s.dataset.rating, 10);
+                    s.className = `${sr <= r ? 'fa-solid' : 'fa-regular'} fa-star cursor-pointer star-input`;
+                    s.style.color = sr <= r ? '#f1c40f' : '';
+                });
+            });
+        });
+
+        submitBtn?.addEventListener('click', async () => {
+            const rating = parseInt(ratingInput.value, 10);
+            const text = textInput.value.trim();
+            const userName = authService.getDisplayName();
+
+            if (rating === 0) return showToast('Please select a star rating.', 'error');
+            if (!text) return showToast('Please write a review.', 'error');
+
+            const updatedReviews = storage.saveReview(course.id, rating, text, userName);
+             const myReview = updatedReviews.find(r => r.userName === userName);
+            
+             if (myReview) {
+                 await firestoreService.saveReview(course.id, myReview);
+             }
+
+            showToast('Review submitted successfully!', 'success');
+            renderCourse(params); // re-render to show new review
+        });
     }
 }
 

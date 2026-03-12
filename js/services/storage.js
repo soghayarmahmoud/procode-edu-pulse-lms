@@ -53,6 +53,9 @@ class StorageService {
         if (!this._get('submissions')) {
             this._set('submissions', {});
         }
+        if (!this._get('reviews')) {
+            this._set('reviews', {});
+        }
     }
 
     // ── Profile ──
@@ -234,6 +237,37 @@ class StorageService {
 
     getTotalChallengesPassed() {
         return this.getPassedSubmissions().length;
+    }
+
+    // ── Reviews ──
+
+    getReviews(courseId) {
+        const reviews = this._get('reviews') || {};
+        return reviews[courseId] || [];
+    }
+
+    saveReview(courseId, rating, text, userName) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) reviews[courseId] = [];
+        
+        // Check if user already reviewed
+        const existingIndex = reviews[courseId].findIndex(r => r.userName === userName);
+        const reviewData = {
+            id: Date.now().toString(),
+            userName,
+            rating,
+            text,
+            createdAt: new Date().toISOString()
+        };
+        
+        if (existingIndex >= 0) {
+            reviews[courseId][existingIndex] = reviewData;
+        } else {
+            reviews[courseId].push(reviewData);
+        }
+        
+        this._set('reviews', reviews);
+        return reviews[courseId];
     }
 
     // ── Reset ──

@@ -126,6 +126,41 @@ class FirestoreService {
             return null;
         }
     }
+
+    /**
+     * Save a review for a course.
+     */
+    async saveReview(courseId, reviewData) {
+        if (!isFirebaseConfigured() || !courseId) return;
+        try {
+            // We use the review ID as the document ID inside the course's reviews subcollection
+            const ref = doc(db, 'course_reviews', courseId, 'reviews', reviewData.id);
+            await setDoc(ref, {
+                ...reviewData,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveReview failed:', e);
+        }
+    }
+
+    /**
+     * Get all reviews for a course.
+     */
+    async getCourseReviews(courseId) {
+        if (!isFirebaseConfigured() || !courseId) return [];
+        try {
+            // Because we don't want to import getDocs and collection from firestore here unless we need to,
+            // Let's dynamically import them to avoid cluttering the top-level imports if they aren't used.
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const colRef = collection(db, 'course_reviews', courseId, 'reviews');
+            const snap = await getDocs(colRef);
+            return snap.docs.map(doc => doc.data());
+        } catch (e) {
+            console.warn('Firestore getCourseReviews failed:', e);
+            return [];
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();
