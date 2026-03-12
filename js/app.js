@@ -32,16 +32,18 @@ let quizzesData = null;
 let challengesData = null;
 let roadmapsData = null;
 let docsData = null;
+let modulesData = null;
 
 async function loadData() {
     const base = getBasePath();
-    const [courses, lessons, quizzes, challenges, roadmaps, docs] = await Promise.all([
+    const [courses, lessons, quizzes, challenges, roadmaps, docs, modules] = await Promise.all([
         fetch(`${base}data/courses.json`).then(r => r.json()),
         fetch(`${base}data/lessons.json`).then(r => r.json()),
         fetch(`${base}data/quizzes.json`).then(r => r.json()),
         fetch(`${base}data/challenges.json`).then(r => r.json()),
         fetch(`${base}data/roadmaps.json`).then(r => r.json()).catch(() => ({ roadmaps: [] })),
-        fetch(`${base}data/docs.json`).then(r => r.json()).catch(() => ({ categories: [] }))
+        fetch(`${base}data/docs.json`).then(r => r.json()).catch(() => ({ categories: [] })),
+        fetch(`${base}data/modules.json`).then(r => r.json()).catch(() => ({ modules: [] }))
     ]);
     coursesData = courses.courses;
     lessonsData = lessons.lessons;
@@ -49,6 +51,7 @@ async function loadData() {
     challengesData = challenges.challenges;
     roadmapsData = roadmaps.roadmaps || [];
     docsData = docs.categories || [];
+    modulesData = modules.modules || [];
 }
 
 function transitionPage(renderFn) {
@@ -849,6 +852,21 @@ async function renderCourse(params) {
                             <span style="font-size:0.8rem; font-weight:600">${(r.reactions?.helpful?.length || 0)}</span>
                         </button>
                     </div>
+                    <div class="review-replies" style="margin-top:var(--space-4); padding-left:var(--space-4); border-left:2px solid var(--border-subtle);">
+                      ${r.replies && r.replies.length > 0 ? r.replies.map(reply => `
+                            <div class="reply-item" data-reply-id="${reply.id}" style="margin-bottom:var(--space-3);">
+                               <div style="display:flex; align-items:center; gap:var(--space-2); font-size:0.85rem; color:var(--text-muted);">
+                                   <span style="font-weight:600;color:var(--text-primary)">${reply.userName}</span>
+                                   <span>${new Date(reply.createdAt).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</span>
+                               </div>
+                               <p style="margin:4px 0 0 0; color:var(--text-secondary);">${reply.text}</p>
+                            </div>
+                          `).join('') : ''}
+                    </div>
+                    <div class="reply-form" data-review-id="${r.id}" style="margin-top:var(--space-4);">
+                      <textarea class="input textarea reply-text" rows="2" placeholder="Write a reply..." style="width:100%;"></textarea>
+                      <button class="btn btn-sm btn-outline reply-submit" style="margin-top:var(--space-2);">Reply</button>
+                    </div>
                 </div>
             `}).join('') : '<div class="text-center" style="padding:var(--space-8); background:var(--bg-input); border-radius:var(--radius-lg); border: 1px dashed var(--border-subtle);"><i class="fa-regular fa-comments text-muted" style="font-size:2rem; margin-bottom:var(--space-3);"></i><p class="text-muted" style="margin:0;">No reviews yet. Be the first to share your thoughts!</p></div>'}
           </div>
@@ -923,6 +941,24 @@ async function renderCourse(params) {
                 }
 
                 // Re-render course to show updated reactions
+                renderCourse(params);
+            });
+        });
+
+        // Attach Reply Handlers
+        const replyForms = app.querySelectorAll('.reply-form');
+        replyForms.forEach(form => {
+            const reviewId = form.dataset.reviewId;
+            const textarea = form.querySelector('.reply-text');
+            const btn = form.querySelector('.reply-submit');
+            btn.addEventListener('click', async () => {
+                const text = textarea.value.trim();
+                const userName = authService.getDisplayName();
+                if (!text) return;
+                const reply = storage.addReply(course.id, reviewId, userName, text);
+                if (reply) {
+                    await firestoreService.addReply(course.id, reviewId, reply);
+                }
                 renderCourse(params);
             });
         });
@@ -1101,7 +1137,8 @@ async function renderLesson(params) {
 
     // ── Init Sidebar ──
     const { SidebarComponent } = await import('./components/sidebar.js');
-    new SidebarComponent('#course-sidebar', course, courseLessons, lessonId);
+    const courseModules = modulesData ? modulesData.filter(m => m.courseId === course.id) : [];
+    new SidebarComponent('#course-sidebar', course, courseLessons, lessonId, courseModules);
 
     // ── Init Video Player ──
     const { VideoPlayer } = await import('./components/video-player.js');
@@ -1164,6 +1201,17 @@ async function renderLesson(params) {
         if (!storage.isLessonCompleted(courseId, lessonId)) {
             storage.addGems(10);
             storage.completeLesson(courseId, lessonId);
+
+            // check module completion
+            const currentModule = modulesData && modulesData.find(m => m.courseId === courseId && m.lessons.includes(lessonId));
+            if (currentModule) {
+                const allDone = currentModule.lessons.every(lid => storage.isLessonCompleted(courseId, lid));
+                if (allDone) {
+                    storage.completeModule(courseId, currentModule.id);
+                    showToast(`Module "${currentModule.title}" completed!`, 'success');
+                }
+            }
+
             showToast('Lesson marked as complete! +10 Gems 💎', 'success');
             
             // Sync to cloud
@@ -1552,6 +1600,75 @@ function renderProfile() {
 }
 
 // ══════════════════════════════════════════════
+// ADMIN & UTILITY PAGES
+// ══════════════════════════════════════════════
+
+async function renderAdminDashboard() {
+    const app = $('#app');
+    app.innerHTML = `<div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);">
+        <div class="container" style="max-width:800px;">
+            <h1 class="section-title">Admin Dashboard</h1>
+            <div id="admin-stats" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-6);"></div>
+        </div>
+    </div>`;
+
+    const stats = await firestoreService.getAdminStats();
+    const container = $('#admin-stats');
+    if (!stats) {
+        container.innerHTML = '<p class="text-muted">Unable to load statistics.</p>';
+        return;
+    }
+
+    const cards = [];
+    cards.push(`<div class="card">
+        <h3>Total Users</h3>
+        <div style="font-size:2rem;font-weight:800">${stats.totalUsers}</div>
+    </div>`);
+    cards.push(`<div class="card">
+        <h3>Total Courses</h3>
+        <div style="font-size:2rem;font-weight:800">${stats.totalCourses || 'N/A'}</div>
+    </div>`);
+    cards.push(`<div class="card">
+        <h3>Total Enrollments</h3>
+        <div style="font-size:2rem;font-weight:800">${stats.totalEnrollments}</div>
+    </div>`);
+    if (stats.mostPopularCourses && stats.mostPopularCourses.length) {
+        cards.push(`<div class="card">
+            <h3>Top Courses</h3>
+            <ul style="padding-left:1rem; margin:0;">
+                ${stats.mostPopularCourses.slice(0,5).map(c=>`<li>${c.courseId} (${c.count})</li>`).join('')}
+            </ul>
+        </div>`);
+    }
+    container.innerHTML = cards.join('');
+}
+
+function renderErrorPage() {
+    const app = $('#app');
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);text-align:center">
+        <div class="error-offline-icon" style="font-size:6rem;">😕</div>
+        <h1 style="margin-top:var(--space-6)">404 - Page Not Found</h1>
+        <p class="text-muted" style="margin-bottom:var(--space-6);">Sorry, the page you're looking for doesn't exist.</p>
+        <a href="#/" class="btn btn-primary">Go to Home</a>
+    </div>
+    `;
+}
+
+function renderOfflinePage() {
+    const app = $('#app');
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);text-align:center">
+        <div class="error-offline-icon" style="font-size:6rem;">📡</div>
+        <h1 style="margin-top:var(--space-6)">No Internet Connection</h1>
+        <p class="text-muted" style="margin-bottom:var(--space-6);">Please check your network and try again.</p>
+        <button id="retry-connection" class="btn btn-primary">Retry</button>
+    </div>
+    `;
+    $('#retry-connection').addEventListener('click', () => window.location.reload());
+}
+
+// ══════════════════════════════════════════════
 // NEW PAGES (Roadmaps, Docs, About, Careers)
 // ══════════════════════════════════════════════
 
@@ -1923,11 +2040,23 @@ async function startMainApp() {
         .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params)))
         .on('/portfolio', () => transitionPage(renderPortfolio))
         .on('/profile', () => transitionPage(renderProfile))
+        .on('/admin', () => transitionPage(renderAdminDashboard))
         .on('/about', () => transitionPage(renderAboutPage))
         .on('/careers', () => transitionPage(renderCareersPage))
         .on('/login', () => transitionPage(renderLoginPage))
         .on('/signup', () => transitionPage(renderSignupPage))
-        .on('*', () => transitionPage(renderLanding));
+        .on('/404', () => transitionPage(renderErrorPage))
+        .on('/offline', () => transitionPage(renderOfflinePage))
+        .on('*', () => transitionPage(renderErrorPage));
+
+    // network status handling
+    window.addEventListener('offline', () => {
+        router.navigate('/offline');
+    });
+    window.addEventListener('online', () => {
+        // simply reload to re-attempt data fetches/navigation
+        window.location.reload();
+    });
 
     // Back to Top button
     window.addEventListener('scroll', () => {

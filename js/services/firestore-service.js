@@ -4,7 +4,7 @@
 
 import { db, isFirebaseConfigured } from './firebase-config.js';
 import {
-    doc, setDoc, getDoc, updateDoc, serverTimestamp
+    doc, setDoc, getDoc, updateDoc, serverTimestamp, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 class FirestoreService {
@@ -145,6 +145,26 @@ class FirestoreService {
     }
 
     /**
+     * Add a reply to a review document
+     */
+    async addReply(courseId, reviewId, replyData) {
+        if (!isFirebaseConfigured() || !courseId || !reviewId) return;
+        try {
+            const ref = doc(db, 'course_reviews', courseId, 'reviews', reviewId);
+            // Use updateDoc to push into replies array
+            await updateDoc(ref, {
+                replies: arrayUnion({
+                    ...replyData,
+                    updatedAt: serverTimestamp()
+                }),
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore addReply failed:', e);
+        }
+    }
+
+    /**
      * Get all reviews for a course.
      */
     async getCourseReviews(courseId) {
@@ -159,6 +179,131 @@ class FirestoreService {
         } catch (e) {
             console.warn('Firestore getCourseReviews failed:', e);
             return [];
+        }
+    }
+
+    /**
+     * Get aggregated statistics for a specific course
+     */
+    async getCourseStats(courseId) {
+        if (!isFirebaseConfigured() || !courseId) return null;
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            // fetch all users
+            const usersSnap = await getDocs(collection(db, 'users'));
+            let totalStudents = 0;
+            let completionSum = 0;
+            let usersWithProgress = 0;
+
+            usersSnap.forEach(u => {
+                const data = u.data();
+                if (data.enrollments && data.enrollments[courseId]) {
+                    totalStudents++;
+                }
+                if (data.progress && data.progress[courseId]) {
+                    const prog = data.progress[courseId];
+                    const lessons = prog.completedLessons || [];
+                    // assume totalLessons available from local cache on client side when calling
+                    if (prog.totalLessons) {
+                        completionSum += (lessons.length / prog.totalLessons) * 100;
+                        usersWithProgress++;
+                    }
+                }
+            });
+
+            const reviews = await this.getCourseReviews(courseId);
+            const avgRating = reviews.length
+                ? reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
+                : 0;
+            const completionRate = usersWithProgress ? (completionSum / usersWithProgress) : 0;
+
+            return {
+                totalStudents,
+                averageRating: avgRating,
+                totalReviews: reviews.length,
+                completionRate: Math.round(completionRate)
+            };
+        } catch (e) {
+            console.warn('Firestore getCourseStats failed:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Get aggregated statistics for a user
+     */
+    async getUserStats(uid) {
+        if (!isFirebaseConfigured() || !uid) return null;
+        try {
+            const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'users', uid);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return null;
+            const data = snap.data();
+            const enrollments = data.enrollments || {};
+            const coursesEnrolled = Object.keys(enrollments).length;
+            const progress = data.progress || {};
+            let lessonsCompleted = 0;
+            Object.values(progress).forEach(p => { lessonsCompleted += (p.completedLessons || []).length; });
+            let totalHours = lessonsCompleted * 0.25;
+            // assume stored
+            const reviews = data.reviews || {};
+            let ratingsSum = 0;
+            let reviewCount = 0;
+            Object.values(reviews).forEach(arr => {
+                arr.forEach(r => { ratingsSum += r.rating; reviewCount++; });
+            });
+            const avgRating = reviewCount ? ratingsSum / reviewCount : 0;
+            return {
+                coursesEnrolled,
+                lessonsCompleted,
+                totalHours: Math.round(totalHours * 10) / 10,
+                reviewsWritten: reviewCount,
+                averageRatingGiven: avgRating.toFixed(1)
+            };
+        } catch (e) {
+            console.warn('Firestore getUserStats failed:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Admin dashboard statistics
+     */
+    async getAdminStats() {
+        if (!isFirebaseConfigured()) return null;
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const usersSnap = await getDocs(collection(db, 'users'));
+            const totalUsers = usersSnap.size;
+            let totalEnrollments = 0;
+            let courseCountMap = {};
+            let dailyActive = {};
+
+            usersSnap.forEach(u => {
+                const d = u.data();
+                if (d.enrollments) {
+                    Object.keys(d.enrollments).forEach(cid => {
+                        totalEnrollments++;
+                        courseCountMap[cid] = (courseCountMap[cid] || 0) + 1;
+                    });
+                }
+                if (d.lastLogin) {
+                    const day = new Date(d.lastLogin.seconds * 1000).toISOString().split('T')[0];
+                    dailyActive[day] = (dailyActive[day] || 0) + 1;
+                }
+            });
+            const mostPopular = Object.entries(courseCountMap).sort((a,b)=>b[1]-a[1]).map(e=>({courseId:e[0],count:e[1]}));
+            return {
+                totalUsers,
+                totalCourses: coursesData ? coursesData.length : null,
+                totalEnrollments,
+                mostPopularCourses: mostPopular,
+                dailyActiveUsers: dailyActive
+            };
+        } catch (e) {
+            console.warn('Firestore getAdminStats failed:', e);
+            return null;
         }
     }
 }

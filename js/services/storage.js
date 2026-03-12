@@ -127,6 +127,7 @@ class StorageService {
         const progress = this.getProgress();
         return progress[courseId] || {
             completedLessons: [],
+            completedModules: [],
             quizScores: {},
             lastAccessed: null
         };
@@ -147,6 +148,26 @@ class StorageService {
     isLessonCompleted(courseId, lessonId) {
         const cp = this.getCourseProgress(courseId);
         return cp.completedLessons.includes(lessonId);
+    }
+
+    // Module helpers
+    completeModule(courseId, moduleId) {
+        const progress = this.getProgress();
+        if (!progress[courseId]) {
+            progress[courseId] = { completedLessons: [], completedModules: [], quizScores: {}, lastAccessed: null };
+        }
+        if (!progress[courseId].completedModules) {
+            progress[courseId].completedModules = [];
+        }
+        if (!progress[courseId].completedModules.includes(moduleId)) {
+            progress[courseId].completedModules.push(moduleId);
+        }
+        this._set('progress', progress);
+    }
+
+    isModuleCompleted(courseId, moduleId) {
+        const cp = this.getCourseProgress(courseId);
+        return cp.completedModules && cp.completedModules.includes(moduleId);
     }
 
     getCourseCompletionPercent(courseId, totalLessons) {
@@ -248,6 +269,48 @@ class StorageService {
         this._set('editor_prefs', { ...this.getEditorPrefs(), ...prefs });
     }
 
+    // ── Review Replies ──
+
+    addReply(courseId, reviewId, userName, text) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) return null;
+        const review = reviews[courseId].find(r => r.id === reviewId);
+        if (!review) return null;
+        if (!review.replies) review.replies = [];
+        const reply = {
+            id: Date.now().toString(),
+            userName,
+            text,
+            createdAt: new Date().toISOString(),
+            reactions: {
+                like: [],
+                love: [],
+                helpful: []
+            }
+        };
+        review.replies.push(reply);
+        this._set('reviews', reviews);
+        return reply;
+    }
+
+    addReplyReaction(courseId, reviewId, replyId, reactionType, userName) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) return null;
+        const review = reviews[courseId].find(r => r.id === reviewId);
+        if (!review || !review.replies) return null;
+        const reply = review.replies.find(r => r.id === replyId);
+        if (!reply) return null;
+        if (!reply.reactions) reply.reactions = { like: [], love: [], helpful: [] };
+        // remove prev by user
+        Object.keys(reply.reactions).forEach(type => {
+            reply.reactions[type] = reply.reactions[type].filter(u => u !== userName);
+        });
+        if (!reply.reactions[reactionType]) reply.reactions[reactionType] = [];
+        if (!reply.reactions[reactionType].includes(userName)) reply.reactions[reactionType].push(userName);
+        this._set('reviews', reviews);
+        return reply;
+    }
+
     // ── Stats ──
 
     getTotalCompletedLessons() {
@@ -326,13 +389,15 @@ class StorageService {
                 like: [],
                 love: [],
                 helpful: []
-            }
+            },
+            replies: []
         };
         
         if (existingIndex >= 0) {
-            // Preserve existing reactions when updating review
+            // Preserve existing reactions and replies when updating review
             const existing = reviews[courseId][existingIndex];
             reviewData.reactions = existing.reactions || { like: [], love: [], helpful: [] };
+            reviewData.replies = existing.replies || [];
             reviews[courseId][existingIndex] = reviewData;
         } else {
             reviews[courseId].push(reviewData);

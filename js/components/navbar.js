@@ -37,6 +37,7 @@ export function renderNavbar() {
         <a href="#/docs" class="nav-link ${currentHash.startsWith('/docs') ? 'active' : ''}" data-route="/docs">Docs</a>
         <a href="#/portfolio" class="nav-link ${currentHash === '/portfolio' ? 'active' : ''}" data-route="/portfolio">Portfolio</a>
         <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
+        ${user && user.admin ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin">Admin</a>` : ''}
       </div>
 
       <div class="nav-actions">

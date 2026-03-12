@@ -126,6 +126,45 @@
     border-radius: var(--radius-lg);
     padding: var(--space-6);
     backdrop-filter: blur(20px);
+}
+
+/* animation for large icons used on error/offline pages */
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+.error-offline-icon {
+  animation: float 2s ease-in-out infinite;
+}
+
+/* ── Sidebar Modules ── */
+.module-list {
+    margin-bottom: var(--space-4);
+}
+.module-item {
+    padding: var(--space-2) var(--space-4);
+    font-weight: 600;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-2);
+    position: relative;
+}
+.module-item.completed {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+.module-item.completed::after {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    right: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-success);
+    font-size: 0.9rem;
+}
     -webkit-backdrop-filter: blur(20px);
 }
 
