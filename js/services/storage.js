@@ -263,6 +263,39 @@ class StorageService {
         return this.getPassedSubmissions().length;
     }
 
+    getTotalLearningHours() {
+        const progress = this.getProgress();
+        let totalHours = 0;
+        for (const [courseId, courseProgress] of Object.entries(progress)) {
+            const completedCount = (courseProgress.completedLessons || []).length;
+            // Assume ~15 min per lesson on average = 0.25 hours
+            totalHours += completedCount * 0.25;
+        }
+        return Math.round(totalHours * 10) / 10; // Round to 1 decimal
+    }
+
+    getUserReviews(userName) {
+        const reviews = this._get('reviews') || {};
+        const userReviews = [];
+        
+        for (const [courseId, courseReviews] of Object.entries(reviews)) {
+            courseReviews.forEach(review => {
+                if (review.userName === userName) {
+                    userReviews.push({
+                        ...review,
+                        courseId
+                    });
+                }
+            });
+        }
+        
+        return userReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    getTotalReviewsCount(userName) {
+        return this.getUserReviews(userName).length;
+    }
+
     // ── Reviews ──
 
     getReviews(courseId) {
@@ -288,10 +321,18 @@ class StorageService {
             userName,
             rating,
             text,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            reactions: {
+                like: [],
+                love: [],
+                helpful: []
+            }
         };
         
         if (existingIndex >= 0) {
+            // Preserve existing reactions when updating review
+            const existing = reviews[courseId][existingIndex];
+            reviewData.reactions = existing.reactions || { like: [], love: [], helpful: [] };
             reviews[courseId][existingIndex] = reviewData;
         } else {
             reviews[courseId].push(reviewData);
@@ -299,6 +340,66 @@ class StorageService {
         
         this._set('reviews', reviews);
         return reviews[courseId];
+    }
+
+    // ── Review Reactions ──
+
+    addReaction(courseId, reviewId, reactionType, userName) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) return;
+
+        const review = reviews[courseId].find(r => r.id === reviewId);
+        if (!review) return;
+
+        if (!review.reactions) {
+            review.reactions = { like: [], love: [], helpful: [] };
+        }
+
+        // Remove previous reaction of any type by this user
+        Object.keys(review.reactions).forEach(type => {
+            review.reactions[type] = (review.reactions[type] || []).filter(u => u !== userName);
+        });
+
+        // Add new reaction if not already present
+        if (!review.reactions[reactionType]) {
+            review.reactions[reactionType] = [];
+        }
+        if (!review.reactions[reactionType].includes(userName)) {
+            review.reactions[reactionType].push(userName);
+        }
+
+        this._set('reviews', reviews);
+        return review;
+    }
+
+    removeReaction(courseId, reviewId, reactionType, userName) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) return;
+
+        const review = reviews[courseId].find(r => r.id === reviewId);
+        if (!review || !review.reactions) return;
+
+        if (review.reactions[reactionType]) {
+            review.reactions[reactionType] = review.reactions[reactionType].filter(u => u !== userName);
+        }
+
+        this._set('reviews', reviews);
+        return review;
+    }
+
+    getUserReaction(courseId, reviewId, userName) {
+        const reviews = this._get('reviews') || {};
+        if (!reviews[courseId]) return null;
+
+        const review = reviews[courseId].find(r => r.id === reviewId);
+        if (!review || !review.reactions) return null;
+
+        for (const [type, users] of Object.entries(review.reactions)) {
+            if (users && users.includes(userName)) {
+                return type;
+            }
+        }
+        return null;
     }
 
     // ── Reset ──

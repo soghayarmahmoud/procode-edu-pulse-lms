@@ -540,6 +540,9 @@ function renderLanding() {
         <div class="grid grid-3 gap-6">
           ${coursesData.map(course => {
         const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+        const avgRating = storage.getCourseAverageRating(course.id);
+        const reviews = storage.getReviews(course.id);
+        const isEnrolled = storage.isEnrolled(course.id);
         return `
             <div class="course-card" data-animate onclick="location.hash='/course/${course.id}'">
               ${course.thumbnail ? `<div class="course-thumb"><img src="${base}${course.thumbnail}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`}
@@ -549,6 +552,13 @@ function renderLanding() {
                   ${percent === 100 ? '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-check"></i> Completed</span>' : `<span class="text-sm text-muted">${course.estimatedHours}h estimated</span>`}
                 </div>
                 <h3 class="course-title">${course.title}</h3>
+                ${avgRating > 0 ? `
+                <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);font-size:var(--text-sm)">
+                  <div style="display:flex;gap:2px">${Array(5).fill(0).map((_, i) => `<i class="${i < Math.round(avgRating) ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f;font-size:0.75rem"></i>`).join('')}</div>
+                  <span style="font-weight:600;color:var(--text-primary)">${avgRating}</span>
+                  <span style="color:var(--text-muted)">(${reviews.length})</span>
+                </div>
+                ` : ''}
                 <p class="course-desc">${course.description}</p>
                 ${percent > 0 && percent < 100 ? `
                 <div style="margin-bottom:var(--space-3)">
@@ -560,7 +570,7 @@ function renderLanding() {
                 ` : ''}
                 <div class="course-footer">
                   <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
-                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : '<span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>'}
+                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? '<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>' : '<span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>')}
                 </div>
               </div>
             </div>
@@ -649,6 +659,9 @@ function renderCoursesPage() {
         <div class="grid grid-3 gap-6">
           ${coursesData.map(course => {
         const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+        const avgRating = storage.getCourseAverageRating(course.id);
+        const reviews = storage.getReviews(course.id);
+        const isEnrolled = storage.isEnrolled(course.id);
         return `
             <div class="course-card" onclick="location.hash='/course/${course.id}'" data-animate>
               ${course.thumbnail ? `<div class="course-thumb"><img src="${base}${course.thumbnail}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`}
@@ -658,6 +671,13 @@ function renderCoursesPage() {
                   ${percent === 100 ? '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-check"></i> Completed</span>' : `<span class="text-sm text-muted">${course.estimatedHours}h</span>`}
                 </div>
                 <h3 class="course-title">${course.title}</h3>
+                ${avgRating > 0 ? `
+                <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);font-size:var(--text-sm)">
+                  <div style="display:flex;gap:2px">${Array(5).fill(0).map((_, i) => `<i class="${i < Math.round(avgRating) ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f;font-size:0.75rem"></i>`).join('')}</div>
+                  <span style="font-weight:600;color:var(--text-primary)">${avgRating}</span>
+                  <span style="color:var(--text-muted)">(${reviews.length})</span>
+                </div>
+                ` : ''}
                 <p class="course-desc">${course.description}</p>
                 ${percent > 0 && percent < 100 ? `
                 <div style="margin-bottom:var(--space-3)">
@@ -668,7 +688,7 @@ function renderCoursesPage() {
                 </div>` : ''}
                 <div class="course-footer">
                   <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
-                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : `<span class="btn btn-sm btn-primary">${percent > 0 ? 'Continue' : 'Start'} <i class="fa-solid fa-arrow-right"></i></span>`}
+                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? `<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>` : `<span class="btn btn-sm btn-primary">Start <i class="fa-solid fa-arrow-right"></i></span>`)}
                 </div>
               </div>
             </div>`;
@@ -695,6 +715,10 @@ async function renderCourse(params) {
     const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
     const isEnrolled = storage.isEnrolled(course.id);
     const isCompleted = percent === 100;
+    
+    // Find the next lesson to continue with
+    const nextLessonToLearn = courseLessons.find(l => !storage.isLessonCompleted(course.id, l.id)) || courseLessons[0];
+    const continueUrl = `#/lesson/${course.id}/${nextLessonToLearn.id}`;
     
     // Fetch reviews
     const { firestoreService } = await import('./services/firestore-service.js');
@@ -765,7 +789,7 @@ async function renderCourse(params) {
           
           <div style="margin-top:var(--space-6); text-align:center;">
             ${isEnrolled ? 
-              `<a href="#/lesson/${course.id}/${courseLessons[0].id}" class="btn btn-primary btn-lg" style="width:100%">${isCompleted ? 'Review Material <i class="fa-solid fa-rotate-right"></i>' : 'Continue Learning <i class="fa-solid fa-play"></i>'}</a>` :
+              `<a href="${continueUrl}" class="btn btn-primary btn-lg" style="width:100%">${isCompleted ? 'Review Material <i class="fa-solid fa-rotate-right"></i>' : 'Continue Learning <i class="fa-solid fa-play"></i>'}</a>` :
               `<button id="enroll-course-btn" class="btn btn-primary btn-lg" style="width:100%">Enroll in Course <i class="fa-solid fa-user-plus"></i></button>`
             }
           </div>
@@ -792,26 +816,41 @@ async function renderCourse(params) {
           ` : `<div style="text-align:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); margin-bottom:var(--space-8); font-size:0.9rem; color:var(--text-muted);">Enroll in this course to leave a review.</div>`}
           
           <div id="reviews-list" style="display:flex; flex-direction:column; gap:var(--space-4);">
-            ${reviews.length > 0 ? reviews.map(r => `
-                <div class="card-glass" style="margin-bottom:var(--space-4); padding:var(--space-5); position:relative; overflow:hidden;">
-                    <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--brand-primary); opacity:0.8;"></div>
-                    <div class="flex items-start justify-between" style="margin-bottom:var(--space-3)">
-                       <div class="flex items-center" style="gap:var(--space-3)">
-                           <div class="avatar avatar-sm" style="background:var(--bg-secondary); color:var(--text-primary); font-weight:600;">
+            ${reviews.length > 0 ? reviews.map(r => {
+              const userReaction = storage.getUserReaction(course.id, r.id, authService.getDisplayName());
+              return `
+                <div class="review-card" data-review-id="${r.id}" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:var(--space-5); transition:all 0.2s;">
+                    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--space-4)">
+                       <div style="display:flex; align-items:center; gap:var(--space-3); flex:1;">
+                           <div class="avatar avatar-lg" style="background:var(--brand-gradient); color:#fff; font-weight:600; font-size:1.2rem; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:50%;">
                                ${(r.userName || 'U')[0].toUpperCase()}
                            </div>
-                           <div>
-                               <div style="font-weight:600; font-size:var(--text-sm)">${r.userName || 'Anonymous'}</div>
-                               <div style="font-size:0.75rem; color:var(--text-muted);">${new Date(r.createdAt).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</div>
+                           <div style="flex:1;">
+                               <div style="font-weight:700; font-size:var(--text-base); color:var(--text-primary); margin-bottom:4px">${r.userName || 'Anonymous'}</div>
+                               <div style="display:flex; align-items:center; gap:var(--space-3); font-size:0.85rem; color:var(--text-muted);">
+                                   <div style="display:flex; gap:2px;">${Array(5).fill(0).map((_, i) => `<i class="${i < r.rating ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f; font-size:0.8rem;"></i>`).join('')}</div>
+                                   <span>${new Date(r.createdAt).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</span>
+                               </div>
                            </div>
                        </div>
-                       <div class="flex" style="gap:2px; background:var(--bg-input); padding:4px 8px; border-radius:12px;">
-                          ${Array(5).fill(0).map((_, i) => `<i class="${i < r.rating ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f; font-size:0.75rem; text-shadow: ${i < r.rating ? '0 0 5px rgba(241,196,15,0.4)' : 'none'};"></i>`).join('')}
-                       </div>
                     </div>
-                    <p style="font-size:1rem; color:var(--text-secondary); line-height:1.6; margin:0; padding-left:var(--space-2); border-left: 2px solid var(--border-subtle);">${r.text}</p>
+                    <p style="font-size:1rem; color:var(--text-secondary); line-height:1.6; margin:0 0 var(--space-4) 0; word-wrap:break-word;">"${r.text}"</p>
+                    <div style="display:flex; gap:var(--space-2); padding-top:var(--space-3); border-top:1px solid var(--border-subtle); flex-wrap:wrap;">
+                        <button class="reaction-btn like-btn" data-course-id="${course.id}" data-review-id="${r.id}" data-reaction="like" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:${userReaction === 'like' ? 'rgba(108, 92, 231, 0.15)' : 'var(--bg-tertiary)'}; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; font-size:0.9rem; transition:all 0.2s; color:${userReaction === 'like' ? 'var(--brand-primary)' : 'var(--text-secondary)'};">
+                            <span>👍</span>
+                            <span style="font-size:0.8rem; font-weight:600">${(r.reactions?.like?.length || 0)}</span>
+                        </button>
+                        <button class="reaction-btn love-btn" data-course-id="${course.id}" data-review-id="${r.id}" data-reaction="love" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:${userReaction === 'love' ? 'rgba(255, 107, 107, 0.15)' : 'var(--bg-tertiary)'}; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; font-size:0.9rem; transition:all 0.2s; color:${userReaction === 'love' ? '#ff6b6b' : 'var(--text-secondary)'};">
+                            <span>❤️</span>
+                            <span style="font-size:0.8rem; font-weight:600">${(r.reactions?.love?.length || 0)}</span>
+                        </button>
+                        <button class="reaction-btn helpful-btn" data-course-id="${course.id}" data-review-id="${r.id}" data-reaction="helpful" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:${userReaction === 'helpful' ? 'rgba(255, 193, 7, 0.15)' : 'var(--bg-tertiary)'}; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; font-size:0.9rem; transition:all 0.2s; color:${userReaction === 'helpful' ? '#ffc107' : 'var(--text-secondary)'};">
+                            <span>🔥</span>
+                            <span style="font-size:0.8rem; font-weight:600">${(r.reactions?.helpful?.length || 0)}</span>
+                        </button>
+                    </div>
                 </div>
-            `).join('') : '<div class="text-center" style="padding:var(--space-8); background:var(--bg-input); border-radius:var(--radius-lg); border: 1px dashed var(--border-subtle);"><i class="fa-regular fa-comments text-muted" style="font-size:2rem; margin-bottom:var(--space-3);"></i><p class="text-muted" style="margin:0;">No reviews yet. Be the first to share your thoughts!</p></div>'}
+            `}).join('') : '<div class="text-center" style="padding:var(--space-8); background:var(--bg-input); border-radius:var(--radius-lg); border: 1px dashed var(--border-subtle);"><i class="fa-regular fa-comments text-muted" style="font-size:2rem; margin-bottom:var(--space-3);"></i><p class="text-muted" style="margin:0;">No reviews yet. Be the first to share your thoughts!</p></div>'}
           </div>
         </div>
 
@@ -854,6 +893,38 @@ async function renderCourse(params) {
 
             showToast('Review submitted successfully!', 'success');
             renderCourse(params); // re-render to show new review
+        });
+
+        // Attach Reaction Handlers
+        const reactionBtns = app.querySelectorAll('.reaction-btn');
+        reactionBtns.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const courseId = btn.dataset.courseId;
+                const reviewId = btn.dataset.reviewId;
+                const reactionType = btn.dataset.reaction;
+                const userName = authService.getDisplayName();
+                const currentReaction = storage.getUserReaction(courseId, reviewId, userName);
+
+                // Toggle reaction
+                if (currentReaction === reactionType) {
+                    storage.removeReaction(courseId, reviewId, reactionType, userName);
+                } else {
+                    storage.addReaction(courseId, reviewId, reactionType, userName);
+                }
+
+                // Sync to Firestore
+                const reviews = storage.getReviews(courseId);
+                const review = reviews.find(r => r.id === reviewId);
+                if (review) {
+                    await firestoreService.saveReview(courseId, review);
+                }
+
+                // Re-render course to show updated reactions
+                renderCourse(params);
+            });
         });
     }
 
@@ -1135,6 +1206,8 @@ function renderProfile() {
     const profile = storage.getProfile();
     const totalCompleted = storage.getTotalCompletedLessons();
     const totalChallenges = storage.getTotalChallengesPassed();
+    const totalLearningHours = storage.getTotalLearningHours();
+    const totalReviews = storage.getTotalReviewsCount(profile.name);
     const theme = storage.getTheme();
     const email = authService.getEmail();
 
@@ -1184,7 +1257,7 @@ function renderProfile() {
           </div>
 
           <!-- Highlight Metric Cards -->
-          <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap:var(--space-4); align-items:start;">
+          <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap:var(--space-4); align-items:start;">
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
                    <span>Lessons Completed</span>
@@ -1205,6 +1278,15 @@ function renderProfile() {
 
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
+                   <span>Learning Hours</span>
+                   <i class="fa-solid fa-hourglass-end text-gradient"></i>
+                </div>
+                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalLearningHours}</div>
+                <div class="text-sm text-muted">Keep learning!</div>
+            </div>
+
+            <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
                    <span>Total Gems</span>
                    <i class="fa-solid fa-gem" style="color:#00cec9; text-shadow:0 0 5px rgba(0,206,201,0.5);"></i>
                 </div>
@@ -1213,7 +1295,7 @@ function renderProfile() {
             </div>
 
             <!-- Chart Section span full width -->
-            <div class="card" style="grid-column: span 3; padding:var(--space-6);">
+            <div class="card" style="grid-column: span 4; padding:var(--space-6);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
                     <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-line"></i> Activity Overview</h3>
                 </div>
@@ -1224,10 +1306,39 @@ function renderProfile() {
           </div>
         </div>
 
+        <div class="grid" style="grid-template-columns:1fr;gap:var(--space-6)">
+          <!-- User Reviews section -->
+          <div class="card">
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-star"></i> My Reviews</h3>
+            ${(() => {
+                const userReviews = storage.getUserReviews(profile.name);
+                if (userReviews.length === 0) {
+                    return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">You haven\'t written any reviews yet. <a href="#/courses">Enroll in a course</a> to share your feedback!</p>';
+                }
+                return userReviews.map(review => {
+                    const course = coursesData.find(c => c.id === review.courseId);
+                    const courseName = course ? course.title : 'Unknown Course';
+                    return `
+                      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); transition:all 0.2s;">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-3);">
+                          <div>
+                            <div style="font-weight:600; color:var(--text-primary); margin-bottom:4px; font-size:1rem;"><a href="#/course/${review.courseId}" style="color:var(--brand-primary-light); text-decoration:none;">${courseName}</a></div>
+                            <div style="font-size:0.85rem; color:var(--text-muted);">${new Date(review.createdAt).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</div>
+                          </div>
+                          <div style="display:flex; gap:2px;">${Array(5).fill(0).map((_, i) => `<i class="${i < review.rating ? 'fa-solid' : 'fa-regular'} fa-star\" style=\"color:#f1c40f; font-size:0.85rem;\"></i>`).join('')}</div>
+                        </div>
+                        <p style="font-size:0.95rem; color:var(--text-secondary); line-height:1.5; margin:0;">"${review.text}"</p>
+                      </div>
+                    `;
+                }).join('');
+            })()}
+          </div>
+        </div>
+
         <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-6)">
           <!-- Course Progress section -->
           <div class="card">
-            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Course Progress</h3>
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Current Courses</h3>
             ${(() => {
                 const enrolledCourses = coursesData.filter(course => storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, course.totalLessons) > 0);
                 if (enrolledCourses.length === 0) {
