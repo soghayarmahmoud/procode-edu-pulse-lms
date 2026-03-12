@@ -56,6 +56,9 @@ class StorageService {
         if (!this._get('reviews')) {
             this._set('reviews', {});
         }
+        if (!this._get('enrollments')) {
+            this._set('enrollments', {});
+        }
     }
 
     // ── Profile ──
@@ -91,6 +94,27 @@ class StorageService {
     setTheme(theme) {
         this.updateProfile({ theme });
         document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // ── Enrollments ──
+
+    enrollCourse(courseId) {
+        const enrollments = this._get('enrollments') || {};
+        if (!enrollments[courseId]) {
+            enrollments[courseId] = {
+                enrolledAt: new Date().toISOString()
+            };
+            this._set('enrollments', enrollments);
+        }
+    }
+
+    isEnrolled(courseId) {
+        const enrollments = this._get('enrollments') || {};
+        return !!enrollments[courseId];
+    }
+
+    getEnrollments() {
+        return this._get('enrollments') || {};
     }
 
     // ── Progress ──

@@ -131,10 +131,12 @@ function renderLoginPage() {
                 if (cloudData) {
                     if (cloudData.progress) storage._set('progress', cloudData.progress);
                     if (cloudData.profile) storage._set('profile', cloudData.profile);
+                    if (cloudData.enrollments) storage._set('enrollments', cloudData.enrollments);
                 }
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             await startMainApp();
+            window.location.hash = '/';
         } catch (err) {
             alert.className = 'auth-alert error visible';
             alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
@@ -156,11 +158,13 @@ function renderLoginPage() {
                     profile: storage.getProfile(),
                     progress: storage.getProgress(),
                     submissions: storage.getSubmissions(),
+                    enrollments: storage.getEnrollments(),
                     notes: storage._get('notes') || {}
                 });
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             await startMainApp();
+            window.location.hash = '/';
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.className = 'auth-alert error visible';
@@ -243,6 +247,7 @@ function renderSignupPage() {
                     name, email,
                     profile: storage.getProfile(),
                     progress: {},
+                    enrollments: {},
                     submissions: {},
                     notes: {}
                 });
@@ -250,6 +255,7 @@ function renderSignupPage() {
             localStorage.setItem('procode_onboarding_done', 'true');
             localStorage.setItem('procode_user_name', name);
             await startMainApp();
+            window.location.hash = '/';
         } catch (err) {
             alert.className = 'auth-alert error visible';
             alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
@@ -270,12 +276,14 @@ function renderSignupPage() {
                 await firestoreService.syncLocalToCloud(uid, {
                     profile: storage.getProfile(),
                     progress: storage.getProgress(),
+                    enrollments: storage.getEnrollments(),
                     submissions: storage.getSubmissions(),
                     notes: storage._get('notes') || {}
                 });
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             await startMainApp();
+            window.location.hash = '/';
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.className = 'auth-alert error visible';
@@ -685,7 +693,7 @@ async function renderCourse(params) {
 
     const courseLessons = lessonsData.filter(l => l.courseId === course.id).sort((a, b) => a.order - b.order);
     const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
-    const isEnrolled = percent > 0;
+    const isEnrolled = storage.isEnrolled(course.id);
     const isCompleted = percent === 100;
     
     // Fetch reviews
@@ -758,7 +766,7 @@ async function renderCourse(params) {
           <div style="margin-top:var(--space-6); text-align:center;">
             ${isEnrolled ? 
               `<a href="#/lesson/${course.id}/${courseLessons[0].id}" class="btn btn-primary btn-lg" style="width:100%">${isCompleted ? 'Review Material <i class="fa-solid fa-rotate-right"></i>' : 'Continue Learning <i class="fa-solid fa-play"></i>'}</a>` :
-              `<a href="#/lesson/${course.id}/${courseLessons[0].id}" class="btn btn-primary btn-lg" style="width:100%">Start Course <i class="fa-solid fa-arrow-right"></i></a>`
+              `<button id="enroll-course-btn" class="btn btn-primary btn-lg" style="width:100%">Enroll in Course <i class="fa-solid fa-user-plus"></i></button>`
             }
           </div>
         </div>
@@ -838,6 +846,31 @@ async function renderCourse(params) {
 
             showToast('Review submitted successfully!', 'success');
             renderCourse(params); // re-render to show new review
+        });
+    }
+
+    // Attach Enrollment Handler
+    const enrollBtn = document.getElementById('enroll-course-btn');
+    if (enrollBtn) {
+        enrollBtn.addEventListener('click', async () => {
+             const user = authService.getCurrentUser();
+             if (!user) {
+                 window.location.hash = '/login';
+                 showToast('Please sign in to enroll in this course.', 'info');
+                 return;
+             }
+             
+             enrollBtn.disabled = true;
+             enrollBtn.innerHTML = '<div class="spinner-sm"></div> Enrolling...';
+             
+             storage.enrollCourse(course.id);
+             
+             await firestoreService.syncLocalToCloud(user.uid, {
+                 enrollments: storage.getEnrollments()
+             });
+             
+             showToast('Successfully enrolled in the course!', 'success');
+             renderCourse(params);
         });
     }
 }
@@ -1185,19 +1218,26 @@ function renderProfile() {
           <!-- Course Progress section -->
           <div class="card">
             <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Course Progress</h3>
-            ${coursesData.map(course => {
-        const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
-        return `
-              <div style="margin-bottom:var(--space-5)">
-                <div class="flex justify-between text-sm mb-2">
-                  <span style="font-weight:600;"><i class="${course.icon}" style="margin-right:8px; color:var(--brand-primary-light);"></i> ${course.title}</span>
-                  <span class="text-muted">${percent}%</span>
-                </div>
-                <div class="progress-track" style="height:6px; background:var(--bg-input);">
-                  <div class="progress-fill" style="width:${percent}%; box-shadow: 0 0 10px var(--brand-primary-light);"></div>
-                </div>
-              </div>`;
-    }).join('')}
+            ${(() => {
+                const enrolledCourses = coursesData.filter(course => storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, course.totalLessons) > 0);
+                if (enrolledCourses.length === 0) {
+                    return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">You haven\'t enrolled in any courses yet. <a href="#/courses">Browse courses</a> to get started!</p>';
+                }
+                return enrolledCourses.map(course => {
+                    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+                    const isCompleted = percent === 100;
+                    return `
+                      <div style="margin-bottom:var(--space-5)">
+                        <div class="flex justify-between text-sm mb-2">
+                          <span style="font-weight:600;"><i class="${course.icon}" style="margin-right:8px; color:var(--brand-primary-light);"></i> ${course.title} ${isCompleted ? '<span class="badge badge-success" style="font-size:0.7rem; margin-left:8px;"><i class="fa-solid fa-check"></i> Completed</span>' : ''}</span>
+                          <span class="text-muted">${percent}%</span>
+                        </div>
+                        <div class="progress-track" style="height:6px; background:var(--bg-input);">
+                          <div class="progress-fill" style="width:${percent}%; box-shadow: 0 0 10px var(--brand-primary-light);"></div>
+                        </div>
+                      </div>`;
+                }).join('');
+            })()}
           </div>
 
           <!-- Settings -->
@@ -1833,6 +1873,12 @@ async function initApp() {
             .on('/login', () => renderLoginPage())
             .on('/signup', () => renderSignupPage())
             .on('*', () => renderLoginPage());
+        return;
+    }
+
+    // If user is already logged in but trying to access auth pages, redirect to home
+    if (user && (hash === '/login' || hash === '/signup')) {
+        window.location.hash = '/';
         return;
     }
 
