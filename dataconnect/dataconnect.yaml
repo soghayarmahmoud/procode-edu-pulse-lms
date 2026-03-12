@@ -1,0 +1,13 @@
+specVersion: "v1"
+serviceId: "procode"
+location: "me-west1"
+schemas:
+  - source: "./schema"
+    datasource:
+      postgresql:
+        database: "fdcdb"
+        cloudSql:
+          instanceId: "procode-fdc"
+          # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
+          # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
+connectorDirs: ["./example"]
