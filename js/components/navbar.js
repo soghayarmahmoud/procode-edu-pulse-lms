@@ -44,7 +44,10 @@ export function renderNavbar() {
           <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
         </button>
         ${user ? `
-          <div class="user-menu" style="display:flex; align-items:center; gap:var(--space-2);">
+          <div class="user-menu" style="display:flex; align-items:center; gap:var(--space-4);">
+            <div class="nav-gems" style="background:var(--bg-tertiary); padding:4px 10px; border-radius:20px; font-weight:bold; font-size:var(--text-sm); display:flex; align-items:center; gap:6px; color:var(--text-primary); border: 1px solid var(--border-subtle)">
+              <i class="fa-solid fa-gem" style="color: #00cec9; text-shadow: 0 0 5px rgba(0,206,201,0.5);"></i> <span class="nav-gems-display">${storage.getGems()}</span>
+            </div>
             <a href="#/profile" style="display:flex; align-items:center; gap:var(--space-2); text-decoration:none;">
               <div class="user-avatar-sm">${initial}</div>
               <span class="user-name-display" style="color:var(--text-primary); font-weight:500;">${displayName}</span>

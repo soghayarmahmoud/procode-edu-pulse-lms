@@ -40,7 +40,8 @@ class StorageService {
                 bio: 'Passionate learner on ProCode.',
                 role: 'Frontend Developer',
                 joinDate: new Date().toISOString(),
-                theme: 'dark'
+                theme: 'dark',
+                gems: 0
             });
         }
         if (!this._get('progress')) {
@@ -64,6 +65,18 @@ class StorageService {
         const profile = this.getProfile();
         this._set('profile', { ...profile, ...updates });
         return this.getProfile();
+    }
+
+    // ── Gems ──
+
+    getGems() {
+        return this.getProfile().gems || 0;
+    }
+
+    addGems(amount) {
+        const current = this.getGems();
+        this.updateProfile({ gems: current + amount });
+        return this.getGems();
     }
 
     // ── Theme ──

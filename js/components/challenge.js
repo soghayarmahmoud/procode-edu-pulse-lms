@@ -141,12 +141,41 @@ export class ChallengeComponent {
       </div>
     `;
 
-        // Save submission
+        const existingSub = storage.getSubmission(this.challenge.title);
+        const alreadyPassed = existingSub?.passed;
+
+        // Save submission locally
         storage.saveSubmission(this.challenge.title, code, result.pass);
 
         if (result.pass) {
+            if (!alreadyPassed) {
+                storage.addGems(50);
+                showToast('Challenge completed! +50 Gems 💎', 'success');
+                
+                // Sync to Cloud
+                import('../services/auth-service.js').then(({ authService }) => {
+                    import('../services/firestore-service.js').then(({ firestoreService }) => {
+                        const uid = authService.getUid();
+                        if (uid) {
+                            firestoreService.saveUserProfile(uid, { gems: storage.getGems() });
+                            firestoreService.saveSubmissions(uid, storage.getSubmissions());
+                        }
+                    });
+                });
+                
+                // Re-render navbar to update gems display
+                import('./navbar.js').then(m => m.renderNavbar());
+            } else {
+                showToast('Challenge already completed! Great job reviewing.', 'success');
+            }
+            
             storage.completeLesson(this.courseId, this.lessonId);
-            showToast('Challenge completed! Lesson marked as complete.', 'success');
+            import('../services/auth-service.js').then(({ authService }) => {
+                import('../services/firestore-service.js').then(({ firestoreService }) => {
+                    const uid = authService.getUid();
+                    if (uid) firestoreService.saveProgress(uid, storage.getProgress());
+                });
+            });
         }
     }
 

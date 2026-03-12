@@ -895,11 +895,22 @@ async function renderLesson(params) {
 
     // ── Mark Complete ──
     $('#mark-complete-btn')?.addEventListener('click', () => {
-        storage.completeLesson(courseId, lessonId);
-        showToast('Lesson marked as complete!', 'success');
-        // Sync to cloud
-        const uid = authService.getUid();
-        if (uid) firestoreService.saveProgress(uid, storage.getProgress());
+        if (!storage.isLessonCompleted(courseId, lessonId)) {
+            storage.addGems(10);
+            storage.completeLesson(courseId, lessonId);
+            showToast('Lesson marked as complete! +10 Gems 💎', 'success');
+            
+            // Sync to cloud
+            const uid = authService.getUid();
+            if (uid) {
+                firestoreService.saveProgress(uid, storage.getProgress());
+                firestoreService.saveUserProfile(uid, { gems: storage.getGems() });
+            }
+            
+            // Re-render navbar to update gems display
+            import('./components/navbar.js').then(m => m.renderNavbar());
+        }
+        
         new SidebarComponent('#course-sidebar', course, courseLessons, lessonId);
         $('#mark-complete-btn').style.display = 'none';
     });
@@ -997,11 +1008,11 @@ function renderProfile() {
 
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
-                   <span>Learning Streak</span>
-                   <i class="fa-solid fa-fire" style="color:#fdcb6e;"></i>
+                   <span>Total Gems</span>
+                   <i class="fa-solid fa-gem" style="color:#00cec9; text-shadow:0 0 5px rgba(0,206,201,0.5);"></i>
                 </div>
-                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">3 <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">Days</span></div>
-                <div class="text-sm text-muted">Keep it up!</div>
+                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${storage.getGems()}</div>
+                <div class="text-sm text-muted">Keep earning!</div>
             </div>
 
             <!-- Chart Section span full width -->
