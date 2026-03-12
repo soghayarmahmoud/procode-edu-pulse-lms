@@ -793,17 +793,25 @@ async function renderCourse(params) {
           
           <div id="reviews-list" style="display:flex; flex-direction:column; gap:var(--space-4);">
             ${reviews.length > 0 ? reviews.map(r => `
-                <div style="border-bottom:1px solid var(--border-subtle); padding-bottom:var(--space-4);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-2);">
-                       <div style="font-weight:600;">${r.userName || 'Anonymous'}</div>
-                       <div>
-                          ${Array(5).fill(0).map((_, i) => `<i class="${i < r.rating ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f; font-size:0.8rem;"></i>`).join('')}
+                <div class="card-glass" style="margin-bottom:var(--space-4); padding:var(--space-5); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--brand-primary); opacity:0.8;"></div>
+                    <div class="flex items-start justify-between" style="margin-bottom:var(--space-3)">
+                       <div class="flex items-center" style="gap:var(--space-3)">
+                           <div class="avatar avatar-sm" style="background:var(--bg-secondary); color:var(--text-primary); font-weight:600;">
+                               ${(r.userName || 'U')[0].toUpperCase()}
+                           </div>
+                           <div>
+                               <div style="font-weight:600; font-size:var(--text-sm)">${r.userName || 'Anonymous'}</div>
+                               <div style="font-size:0.75rem; color:var(--text-muted);">${new Date(r.createdAt).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</div>
+                           </div>
+                       </div>
+                       <div class="flex" style="gap:2px; background:var(--bg-input); padding:4px 8px; border-radius:12px;">
+                          ${Array(5).fill(0).map((_, i) => `<i class="${i < r.rating ? 'fa-solid' : 'fa-regular'} fa-star" style="color:#f1c40f; font-size:0.75rem; text-shadow: ${i < r.rating ? '0 0 5px rgba(241,196,15,0.4)' : 'none'};"></i>`).join('')}
                        </div>
                     </div>
-                    <p style="font-size:0.95rem; color:var(--text-secondary); line-height:1.5;">${r.text}</p>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:var(--space-2);">${new Date(r.createdAt).toLocaleDateString()}</div>
+                    <p style="font-size:1rem; color:var(--text-secondary); line-height:1.6; margin:0; padding-left:var(--space-2); border-left: 2px solid var(--border-subtle);">${r.text}</p>
                 </div>
-            `).join('') : '<div class="text-center text-muted" style="padding:var(--space-8);">No reviews yet. Be the first!</div>'}
+            `).join('') : '<div class="text-center" style="padding:var(--space-8); background:var(--bg-input); border-radius:var(--radius-lg); border: 1px dashed var(--border-subtle);"><i class="fa-regular fa-comments text-muted" style="font-size:2rem; margin-bottom:var(--space-3);"></i><p class="text-muted" style="margin:0;">No reviews yet. Be the first to share your thoughts!</p></div>'}
           </div>
         </div>
 
@@ -911,7 +919,7 @@ async function renderLesson(params) {
           <div class="lesson-meta">
             <span class="lesson-meta-item">${lessonTypeIcon}</span>
             <span class="lesson-meta-item"><i class="fa-regular fa-clock"></i> ${lesson.duration || 'N/A'}</span>
-            <span class="lesson-meta-item">
+            <span class="lesson-meta-item" id="lesson-status-badge">
               ${isCompleted ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>' : '<span class="badge badge-warning">In Progress</span>'}
             </span>
           </div>
@@ -1100,6 +1108,8 @@ async function renderLesson(params) {
         
         new SidebarComponent('#course-sidebar', course, courseLessons, lessonId);
         $('#mark-complete-btn').style.display = 'none';
+        const badge = $('#lesson-status-badge');
+        if (badge) badge.innerHTML = '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>';
     });
 
     // ── Sidebar Toggle (Mobile) ──

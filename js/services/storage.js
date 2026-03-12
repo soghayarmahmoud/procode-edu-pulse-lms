@@ -270,6 +270,13 @@ class StorageService {
         return reviews[courseId] || [];
     }
 
+    getCourseAverageRating(courseId) {
+        const reviews = this.getReviews(courseId);
+        if (reviews.length === 0) return 0;
+        const sum = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+        return (sum / reviews.length).toFixed(1);
+    }
+
     saveReview(courseId, rating, text, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) reviews[courseId] = [];
