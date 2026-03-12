@@ -11,6 +11,7 @@ import { PortfolioComponent } from './components/portfolio.js';
 import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
+import 'https://cdn.jsdelivr.net/npm/chart.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -932,99 +933,217 @@ function renderProfile() {
     app.innerHTML = `
     <div class="page-wrapper bg-dots-pattern">
       <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
-        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10)">
-          <span class="section-badge"><i class="fa-solid fa-user"></i> Profile</span>
-          <h1 class="section-title">Your Profile</h1>
+        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10); display:flex; justify-content:space-between; align-items:flex-end;">
+          <div>
+            <span class="section-badge"><i class="fa-solid fa-user"></i> Dashboard</span>
+            <h1 class="section-title">Developer Profile</h1>
+          </div>
+          <button class="btn btn-outline btn-sm" id="edit-profile-btn"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+        </div>
+
+        <!-- Top Overview -->
+        <div class="grid" style="grid-template-columns: 300px 1fr; gap:var(--space-6); margin-bottom:var(--space-6);">
+          
+          <!-- Identity Card -->
+          <div class="card" style="text-align:center; padding:var(--space-8) var(--space-6);">
+            <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); width: 80px; height: 80px; font-size: 2rem; box-shadow: var(--shadow-glow);">
+              ${profile.name.charAt(0).toUpperCase()}
+            </div>
+            <h3 style="font-size:var(--text-xl); margin-bottom:var(--space-1)">${profile.name}</h3>
+            ${email ? `<p class="text-sm text-muted" style="margin-bottom:var(--space-4)">${email}</p>` : ''}
+            
+            <div class="badge badge-primary" style="margin-bottom:var(--space-6)">ProCode Student</div>
+            
+            <div class="divider"></div>
+            
+            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm);">
+                <span class="text-muted">Member Since</span>
+                <span style="font-weight:600">${new Date(profile.joinDate).toLocaleDateString([], {month: 'short', year: 'numeric'})}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; text-align:left; font-size:var(--text-sm); margin-top:var(--space-2);">
+                <span class="text-muted">Global Rank</span>
+                <span style="font-weight:600; color:var(--brand-primary-light);">Top 15%</span>
+            </div>
+          </div>
+
+          <!-- Highlight Metric Cards -->
+          <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap:var(--space-4); align-items:start;">
+            <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
+                   <span>Lessons Completed</span>
+                   <i class="fa-solid fa-graduation-cap text-gradient"></i>
+                </div>
+                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalCompleted}</div>
+                <div class="text-sm" style="color:var(--color-success);"><i class="fa-solid fa-arrow-trend-up"></i> +4 this week</div>
+            </div>
+            
+            <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
+                   <span>Challenges Solved</span>
+                   <i class="fa-solid fa-code text-gradient"></i>
+                </div>
+                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalChallenges}</div>
+                <div class="text-sm" style="color:var(--color-success);"><i class="fa-solid fa-arrow-trend-up"></i> +2 this week</div>
+            </div>
+
+            <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
+                   <span>Learning Streak</span>
+                   <i class="fa-solid fa-fire" style="color:#fdcb6e;"></i>
+                </div>
+                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">3 <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">Days</span></div>
+                <div class="text-sm text-muted">Keep it up!</div>
+            </div>
+
+            <!-- Chart Section span full width -->
+            <div class="card" style="grid-column: span 3; padding:var(--space-6);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-line"></i> Activity Overview</h3>
+                </div>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+          </div>
         </div>
 
         <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-6)">
-          <!-- Profile Card -->
+          <!-- Course Progress section -->
           <div class="card">
-            <div class="flex items-center gap-4 mb-6">
-              <div class="avatar avatar-lg">${profile.name.charAt(0).toUpperCase()}</div>
-              <div>
-                <h3 style="font-size:var(--text-xl)">${profile.name}</h3>
-                ${email ? `<p class="text-sm text-muted">${email}</p>` : ''}
-                <p class="text-sm text-muted">Joined ${new Date(profile.joinDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-            
-            <div class="input-group mb-4">
-              <label>Display Name</label>
-              <input type="text" class="input" id="profile-name" value="${profile.name}" placeholder="Your name">
-            </div>
-            
-            <button class="btn btn-primary btn-sm" id="save-profile"><i class="fa-solid fa-save"></i> Save Changes</button>
-          </div>
-
-          <!-- Stats Card -->
-          <div class="card">
-            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-chart-bar"></i> Your Stats</h3>
-            <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4)">
-              <div class="card" style="text-align:center;padding:var(--space-4)">
-                <div style="font-size:var(--text-3xl);font-weight:800" class="text-gradient">${totalCompleted}</div>
-                <div class="text-sm text-muted">Lessons Completed</div>
-              </div>
-              <div class="card" style="text-align:center;padding:var(--space-4)">
-                <div style="font-size:var(--text-3xl);font-weight:800" class="text-gradient">${totalChallenges}</div>
-                <div class="text-sm text-muted">Challenges Passed</div>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <h4 style="margin-bottom:var(--space-4)">Course Progress</h4>
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Course Progress</h3>
             ${coursesData.map(course => {
         const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
         return `
-              <div style="margin-bottom:var(--space-4)">
+              <div style="margin-bottom:var(--space-5)">
                 <div class="flex justify-between text-sm mb-2">
-                  <span><i class="${course.icon}"></i> ${course.title}</span>
+                  <span style="font-weight:600;"><i class="${course.icon}" style="margin-right:8px; color:var(--brand-primary-light);"></i> ${course.title}</span>
                   <span class="text-muted">${percent}%</span>
                 </div>
-                <div class="progress-track" style="height:6px">
-                  <div class="progress-fill" style="width:${percent}%"></div>
+                <div class="progress-track" style="height:6px; background:var(--bg-input);">
+                  <div class="progress-fill" style="width:${percent}%; box-shadow: 0 0 10px var(--brand-primary-light);"></div>
                 </div>
               </div>`;
     }).join('')}
           </div>
-        </div>
 
-        <!-- Settings -->
-        <div class="card" style="margin-top:var(--space-6)">
-          <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Settings</h3>
-          <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-8)">
-            <div>
-              <h4 style="margin-bottom:var(--space-4)">Appearance</h4>
-              <div class="flex items-center justify-between mb-4" style="padding:var(--space-3);background:var(--bg-tertiary);border-radius:var(--radius-md)">
-                <span>Theme</span>
-                <div class="tabs" style="background:var(--bg-secondary)">
-                  <span class="tab ${theme === 'dark' ? 'active' : ''}" data-theme-option="dark"><i class="fa-solid fa-moon"></i> Dark</span>
-                  <span class="tab ${theme === 'light' ? 'active' : ''}" data-theme-option="light"><i class="fa-solid fa-sun"></i> Light</span>
+          <!-- Settings -->
+          <div class="card">
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Preferences</h3>
+            <div style="display:flex; flex-direction:column; gap:var(--space-6);">
+              <div>
+                <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Appearance</h4>
+                <div class="flex items-center justify-between" style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <span style="font-weight:500;">Interface Theme</span>
+                  <div class="tabs" style="background:var(--bg-secondary)">
+                    <span class="tab ${theme === 'dark' ? 'active' : ''}" data-theme-option="dark"><i class="fa-solid fa-moon"></i> Dark</span>
+                    <span class="tab ${theme === 'light' ? 'active' : ''}" data-theme-option="light"><i class="fa-solid fa-sun"></i> Light</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">AI Integration</h4>
+                <div style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <div class="input-group mb-4">
+                    <label>Gemini API Key</label>
+                    <input type="password" class="input" id="ai-api-key" placeholder="Enter your API key">
+                  </div>
+                  <button class="btn btn-secondary btn-sm" id="save-api-key" style="width:100%"><i class="fa-solid fa-robot"></i> Save AI Configuration</button>
                 </div>
               </div>
             </div>
-            <div>
-              <h4 style="margin-bottom:var(--space-4)">AI Hints</h4>
-              <div class="input-group mb-4">
-                <label>Gemini API Key (optional)</label>
-                <input type="password" class="input" id="ai-api-key" placeholder="Enter your API key for AI hints">
+            
+            <div class="divider" style="margin:var(--space-8) 0 var(--space-6);"></div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                  <h4 style="color:var(--color-error); margin-bottom:4px;">Danger Zone</h4>
+                  <p class="text-xs text-muted">Irreversibly delete all your local data.</p>
               </div>
-              <button class="btn btn-secondary btn-sm" id="save-api-key"><i class="fa-solid fa-key"></i> Save API Key</button>
+              <button class="btn btn-outline btn-sm" style="border-color:var(--color-error);color:var(--color-error)" id="reset-data-btn">
+                <i class="fa-solid fa-trash"></i> Reset Data
+              </button>
             </div>
-          </div>
-          
-          <div class="divider"></div>
-          <div>
-            <h4 style="margin-bottom:var(--space-4);color:var(--color-error)">Danger Zone</h4>
-            <button class="btn btn-outline btn-sm" style="border-color:var(--color-error);color:var(--color-error)" id="reset-data-btn">
-              <i class="fa-solid fa-triangle-exclamation"></i> Reset All Data
-            </button>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay" id="edit-profile-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Profile</h3>
+                <button class="modal-close" id="close-profile-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="input-group mb-6">
+                <label>Display Name</label>
+                <input type="text" class="input" id="profile-name" value="${profile.name}" placeholder="Your name">
+            </div>
+            <div class="flex justify-end gap-3">
+                <button class="btn btn-ghost" id="cancel-profile-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-profile">Save Changes</button>
+            </div>
+        </div>
+    </div>
   `;
+
+  // Render Charts
+  setTimeout(() => {
+        const ctx = document.getElementById('activityChart');
+        if (ctx && window.Chart) {
+            Chart.defaults.color = theme === 'dark' ? '#94a3b8' : '#64748b';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Lessons',
+                            data: [1, 2, 0, 3, 1, 4, 2],
+                            backgroundColor: 'rgba(108, 92, 231, 0.8)',
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Challenges',
+                            data: [0, 1, 0, 2, 0, 3, 1],
+                            backgroundColor: 'rgba(0, 206, 201, 0.8)',
+                            borderRadius: 4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: { boxWidth: 12, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                            ticks: { precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    }, 100);
+
+    // Edit Profile Modal Logic
+    const modal = document.getElementById('edit-profile-modal');
+    $('#edit-profile-btn')?.addEventListener('click', () => modal.classList.add('active'));
+    $('#close-profile-modal')?.addEventListener('click', () => modal.classList.remove('active'));
+    $('#cancel-profile-modal')?.addEventListener('click', () => modal.classList.remove('active'));
 
     // Save Profile
     $('#save-profile')?.addEventListener('click', async () => {
@@ -1033,6 +1152,9 @@ function renderProfile() {
             storage.updateProfile({ name });
             showToast('Profile updated!', 'success');
             renderNavbar();
+            modal.classList.remove('active');
+            renderProfile(); // re-render to update the ui
+            
             // Sync to Firebase
             const uid = authService.getUid();
             if (uid) {
@@ -1047,12 +1169,18 @@ function renderProfile() {
         tab.addEventListener('click', () => {
             app.querySelectorAll('[data-theme-option]').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            storage.setTheme(tab.dataset.themeOption);
+            
+            const newTheme = tab.dataset.themeOption;
+            storage.setTheme(newTheme);
+            
             const toggle = document.getElementById('theme-toggle');
             if (toggle) {
                 const icon = toggle.querySelector('i');
-                icon.className = `fa-solid ${tab.dataset.themeOption === 'dark' ? 'fa-sun' : 'fa-moon'}`;
+                icon.className = `fa-solid ${newTheme === 'dark' ? 'fa-sun' : 'fa-moon'}`;
             }
+            
+            // Re-render chart to pick up theme colors
+            renderProfile();
         });
     });
 
@@ -1063,15 +1191,15 @@ function renderProfile() {
             import('./services/ai-service.js').then(m => {
                 m.aiService.configure({ apiKey: key });
             });
-            showToast('API key saved!', 'success');
+            showToast('API key saved successfully!', 'success');
         }
     });
 
     // Reset data
     $('#reset-data-btn')?.addEventListener('click', () => {
-        if (confirm('Are you sure? This will reset ALL your progress, notes, and submissions.')) {
+        if (confirm('Are you absolutely sure? This will permanently delete all your local progress, notes, and submissions.')) {
             storage.resetAll();
-            showToast('All data reset.', 'info');
+            showToast('All data reset locally.', 'info');
             renderProfile();
         }
     });
