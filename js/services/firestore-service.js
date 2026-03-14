@@ -103,6 +103,10 @@ class FirestoreService {
                     progress: localData.progress || {},
                     submissions: localData.submissions || {},
                     notes: localData.notes || {},
+                    enrollments: localData.enrollments || {},
+                    certifications: localData.certifications || {},
+                    active_time: localData.active_time || 0,
+                    first_access: localData.first_access || new Date().toISOString(),
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp()
                 });
@@ -161,6 +165,38 @@ class FirestoreService {
             });
         } catch (e) {
             console.warn('Firestore addReply failed:', e);
+        }
+    }
+
+    /**
+     * Save certifications to Firestore.
+     */
+    async saveCertifications(uid, certifications) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                certifications,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveCertifications failed:', e);
+        }
+    }
+
+    /**
+     * Save activity time to Firestore.
+     */
+    async saveActivityTime(uid, activeTime) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                active_time: activeTime,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveActivityTime failed:', e);
         }
     }
 

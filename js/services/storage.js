@@ -65,6 +65,12 @@ class StorageService {
         if (!this._get('daily_activity')) {
             this._set('daily_activity', {});
         }
+        if (!this._get('first_access')) {
+            this._set('first_access', new Date().toISOString());
+        }
+        if (!this._get('certifications')) {
+            this._set('certifications', {});
+        }
     }
 
     // ── Time Tracking & Activity Stats ──
@@ -591,7 +597,48 @@ class StorageService {
         return null;
     }
 
-    // ── Reset ──
+    // ── Certifications ──
+
+    downloadCertificate(courseId, courseName) {
+        const certifications = this._get('certifications') || {};
+        const certificate = {
+            id: Date.now().toString(),
+            courseId,
+            courseName,
+            studentName: this.getProfile().name,
+            completionDate: new Date().toISOString(),
+            downloadedAt: new Date().toISOString()
+        };
+        
+        if (!certifications[courseId]) {
+            certifications[courseId] = [];
+        }
+        
+        certifications[courseId].push(certificate);
+        this._set('certifications', certifications);
+        return certificate;
+    }
+
+    getCertifications() {
+        return this._get('certifications') || {};
+    }
+
+    getCertificateCount() {
+        const certs = this.getCertifications();
+        let count = 0;
+        for (const courseInfo of Object.values(certs)) {
+            count += (Array.isArray(courseInfo) ? courseInfo.length : 0);
+        }
+        return count;
+    }
+
+    // ── First Access Tracking ──
+
+    getFirstAccessDate() {
+        return this._get('first_access') || new Date().toISOString();
+    }
+
+    // Reset ──
 
     resetAll() {
         const keys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));

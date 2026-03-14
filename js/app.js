@@ -1203,7 +1203,14 @@ async function renderCourse(params) {
         certBtn.addEventListener('click', async () => {
             const studentName = authService.getDisplayName();
             try {
-                await generateCertificate(studentName, course.title);
+                await generateCertificate(studentName, course.title, course.id);
+                
+                // Sync certifications to Firestore
+                const uid = authService.getUid();
+                if (uid) {
+                    await firestoreService.saveCertifications(uid, storage.getCertifications());
+                }
+                
                 showToast('Certificate generated. Check your downloads.', 'success');
             } catch (err) {
                 console.error('Certificate generation failed', err);
@@ -1213,7 +1220,7 @@ async function renderCourse(params) {
     }
 }
 
-async function generateCertificate(studentName, courseName) {
+async function generateCertificate(studentName, courseName, courseId) {
     const { jsPDF } = await import('https://esm.sh/jspdf');
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     const width = doc.internal.pageSize.getWidth();
@@ -1272,6 +1279,9 @@ async function generateCertificate(studentName, courseName) {
 
     const fileName = `ProCode_Certificate_${courseName.replace(/\s+/g, '_')}_${now.toISOString().slice(0,10)}.pdf`;
     doc.save(fileName);
+    
+    // Track certificate download in storage
+    storage.downloadCertificate(courseId || '', courseName);
 }
 
 async function renderLesson(params) {
@@ -1711,10 +1721,80 @@ function renderProfile() {
             })()}
           </div>
 
+          <!-- Certifications -->
+          <div class="card">
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-certificate"></i> Certifications</h3>
+            ${(() => {
+                const certifications = storage.getCertifications();
+                const totalCerts = storage.getCertificateCount();
+                const completedCourses = coursesData.filter(course => storage.getCourseCompletionPercent(course.id, course.totalLessons) === 100);
+                
+                if (totalCerts === 0) {
+                    return `
+                      <div style="text-align:center; padding:var(--space-8); background:var(--bg-input); border-radius:var(--radius-md);">
+                        <div style="font-size:2.5rem; margin-bottom:var(--space-3); color:var(--brand-primary-light);">
+                          <i class="fa-solid fa-certificate"></i>
+                        </div>
+                        <p class="text-muted" style="margin-bottom:var(--space-4);">No certifications yet</p>
+                        <p class="text-sm text-secondary" style="margin:0;">Complete your first course to earn a certificate</p>
+                      </div>
+                    `;
+                }
+                
+                return `
+                  <div style="margin-bottom:var(--space-6);">
+                    <div style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); margin-bottom:var(--space-6); text-align:center;">
+                      <div style="font-size:3rem; color:var(--brand-primary-light); margin-bottom:var(--space-2);">
+                        <i class="fa-solid fa-trophy"></i>
+                      </div>
+                      <div style="font-size:2rem; font-weight:bold; color:var(--text-primary); margin-bottom:4px;">${totalCerts}</div>
+                      <div class="text-sm text-muted">Certifications Earned</div>
+                    </div>
+                  </div>
+                  ${completedCourses.map(course => {
+                    const courseCerts = certifications[course.id] || [];
+                    return courseCerts.map(cert => `
+                      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:var(--space-4);">
+                          <div style="font-size:2rem; color:var(--brand-primary-light);">
+                            <i class="fa-solid fa-certificate"></i>
+                          </div>
+                          <div>
+                            <div style="font-weight:600; color:var(--text-primary); margin-bottom:4px; font-size:1rem;">${course.title}</div>
+                            <div class="text-xs text-muted">Completed on ${new Date(cert.completionDate).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</div>
+                          </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" style="cursor:pointer;" onclick="showToast('Certificate saved. Check downloads folder!', 'success')">
+                          <i class="fa-solid fa-download"></i> View
+                        </button>
+                      </div>
+                    `).join('');
+                  }).join('')}
+                `;
+            })()}
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr;gap:var(--space-6)">
           <!-- Settings -->
           <div class="card">
-            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Preferences</h3>
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Preferences</div>
             <div style="display:flex; flex-direction:column; gap:var(--space-6);">
+              <div>
+                <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Account</h4>
+                <div style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+                    <div>
+                      <span style="font-weight:500; display:block;">Member Since</span>
+                      <span class="text-sm text-muted">${new Date(storage.getFirstAccessDate()).toLocaleDateString([], {month:'long', day:'numeric', year:'numeric'})}</span>
+                    </div>
+                    <div style="color:var(--brand-primary-light); font-size:1.5rem;">
+                      <i class="fa-solid fa-calendar"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Appearance</h4>
                 <div class="flex items-center justify-between" style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
@@ -2576,6 +2656,14 @@ async function startMainApp() {
             storage.addActiveTime(60); // Add 60 seconds every minute
         }
     }, 60000);
+
+    // Sync activity time to Firestore every 5 minutes
+    setInterval(async () => {
+        const uid = authService.getUid();
+        if (uid) {
+            await firestoreService.saveActivityTime(uid, storage.getTotalLearningHours() * 3600);
+        }
+    }, 300000);
 
     const router = new Router();
     router
