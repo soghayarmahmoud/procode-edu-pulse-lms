@@ -36,6 +36,7 @@ export function renderNavbar() {
         <a href="#/roadmaps" class="nav-link ${currentHash.startsWith('/roadmap') ? 'active' : ''}" data-route="/roadmaps">Roadmaps</a>
         <a href="#/docs" class="nav-link ${currentHash.startsWith('/docs') ? 'active' : ''}" data-route="/docs">Docs</a>
         <a href="#/portfolio" class="nav-link ${currentHash === '/portfolio' ? 'active' : ''}" data-route="/portfolio">Portfolio</a>
+        <a href="#/careers" class="nav-link ${currentHash.startsWith('/careers') ? 'active' : ''}" data-route="/careers">Volunteer</a>
         <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
         ${user && user.admin ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin">Admin</a>` : ''}
       </div>
@@ -74,6 +75,7 @@ export function renderNavbar() {
       <a href="#/roadmaps" class="nav-link" data-route="/roadmaps">Roadmaps</a>
       <a href="#/docs" class="nav-link" data-route="/docs">Docs</a>
       <a href="#/portfolio" class="nav-link" data-route="/portfolio">Portfolio</a>
+      <a href="#/careers" class="nav-link" data-route="/careers">Volunteer</a>
       <a href="#/about" class="nav-link" data-route="/about">About</a>
     </div>
   `;

@@ -59,6 +59,62 @@ class StorageService {
         if (!this._get('enrollments')) {
             this._set('enrollments', {});
         }
+        if (!this._get('active_time')) {
+            this._set('active_time', 0);
+        }
+        if (!this._get('daily_activity')) {
+            this._set('daily_activity', {});
+        }
+    }
+
+    // ── Time Tracking & Activity Stats ──
+
+    addActiveTime(seconds) {
+        const current = this._get('active_time') || 0;
+        this._set('active_time', current + seconds);
+    }
+
+    getTotalLearningHours() {
+        // Return actual recorded time in hours
+        const seconds = this._get('active_time') || 0;
+        return Math.round((seconds / 3600) * 10) / 10;
+    }
+
+    recordActivity(type) { // type can be 'lesson' or 'challenge'
+        const act = this._get('daily_activity') || {};
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (!act[today]) {
+            act[today] = { lessons: 0, challenges: 0 };
+        }
+        
+        if (type === 'lesson') {
+            act[today].lessons += 1;
+        } else if (type === 'challenge') {
+            act[today].challenges += 1;
+        }
+        
+        this._set('daily_activity', act);
+    }
+
+    getActivityLast7Days() {
+        const act = this._get('daily_activity') || {};
+        const labels = [];
+        const datasets = { lessons: [], challenges: [] };
+        
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const displayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+            
+            labels.push(displayStr);
+            const dayData = act[dateStr] || { lessons: 0, challenges: 0 };
+            datasets.lessons.push(dayData.lessons);
+            datasets.challenges.push(dayData.challenges);
+        }
+        
+        return { labels, datasets };
     }
 
     // ── Profile ──
@@ -140,6 +196,8 @@ class StorageService {
         }
         if (!progress[courseId].completedLessons.includes(lessonId)) {
             progress[courseId].completedLessons.push(lessonId);
+            this.addGems(5); // Reward for lesson
+            this.recordActivity('lesson'); // Record activity for chart
         }
         progress[courseId].lastAccessed = new Date().toISOString();
         this._set('progress', progress);
@@ -183,11 +241,19 @@ class StorageService {
         if (!progress[courseId]) {
             progress[courseId] = { completedLessons: [], quizScores: {}, lastAccessed: null };
         }
+        
+        const wasAlreadyPassed = progress[courseId].quizScores[quizId];
+
         progress[courseId].quizScores[quizId] = {
             score,
             date: new Date().toISOString()
         };
         this._set('progress', progress);
+
+        if (!wasAlreadyPassed && score >= 70) {
+            this.addGems(20);
+            this.recordActivity('challenge');
+        }
     }
 
     getQuizScore(courseId, quizId) {
@@ -239,12 +305,19 @@ class StorageService {
 
     saveSubmission(challengeId, code, passed) {
         const subs = this.getSubmissions();
+        const wasAlreadyPassed = subs[challengeId]?.passed;
+        
         subs[challengeId] = {
             code,
             passed,
             submittedAt: new Date().toISOString()
         };
         this._set('submissions', subs);
+
+        if (passed && !wasAlreadyPassed) {
+            this.addGems(10); // Reward for challenge
+            this.recordActivity('challenge'); // Record activity for chart
+        }
     }
 
     getPassedSubmissions() {
@@ -324,17 +397,6 @@ class StorageService {
 
     getTotalChallengesPassed() {
         return this.getPassedSubmissions().length;
-    }
-
-    getTotalLearningHours() {
-        const progress = this.getProgress();
-        let totalHours = 0;
-        for (const [courseId, courseProgress] of Object.entries(progress)) {
-            const completedCount = (courseProgress.completedLessons || []).length;
-            // Assume ~15 min per lesson on average = 0.25 hours
-            totalHours += completedCount * 0.25;
-        }
-        return Math.round(totalHours * 10) / 10; // Round to 1 decimal
     }
 
     getUserReviews(userName) {

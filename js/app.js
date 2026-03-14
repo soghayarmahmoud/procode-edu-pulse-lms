@@ -1383,7 +1383,7 @@ function renderProfile() {
                    <i class="fa-solid fa-hourglass-end text-gradient"></i>
                 </div>
                 <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalLearningHours}</div>
-                <div class="text-sm text-muted">Keep learning!</div>
+                <div class="text-sm text-muted">Active site time</div>
             </div>
 
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
@@ -1398,7 +1398,7 @@ function renderProfile() {
             <!-- Chart Section span full width -->
             <div class="card" style="grid-column: span 4; padding:var(--space-6);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
-                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-line"></i> Activity Overview</h3>
+                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-line"></i> Activity Overview (Last 7 Days)</h3>
                 </div>
                 <div style="position: relative; height: 260px; width: 100%;">
                     <canvas id="activityChart"></canvas>
@@ -1539,20 +1539,22 @@ function renderProfile() {
             Chart.defaults.color = theme === 'dark' ? '#94a3b8' : '#64748b';
             Chart.defaults.font.family = "'Inter', sans-serif";
             
+            const activityData = storage.getActivityLast7Days();
+
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    labels: activityData.labels,
                     datasets: [
                         {
                             label: 'Lessons',
-                            data: [1, 2, 0, 3, 1, 4, 2],
+                            data: activityData.datasets.lessons,
                             backgroundColor: 'rgba(108, 92, 231, 0.8)',
                             borderRadius: 4,
                         },
                         {
                             label: 'Challenges',
-                            data: [0, 1, 0, 2, 0, 3, 1],
+                            data: activityData.datasets.challenges,
                             backgroundColor: 'rgba(0, 206, 201, 0.8)',
                             borderRadius: 4,
                         }
@@ -2041,7 +2043,7 @@ function renderCareersPage() {
                     </p>
                 </div>
                 <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--border-subtle);background:var(--bg-input);">
-                    <a href="mailto:volunteer@procode.edu?subject=Application for ${job.title}" class="btn btn-primary" style="width:100%;">Apply Now <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></a>
+                    <button class="btn btn-primary btn-apply-volunteer" data-job="${job.title}" style="width:100%;">Apply Now <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></button>
                 </div>
             </div>
           `).join('')}
@@ -2055,7 +2057,61 @@ function renderCareersPage() {
             </div>
         </div>
       </div>
+      
+      <!-- Application Modal -->
+      <div class="modal-overlay" id="volunteer-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Volunteer Application</h3>
+                <button class="modal-close" id="close-volunteer-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-muted" style="margin-bottom:var(--space-4);">Applying for: <strong style="color:var(--brand-primary-light);" id="volunteer-job-title"></strong></p>
+            <form id="volunteer-form">
+                <div class="input-group mb-4">
+                    <label>Full Name</label>
+                    <input type="text" class="input" id="vol-name" required placeholder="John Doe">
+                </div>
+                <div class="input-group mb-4">
+                    <label>Email Address</label>
+                    <input type="email" class="input" id="vol-email" required placeholder="john@example.com">
+                </div>
+                <div class="input-group mb-4">
+                    <label>GitHub / LinkedIn URL</label>
+                    <input type="url" class="input" id="vol-link" placeholder="https://github.com/..." required>
+                </div>
+                <div class="input-group mb-6">
+                    <label>Why do you want to volunteer?</label>
+                    <textarea class="input textarea" id="vol-reason" required placeholder="Tell us about your experience..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" class="btn btn-ghost" id="cancel-volunteer-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                </div>
+            </form>
+        </div>
+      </div>
     `;
+
+    // Volunteer Logic
+    const vModal = document.getElementById('volunteer-modal');
+    const vTitle = document.getElementById('volunteer-job-title');
+    
+    $$('.btn-apply-volunteer').forEach(btn => {
+        btn.onclick = () => {
+            vTitle.innerText = btn.dataset.job;
+            vModal.classList.add('active');
+        };
+    });
+
+    $('#close-volunteer-modal').onclick = () => vModal.classList.remove('active');
+    $('#cancel-volunteer-modal').onclick = () => vModal.classList.remove('active');
+
+    $('#volunteer-form').onsubmit = (e) => {
+        e.preventDefault();
+        $('#volunteer-form').reset();
+        vModal.classList.remove('active');
+        showToast('Application submitted! We will email you shortly.', 'success');
+    };
 }
 
 // ══════════════════════════════════════════════
@@ -2205,6 +2261,13 @@ async function startMainApp() {
     renderNavbar();
     await loadData();
     setupGlobalSearch();
+
+    // Time tracking interval (only count when page is visible)
+    setInterval(() => {
+        if (!document.hidden) {
+            storage.addActiveTime(60); // Add 60 seconds every minute
+        }
+    }, 60000);
 
     const router = new Router();
     router
