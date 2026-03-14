@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from './utils/router.js';
-import { $, animateOnScroll, showToast } from './utils/dom.js';
+import { $, $$, animateOnScroll, showToast } from './utils/dom.js';
 import { storage } from './services/storage.js';
 import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';

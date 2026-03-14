@@ -114,6 +114,143 @@
                     "errorMessage": "Add a <footer> element at the bottom of your page."
                 }
             ]
+        },
+        "html-table-structure-challenge": {
+            "title": "Create a Structured HTML Table",
+            "difficulty": "Easy",
+            "instructions": "Build an HTML table with a header row and 3 data rows. Include columns: Name, Age, City.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Table Challenge</title>\n</head>\n<body>\n  <!-- Add your table here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "table",
+                    "errorMessage": "Add a <table> element."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "table thead",
+                    "errorMessage": "Add a <thead> with a header row."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "table tbody tr",
+                    "count": 3,
+                    "errorMessage": "Your table should include exactly 3 data rows inside <tbody>."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "table th:nth-child(1)",
+                    "attribute": "textContent",
+                    "value": "Name",
+                    "errorMessage": "First header cell should be 'Name'."
+                }
+            ]
+        },
+        "html-responsive-nav-challenge": {
+            "title": "Build a Responsive Navigation Bar",
+            "difficulty": "Medium",
+            "instructions": "Create a responsive nav bar with at least 4 links. Use a <nav> element and CSS classes, and make sure link color changes on hover.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Responsive Nav</title>\n  <style>\n    /* Add your CSS here */\n  </style>\n</head>\n<body>\n  <!-- Add your navigation bar here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "nav",
+                    "errorMessage": "Add a <nav> element for the navigation bar."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "nav a",
+                    "count": 4,
+                    "errorMessage": "Add at least 4 <a> links inside <nav>."
+                },
+                {
+                    "type": "css-property",
+                    "selector": "nav",
+                    "property": "display",
+                    "value": "flex",
+                    "errorMessage": "Set nav display to flex for responsiveness."
+                },
+                {
+                    "type": "css-property",
+                    "selector": "nav a:hover",
+                    "property": "color",
+                    "value": "rgb(0, 0, 255)",
+                    "errorMessage": "Add hover color styling to links (e.g., blue)."
+                }
+            ]
+        },
+        "html-css-card-challenge": {
+            "title": "Build a CSS Card Component",
+            "difficulty": "Medium",
+            "instructions": "Create a stylized card with a title, image placeholder, and description. Apply background, border-radius, and box-shadow.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>CSS Card</title>\n  <style>\n    /* Card styles */\n  </style>\n</head>\n<body>\n  <!-- Card markup -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": ".card",
+                    "errorMessage": "Create an element with class 'card'."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": ".card h2",
+                    "errorMessage": "Add a <h2> title inside the card."
+                },
+                {
+                    "type": "css-property",
+                    "selector": ".card",
+                    "property": "border-radius",
+                    "value": "10px",
+                    "errorMessage": "Set card border-radius (e.g. 10px)."
+                },
+                {
+                    "type": "css-property",
+                    "selector": ".card",
+                    "property": "box-shadow",
+                    "value": "",
+                    "errorMessage": "Add a box-shadow on card (non-empty value)."
+                }
+            ]
+        },
+        "html-form-validation-challenge": {
+            "title": "Create a Form with Validation",
+            "difficulty": "Hard",
+            "instructions": "Build a contact form with name, email, and message fields. Use required attributes and proper input types.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Form Validation</title>\n</head>\n<body>\n  <!-- Add your form here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "form",
+                    "errorMessage": "Add a <form> element."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "input[type='text'][name='name']",
+                    "errorMessage": "Add a 'name' text input."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "input[type='email']",
+                    "attribute": "required",
+                    "value": "",
+                    "errorMessage": "Add a required email input."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "textarea[name='message']",
+                    "errorMessage": "Add a message textarea."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "textarea[name='message']",
+                    "attribute": "required",
+                    "value": "",
+                    "errorMessage": "Make message textarea required."
+                }
+            ]
         }
     }
 }
