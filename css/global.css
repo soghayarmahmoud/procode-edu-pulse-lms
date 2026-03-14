@@ -65,10 +65,12 @@ h6 {
 
 h1 {
     font-size: var(--text-5xl);
+    letter-spacing: -0.02em;
 }
 
 h2 {
     font-size: var(--text-4xl);
+    letter-spacing: -0.01em;
 }
 
 h3 {
@@ -272,6 +274,30 @@ select {
     color: var(--text-muted);
 }
 
+.text-success {
+    color: var(--color-success);
+}
+
+.text-warning {
+    color: var(--color-warning);
+}
+
+.text-error {
+    color: var(--color-error);
+}
+
+.text-info {
+    color: var(--color-info);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-primary {
+    color: var(--text-primary);
+}
+
 .text-sm {
     font-size: var(--text-sm);
 }
@@ -361,19 +387,19 @@ select {
 /* ── Background pattern ── */
 .bg-grid-pattern {
     background-image:
-        linear-gradient(rgba(108, 92, 231, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(108, 92, 231, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(0, 120, 212, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 120, 212, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
 }
 
 .bg-dots-pattern {
-    background-image: radial-gradient(circle, rgba(108, 92, 231, 0.08) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(0, 120, 212, 0.08) 1px, transparent 1px);
     background-size: 24px 24px;
 }
 
 /* ── Selection ── */
 ::selection {
-    background: rgba(108, 92, 231, 0.3);
+    background: rgba(0, 120, 212, 0.3);
     color: var(--text-primary);
 }
 
@@ -458,11 +484,11 @@ select {
 
     0%,
     100% {
-        box-shadow: 0 0 0 rgba(108, 92, 231, 0);
+        box-shadow: 0 0 0 rgba(0, 120, 212, 0);
     }
 
     50% {
-        box-shadow: 0 0 20px rgba(108, 92, 231, 0.3);
+        box-shadow: 0 0 20px rgba(0, 120, 212, 0.3);
     }
 }
 

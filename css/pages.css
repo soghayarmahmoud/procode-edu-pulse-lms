@@ -43,7 +43,7 @@
     width: 60px;
     height: 60px;
     border-radius: var(--radius-lg);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
     color: var(--brand-primary);
     display: flex;
     align-items: center;
@@ -85,7 +85,7 @@
 
 .roadmap-node.available {
     cursor: pointer;
-    border-color: rgba(108, 92, 231, 0.3);
+    border-color: rgba(0, 120, 212, 0.3);
 }
 
 .roadmap-node.available:hover {
@@ -170,7 +170,7 @@
 }
 
 .docs-nav-link.active {
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
     color: var(--brand-primary-light);
     font-weight: 600;
 }
@@ -260,8 +260,8 @@
 
 /* ── Careers Page ── */
 .careers-banner {
-    background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(0, 210, 211, 0.1));
-    border: 1px solid rgba(108, 92, 231, 0.2);
+    background: linear-gradient(135deg, rgba(0, 120, 212, 0.1), rgba(0, 188, 242, 0.1));
+    border: 1px solid rgba(0, 120, 212, 0.2);
     border-radius: var(--radius-xl);
     padding: var(--space-16) var(--space-8);
     text-align: center;
@@ -345,7 +345,7 @@
 }
 
 .search-result-item:hover, .search-result-item.selected {
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
 }
 
 .search-result-title {
@@ -382,7 +382,7 @@
 
 .wizard-left {
     flex: 1;
-    background: linear-gradient(135deg, rgba(108, 92, 231, 0.9), rgba(0, 210, 211, 0.9)), url('../logo.png') center/cover;
+    background: linear-gradient(135deg, rgba(0, 120, 212, 0.9), rgba(0, 188, 242, 0.9)), url('../logo.png') center/cover;
     position: relative;
     display: flex;
     align-items: center;
@@ -471,7 +471,7 @@
     position: relative;
     transition: all 0.3s ease;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.2);
 }
 
 .css-bar:hover {

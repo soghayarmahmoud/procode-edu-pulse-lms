@@ -459,7 +459,7 @@
 
 .quiz-option.selected {
     border-color: var(--brand-primary);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
 }
 
 .quiz-option.correct {
@@ -641,13 +641,13 @@
     cursor: pointer;
     white-space: nowrap;
     padding: var(--space-1) var(--space-2);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
     border-radius: var(--radius-sm);
     height: fit-content;
 }
 
 .note-timestamp:hover {
-    background: rgba(108, 92, 231, 0.2);
+    background: rgba(0, 120, 212, 0.2);
 }
 
 .note-content {

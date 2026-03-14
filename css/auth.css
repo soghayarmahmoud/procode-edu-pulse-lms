@@ -21,9 +21,9 @@
     width: 200%;
     height: 200%;
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(0, 210, 211, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(108, 92, 231, 0.04) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 50%, rgba(0, 120, 212, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 188, 242, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(0, 120, 212, 0.04) 0%, transparent 50%);
     animation: authBgPulse 12s ease-in-out infinite alternate;
     pointer-events: none;
 }
@@ -143,7 +143,7 @@
 .auth-form .input:focus {
     outline: none;
     border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
 .auth-form .input::placeholder {
@@ -188,7 +188,7 @@
 
 .auth-submit-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 120, 212, 0.4);
 }
 
 .auth-submit-btn:active {
@@ -320,7 +320,7 @@
     width: 32px;
     height: 32px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--brand-primary), #00d2d3);
+    background: linear-gradient(135deg, var(--brand-primary), #00BCF2);
     display: flex;
     align-items: center;
     justify-content: center;
