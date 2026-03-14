@@ -3,51 +3,75 @@
     {
       "id": "frontend-developer",
       "title": "Frontend Web Developer",
-      "description": "The complete path to becoming a modern frontend developer. Start with the basics and move up to advanced frameworks.",
+      "description": "The complete path to becoming a modern frontend developer. Master UI/UX, responsive design, and cutting-edge JavaScript frameworks.",
       "icon": "fa-solid fa-code",
       "courses": [
-        { "id": "html-fundamentals", "status": "available" },
-        { "id": "css-essentials", "status": "available" },
-        { "id": "javascript-basics", "status": "available" },
-        { "id": "react-mastery", "title": "React Mastery", "status": "coming_soon" },
-        { "id": "nextjs-advanced", "title": "Next.js Advanced", "status": "coming_soon" }
+        { "id": "html-fundamentals", "title": "HTML5 & Semantic Markup", "status": "available" },
+        { "id": "css-essentials", "title": "CSS3 & Responsive Design", "status": "available" },
+        { "id": "javascript-basics", "title": "JavaScript Fundamentals", "status": "available" },
+        { "id": "dom-manipulation", "title": "Advanced DOM Manipulation", "status": "coming_soon" },
+        { "id": "react-mastery", "title": "React.js Mastery", "status": "coming_soon" },
+        { "id": "state-management", "title": "State Management (Redux/Zustand)", "status": "coming_soon" },
+        { "id": "nextjs-advanced", "title": "Next.js & SSR", "status": "coming_soon" },
+        { "id": "frontend-testing", "title": "Frontend Testing (Jest/Cypress)", "status": "coming_soon" }
       ]
     },
     {
-      "id": "full-stack-developer",
-      "title": "Full Stack Developer",
-      "description": "Master both the frontend and backend. Learn how to build databases, APIs, and beautiful user interfaces.",
+      "id": "backend-developer",
+      "title": "Backend Web Developer",
+      "description": "Learn to build secure, scalable, and high-performance server-side architectures, APIs, and databases.",
       "icon": "fa-solid fa-server",
       "courses": [
-        { "id": "html-fundamentals", "status": "available" },
-        { "id": "javascript-basics", "status": "available" },
-        { "id": "nodejs-backend", "title": "Node.js & Express", "status": "coming_soon" },
-        { "id": "database-design", "title": "SQL & MongoDB", "status": "coming_soon" },
-        { "id": "firebase-auth", "title": "Firebase Integrations", "status": "coming_soon" }
+        { "id": "nodejs-backend", "title": "Node.js & Express Basics", "status": "coming_soon" },
+        { "id": "api-design", "title": "RESTful API Design", "status": "coming_soon" },
+        { "id": "sql-databases", "title": "Relational Databases (PostgreSQL)", "status": "coming_soon" },
+        { "id": "nosql-databases", "title": "NoSQL Databases (MongoDB)", "status": "coming_soon" },
+        { "id": "auth-security", "title": "Authentication & Cyber Security", "status": "coming_soon" },
+        { "id": "graphql", "title": "GraphQL Implementation", "status": "coming_soon" },
+        { "id": "backend-testing", "title": "Integration Testing", "status": "coming_soon" }
       ]
     },
     {
       "id": "mobile-developer",
       "title": "Mobile App Developer",
-      "description": "Build cross-platform applications for iOS and Android using modern technologies like Flutter.",
+      "description": "Build cross-platform and native applications for iOS and Android using modern technologies like Flutter or React Native.",
       "icon": "fa-solid fa-mobile-screen-button",
       "courses": [
-        { "id": "dart-basics", "title": "Dart Programming", "status": "coming_soon" },
+        { "id": "mobile-ui-ux", "title": "Mobile UI/UX Principles", "status": "coming_soon" },
+        { "id": "dart-basics", "title": "Dart Programming Basics", "status": "coming_soon" },
         { "id": "flutter-ui", "title": "Flutter UI & Layouts", "status": "coming_soon" },
-        { "id": "flutter-state", "title": "State Management", "status": "coming_soon" },
-        { "id": "mobile-deployment", "title": "App Store Deployment", "status": "coming_soon" }
+        { "id": "flutter-state", "title": "Advanced State Management", "status": "coming_soon" },
+        { "id": "mobile-apis", "title": "Connecting to APIs & Firebase", "status": "coming_soon" },
+        { "id": "mobile-deployment", "title": "App Store & Play Store Deployment", "status": "coming_soon" }
       ]
     },
     {
-      "id": "systems-engineering",
-      "title": "Systems & DevOps",
-      "description": "Get closer to the metal. Learn Linux distributions, command line operations, and system-level programming.",
+      "id": "devops-engineer",
+      "title": "DevOps & Cloud Engineer",
+      "description": "Get closer to the metal. Learn cloud infrastructure, CI/CD pipelines, containerization, and system-level operations.",
       "icon": "fa-brands fa-linux",
       "courses": [
-        { "id": "linux-fundamentals", "status": "available" },
-        { "id": "cpp-basics", "status": "available" },
-        { "id": "docker-kubernetes", "title": "Docker & Kubernetes", "status": "coming_soon" },
-        { "id": "ci-cd-pipelines", "title": "CI/CD Pipelines", "status": "coming_soon" }
+        { "id": "linux-fundamentals", "title": "Linux Administration", "status": "available" },
+        { "id": "computer-networking", "title": "Computer Networking Basics", "status": "coming_soon" },
+        { "id": "git-version-control", "title": "Advanced Git & GitHub", "status": "coming_soon" },
+        { "id": "docker-containers", "title": "Docker Containerization", "status": "coming_soon" },
+        { "id": "kubernetes", "title": "Kubernetes Orchestration", "status": "coming_soon" },
+        { "id": "aws-cloud", "title": "AWS Cloud Architecture", "status": "coming_soon" },
+        { "id": "ci-cd-pipelines", "title": "CI/CD Pipelines (GitHub Actions/Jenkins)", "status": "coming_soon" }
+      ]
+    },
+    {
+      "id": "ai-data-engineer",
+      "title": "AI & Data Engineer",
+      "description": "Master Python, data structures, and machine learning algorithms to build intelligent systems.",
+      "icon": "fa-solid fa-brain",
+      "courses": [
+        { "id": "python-basics", "title": "Python Programming", "status": "coming_soon" },
+        { "id": "data-structures", "title": "Data Structures & Algorithms", "status": "coming_soon" },
+        { "id": "data-analysis", "title": "Data Analysis (Pandas/NumPy)", "status": "coming_soon" },
+        { "id": "machine-learning", "title": "Machine Learning Fundamentals", "status": "coming_soon" },
+        { "id": "deep-learning", "title": "Deep Learning & Neural Networks", "status": "coming_soon" },
+        { "id": "llms-nlp", "title": "LLMs & Natural Language Processing", "status": "coming_soon" }
       ]
     }
   ]

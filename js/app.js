@@ -1793,45 +1793,102 @@ function renderDocsPage(params) {
 
     if (!activeDoc && docsData.length > 0) {
         activeDoc = docsData[0].docs[0];
+        activeCategory = docsData[0];
     }
 
     const sidebarHtml = docsData.map(cat => `
-        <div class="docs-category">
-            <div class="docs-category-title"><i class="${cat.icon}"></i> ${cat.title}</div>
+        <div style="margin-bottom:var(--space-6);">
+            <h4 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:8px;">
+                <i class="${cat.icon}" style="color:var(--brand-primary-light);"></i> ${cat.title}
+            </h4>
+            <div style="display:flex;flex-direction:column;gap:4px;">
             ${cat.docs.map(doc => `
-                <a href="#/docs/${doc.id}" class="docs-nav-link ${doc.id === activeDoc?.id ? 'active' : ''}">
+                <a href="#/docs/${doc.id}" style="padding:8px 12px;border-radius:8px;font-size:0.95rem;color:${doc.id === activeDoc?.id ? 'var(--brand-primary)' : 'var(--text-secondary)'};background:${doc.id === activeDoc?.id ? 'rgba(108,92,231,0.1)' : 'transparent'};font-weight:${doc.id === activeDoc?.id ? '600' : '400'};text-decoration:none;transition:all 0.2s;border-left:${doc.id === activeDoc?.id ? '3px solid var(--brand-primary)' : '3px solid transparent'};">
                     ${doc.title}
                 </a>
             `).join('')}
+            </div>
         </div>
     `).join('');
 
     app.innerHTML = `
-      <div class="docs-layout">
-        <aside class="docs-sidebar">
-          <div style="margin-bottom:var(--space-6)">
-            <input type="text" class="input" placeholder="Search docs..." style="width:100%" id="docs-search">
-          </div>
-          ${sidebarHtml}
-        </aside>
-        <main class="docs-main animate-slideUp">
-          ${activeDoc ? `
-            <div class="mb-4 text-muted" style="font-size:var(--text-sm)">
-              ${activeCategory?.title} / <span style="color:var(--text-primary)">${activeDoc.title}</span>
+      <style>
+        .docs-page-layout { display:flex; min-height:calc(100vh - 70px); background:var(--bg-primary); }
+        .docs-left-sidebar { width:280px; flex-shrink:0; border-right:1px solid var(--border-subtle); background:var(--bg-secondary); padding:var(--space-6); position:sticky; top:70px; height:calc(100vh - 70px); overflow-y:auto; }
+        .docs-main-content { flex:1; padding:var(--space-10) var(--space-8); max-width:850px; margin:0 auto; }
+        .docs-content h2 { font-size:2rem; margin-top:0; margin-bottom:var(--space-6); color:var(--text-primary); border-bottom:1px solid var(--border-subtle); padding-bottom:var(--space-3); }
+        .docs-content h3 { font-size:1.5rem; margin-top:var(--space-8); margin-bottom:var(--space-4); color:var(--text-primary); }
+        .docs-content p { font-size:1.1rem; line-height:1.7; color:var(--text-secondary); margin-bottom:var(--space-4); }
+        .docs-content ul, .docs-content ol { font-size:1.1rem; line-height:1.7; color:var(--text-secondary); margin-bottom:var(--space-6); padding-left:1.5rem; }
+        .docs-content li { margin-bottom:var(--space-2); }
+        .docs-content code { background:var(--bg-input); padding:2px 6px; border-radius:4px; font-family:monospace; color:var(--brand-primary-light); font-size:0.95em; }
+        .shortcuts-docs kbd { background:var(--bg-tertiary); border:1px solid var(--border-subtle); box-shadow:0 2px 0 var(--border-subtle); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:inherit; margin-right:4px; }
+        .faq-item { background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:12px; padding:var(--space-5); margin-bottom:var(--space-4); transition:transform 0.2s; }
+        .faq-item:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+        .faq-item strong { display:block; font-size:1.1rem; margin-bottom:var(--space-2); color:var(--brand-primary-light); }
+        .faq-item p { margin:0; font-size:1rem; }
+        @media (max-width: 900px) {
+            .docs-page-layout { flex-direction:column; }
+            .docs-left-sidebar { width:100%; position:relative; top:0; height:auto; border-right:none; border-bottom:1px solid var(--border-subtle); }
+            .docs-main-content { padding:var(--space-6) var(--space-4); }
+        }
+      </style>
+      <div class="docs-page-layout">
+        <aside class="docs-left-sidebar">
+          <div style="margin-bottom:var(--space-8)">
+            <div style="position:relative;">
+                <i class="fa-solid fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
+                <input type="text" class="input" placeholder="Search documentation..." style="width:100%;padding-left:36px;border-radius:20px;background:var(--bg-input);border-color:transparent;" id="docs-search-local" autocomplete="off">
             </div>
-            <div class="docs-content">
+          </div>
+          <nav>
+            ${sidebarHtml}
+          </nav>
+        </aside>
+        <main class="docs-main-content animate-slideUp">
+          ${activeDoc ? `
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;font-weight:600;color:var(--text-muted);margin-bottom:var(--space-6);letter-spacing:0.5px;text-transform:uppercase;">
+              <span>${activeCategory?.title}</span>
+              <i class="fa-solid fa-chevron-right" style="font-size:0.75rem;"></i>
+              <span style="color:var(--brand-primary);">${activeDoc.title}</span>
+            </div>
+            <article class="docs-content">
+              <h1 style="font-size:3rem;font-weight:800;letter-spacing:-1px;margin-bottom:var(--space-8);color:var(--text-primary);line-height:1.1;">
+                ${activeDoc.title}
+              </h1>
               ${activeDoc.content}
+            </article>
+            <div style="margin-top:var(--space-12);padding-top:var(--space-6);border-top:1px dashed var(--border-subtle);display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:0.9rem;">
+                <span>Was this page helpful? <i class="fa-regular fa-thumbs-up" style="margin-left:8px;cursor:pointer;"></i> <i class="fa-regular fa-thumbs-down" style="margin-left:8px;cursor:pointer;"></i></span>
+                <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" style="color:var(--text-muted);text-decoration:none;"><i class="fa-brands fa-github"></i> Edit this page</a>
             </div>
           ` : `
             <div class="empty-state text-center" style="padding:var(--space-16) 0">
-              <div class="empty-state-icon"><i class="fa-solid fa-book-open"></i></div>
+              <div class="empty-state-icon" style="font-size:4rem;color:var(--border-subtle);margin-bottom:var(--space-4)"><i class="fa-regular fa-file-code"></i></div>
               <h3>Documentation Not Found</h3>
-              <p class="text-muted">The requested document could not be found.</p>
+              <p class="text-muted">The requested document could not be found or has been moved.</p>
+              <a href="#/docs" class="btn btn-primary mt-4">Return home</a>
             </div>
           `}
         </main>
       </div>
     `;
+
+    // Quick local search filter functionality
+    const searchInput = document.getElementById('docs-search-local');
+    if(searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const links = app.querySelectorAll('.docs-left-sidebar a');
+            links.forEach(link => {
+                if(link.innerText.toLowerCase().includes(val)) {
+                    link.style.display = 'block';
+                } else {
+                    link.style.display = 'none';
+                }
+            });
+        });
+    }
 }
 
 function renderAboutPage() {
@@ -1912,23 +1969,90 @@ function renderAboutPage() {
 function renderCareersPage() {
     const app = $('#app');
     
+    const jobs = [
+        {
+            title: "Frontend Instructor",
+            category: "Education",
+            type: "Volunteer",
+            icon: "fa-brands fa-react",
+            desc: "Create lessons, review code submissions, and mentor students in HTML, CSS, JavaScript, and React paths."
+        },
+        {
+            title: "Backend / Systems Instructor",
+            category: "Education",
+            type: "Volunteer",
+            icon: "fa-brands fa-node-js",
+            desc: "Help students master Node.js, databases, Docker, and Linux by crafting real-world challenges."
+        },
+        {
+            title: "Software Engineer (QA/Testing)",
+            category: "Engineering",
+            type: "Volunteer",
+            icon: "fa-solid fa-bug",
+            desc: "Ensure platform stability. Write automated tests in Jest/Playwright, review PRs, and squash bugs."
+        },
+        {
+            title: "Technical Support Specialist",
+            category: "Support",
+            type: "Volunteer",
+            icon: "fa-solid fa-headset",
+            desc: "Be the hero our students need. Answer technical questions on Discord, help debug their IDE setups, and resolve login issues."
+        },
+        {
+            title: "Social Media & Community Manager",
+            category: "Marketing",
+            type: "Volunteer",
+            icon: "fa-brands fa-twitter",
+            desc: "Grow our community! Manage our social channels, highlight student portfolios, and organize weekly coding events."
+        }
+    ];
+
     app.innerHTML = `
-      <div class="container" style="max-width:800px;padding:var(--space-16) 0">
-        <div class="careers-banner animate-scaleIn">
-          <i class="fa-solid fa-briefcase fa-3x" style="color:var(--brand-primary);margin-bottom:var(--space-6)"></i>
-          <h1 style="margin-bottom:var(--space-4)">Join Our Mission</h1>
-          <p style="font-size:1.1rem;color:var(--text-secondary);max-width:500px;margin:0 auto">
-            We are building the future of interactive developer education.
+      <div class="container" style="max-width:1000px;padding:var(--space-16) 0">
+        <div class="careers-banner animate-scaleIn text-center" style="margin-bottom:var(--space-16);">
+          <div class="badge badge-primary" style="margin-bottom:var(--space-4);"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer Force</div>
+          <h1 style="font-size:3.5rem;font-weight:800;letter-spacing:-1px;margin-bottom:var(--space-4);">Help Us Build The Future</h1>
+          <p style="font-size:1.2rem;color:var(--text-secondary);max-width:600px;margin:0 auto;line-height:1.6;">
+            ProCode EduPulse is a community-driven, open-source organization. We don't have paid roles, but we offer a platform to make a massive impact on thousands of early-career developers.
           </p>
         </div>
 
-        <div class="card animate-slideUp text-center" style="padding:var(--space-10)">
-          <div style="font-size:4rem;color:var(--border-subtle);margin-bottom:var(--space-4)"><i class="fa-solid fa-mug-hot"></i></div>
-          <h3 style="margin-bottom:var(--space-2)">No open roles right now</h3>
-          <p class="text-muted" style="margin-bottom:var(--space-6)">
-            We're currently a small, focused team. However, we're always on the lookout for passionate contributors to our open-source projects!
-          </p>
-          <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" class="btn btn-outline">View GitHub Repo</a>
+        <div class="section-header" style="text-align:left;margin-bottom:var(--space-8);display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--border-subtle);padding-bottom:var(--space-4);">
+            <div>
+                <h2 style="font-size:1.8rem;">Open Volunteer Positions</h2>
+                <p class="text-muted" style="margin-top:4px;">Find a role that matches your skills and passion.</p>
+            </div>
+            <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" class="btn btn-outline"><i class="fa-brands fa-github"></i> View Repository</a>
+        </div>
+
+        <div class="grid" style="grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:var(--space-6);">
+          ${jobs.map((job, idx) => `
+            <div class="card animate-slideUp" style="animation-delay:${idx * 0.1}s;display:flex;flex-direction:column;height:100%;transition:all 0.3s;border:1px solid var(--border-subtle);background:var(--bg-secondary);">
+                <div style="padding:var(--space-6);flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-4);">
+                        <div style="width:48px;height:48px;border-radius:12px;background:rgba(108,92,231,0.1);color:var(--brand-primary);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                            <i class="${job.icon}"></i>
+                        </div>
+                        <span class="badge ${job.category === 'Education' ? 'badge-primary' : job.category === 'Engineering' ? 'badge-warning' : 'badge-success'}">${job.type}</span>
+                    </div>
+                    <h3 style="font-size:1.2rem;margin-bottom:var(--space-2);color:var(--text-primary);">${job.title}</h3>
+                    <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.6;">
+                        ${job.desc}
+                    </p>
+                </div>
+                <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--border-subtle);background:var(--bg-input);">
+                    <a href="mailto:volunteer@procode.edu?subject=Application for ${job.title}" class="btn btn-primary" style="width:100%;">Apply Now <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></a>
+                </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="card mt-12 text-center" style="background:linear-gradient(135deg, rgba(108,92,231,0.1) 0%, rgba(0,2ce,201,0.1) 100%);padding:var(--space-10);border-radius:24px;">
+            <h3 style="margin-bottom:var(--space-4);">Don't see a fit?</h3>
+            <p style="color:var(--text-secondary);max-width:500px;margin:0 auto var(--space-6);">If you have a unique skill set and want to help the project grow, we'd still love to hear from you. Join our discord or open a PR anyway!</p>
+            <div style="display:flex;gap:var(--space-4);justify-content:center;">
+                <button class="btn btn-outline" onclick="window.location.hash='/about'">Meet The Founder</button>
+            </div>
         </div>
       </div>
     `;
