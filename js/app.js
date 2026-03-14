@@ -945,6 +945,13 @@ async function renderCourse(params) {
           <span class="badge ${isCompleted ? 'badge-success' : 'badge-primary'}" style="margin-bottom:var(--space-4)">
             ${isCompleted ? '<i class="fa-solid fa-check"></i> Course Completed' : isEnrolled ? 'In Progress' : course.difficulty}
           </span>
+          ${isCompleted ? `
+          <div style="margin-top:var(--space-3); margin-bottom:var(--space-3)">
+            <button id="download-certificate-btn" class="btn btn-success btn-sm" style="padding:0.6rem 1.1rem; font-weight:600;">
+              <i class="fa-solid fa-certificate"></i> Download Certificate
+            </button>
+          </div>
+          ` : ''}
           <h1 style="font-size:2.5rem; margin-bottom:var(--space-2)">${course.title}</h1>
           <p class="text-muted" style="font-size:1.1rem; max-width:600px; margin:0 auto;">${course.description}</p>
         </div>
@@ -1189,6 +1196,82 @@ async function renderCourse(params) {
              renderCourse(params);
         });
     }
+
+    // Attach certificate download when course is completed
+    const certBtn = document.getElementById('download-certificate-btn');
+    if (certBtn) {
+        certBtn.addEventListener('click', async () => {
+            const studentName = authService.getDisplayName();
+            try {
+                await generateCertificate(studentName, course.title);
+                showToast('Certificate generated. Check your downloads.', 'success');
+            } catch (err) {
+                console.error('Certificate generation failed', err);
+                showToast('Failed to generate certificate. Please try again.', 'error');
+            }
+        });
+    }
+}
+
+async function generateCertificate(studentName, courseName) {
+    const { jsPDF } = await import('https://esm.sh/jspdf');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const width = doc.internal.pageSize.getWidth();
+    const height = doc.internal.pageSize.getHeight();
+    const now = new Date();
+    const dateText = now.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Background
+    doc.setFillColor('#0f172a');
+    doc.rect(0, 0, width, height, 'F');
+
+    // Main card
+    doc.setFillColor('#111827');
+    doc.roundedRect(30, 30, width - 60, height - 60, 18, 18, 'F');
+
+    // Title
+    doc.setTextColor('#60a5fa');
+    doc.setFontSize(36);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Certificate of Completion', width / 2, 100, { align: 'center' });
+
+    // Subtitle
+    doc.setTextColor('#d1d5db');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Awarded to', width / 2, 150, { align: 'center' });
+
+    // Student Name
+    doc.setTextColor('#ffffff');
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text(studentName, width / 2, 190, { align: 'center' });
+
+    // Course Name
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`For successfully completing the course: ${courseName}`, width / 2, 240, { align: 'center' });
+
+    // Date & branding
+    doc.setFontSize(14);
+    doc.setTextColor('#9ca3af');
+    doc.text(`Completion Date: ${dateText}`, width / 2, height - 90, { align: 'center' });
+
+    doc.setTextColor('#60a5fa');
+    doc.setFontSize(12);
+    doc.text('ProCode EduPulse • www.procode.com', width / 2, height - 60, { align: 'center' });
+
+    // Signature line
+    doc.setDrawColor('#60a5fa');
+    doc.setLineWidth(1);
+    doc.line(110, height - 140, width / 2 - 60, height - 140);
+    doc.text('Instructor Signature', 160, height - 120, { align: 'left' });
+
+    doc.line(width / 2 + 60, height - 140, width - 110, height - 140);
+    doc.text('Date', width - 160, height - 120, { align: 'left' });
+
+    const fileName = `ProCode_Certificate_${courseName.replace(/\s+/g, '_')}_${now.toISOString().slice(0,10)}.pdf`;
+    doc.save(fileName);
 }
 
 async function renderLesson(params) {
