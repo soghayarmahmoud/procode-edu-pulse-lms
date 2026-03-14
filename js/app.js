@@ -52,6 +52,25 @@ async function loadData() {
     roadmapsData = roadmaps.roadmaps || [];
     docsData = docs.categories || [];
     modulesData = modules.modules || [];
+
+    // Sync reviews from cloud to local storage for all courses
+    try {
+        if (isFirebaseConfigured()) {
+            const allReviews = {};
+            for (const course of coursesData) {
+                const reviews = await firestoreService.getCourseReviews(course.id);
+                if (reviews && reviews.length > 0) {
+                    allReviews[course.id] = reviews;
+                }
+            }
+            if (Object.keys(allReviews).length > 0) {
+                const existingReviews = storage._get('reviews') || {};
+                storage._set('reviews', { ...existingReviews, ...allReviews });
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to sync reviews:', e);
+    }
 }
 
 function transitionPage(renderFn) {
@@ -322,19 +341,19 @@ function showWelcomeModel() {
     let slide = 0;
     const slides = [
         {
-            icon: '<i class="fa-solid fa-rocket fa-3x"></i>',
-            title: "Welcome to ProCode EduPulse",
-            text: "Learn web development with structured lessons, projects, and interactive coding."
+            icon: '<i class="fa-solid fa-code fa-3x"></i>',
+            title: "Unlock Your Potential",
+            text: "Welcome to ProCode EduPulse. Journey from a beginner to an expert web developer with our immersive, interactive curriculum."
         },
         {
             icon: '<i class="fa-solid fa-laptop-code fa-3x"></i>',
-            title: "Interactive Coding",
-            text: "Practice directly in the browser using the built-in code editor with live preview."
+            title: "Browser-Based IDE",
+            text: "No setup required. Write, test, and preview real code directly in your browser with our integrated development environment."
         },
         {
-            icon: '<i class="fa-solid fa-user-graduate fa-3x"></i>',
-            title: "Build Your Portfolio",
-            text: "Every challenge you complete becomes part of your developer portfolio."
+            icon: '<i class="fa-solid fa-bolt fa-3x"></i>',
+            title: "Build & Showcase",
+            text: "Complete hands-on projects, earn gems, and automatically build a professional portfolio to show off your new skills."
         }
     ];
 
@@ -343,45 +362,74 @@ function showWelcomeModel() {
         const isLast = slide === slides.length - 1;
         
         app.innerHTML = `
-      <div class="wizard-overlay">
-        <div class="wizard-left">
-          <div class="wizard-left-content">
-            <h1 style="font-size:3rem;margin-bottom:var(--space-6);line-height:1.2;">Your Journey<br>Starts Here.</h1>
-            <p style="font-size:1.2rem;opacity:0.9">Join thousands of students building real-world projects and mastering modern web technologies.</p>
-          </div>
-        </div>
-        <div class="wizard-right">
-          <div style="max-width:400px;margin:0 auto;width:100%">
-            <div class="wizard-dots">
-              ${slides.map((_, i) => `<div class="wizard-dot ${i === slide ? 'active' : ''}"></div>`).join('')}
-            </div>
+      <style>
+        @keyframes wizFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes wizFadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+        @keyframes wizSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) {
+          .wizard-container { flex-direction: column !important; }
+          .wizard-left { padding: 2rem !important; }
+          .wizard-right { padding: 2rem !important; }
+        }
+      </style>
+      <div class="wizard-overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(15,15,26,0.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;animation:wizFadeIn 0.5s ease-out;">
+        <div class="wizard-container" style="display:flex;width:90%;max-width:1100px;min-height:600px;background:var(--bg-card);border:1px solid rgba(255,255,255,0.1);border-radius:24px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
             
-            <div class="wizard-slide active">
-              <div style="color:var(--brand-primary);margin-bottom:var(--space-6)">${s.icon}</div>
-              <h2 style="font-size:2rem;margin-bottom:var(--space-4)">${s.title}</h2>
-              <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:var(--space-8);line-height:1.6">${s.text}</p>
-              
-              ${isLast ? `
-                <div class="input-group" style="margin-bottom:var(--space-8)">
-                  <label>What should we call you?</label>
-                  <div style="position:relative">
-                    <i class="fa-solid fa-user" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-                    <input id="welcome-name" class="input" style="padding-left:48px;font-size:1.1rem" placeholder="Enter your display name" type="text" required />
-                  </div>
+            <div class="wizard-left" style="flex:1;background:linear-gradient(135deg, var(--brand-primary) 0%, #302b63 100%);padding:var(--space-10);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;">
+                <!-- Decorative elements -->
+                <div style="position:absolute;top:-50px;left:-50px;width:200px;height:200px;background:rgba(255,255,255,0.1);border-radius:50%;filter:blur(40px);pointer-events:none;"></div>
+                <div style="position:absolute;bottom:-100px;right:-50px;width:300px;height:300px;background:rgba(0,0,0,0.2);border-radius:50%;filter:blur(50px);pointer-events:none;"></div>
+                
+                <div style="position:relative;z-index:1;">
+                    <h1 style="font-size:3.5rem;font-weight:800;color:white;line-height:1.2;margin-bottom:var(--space-6);letter-spacing:-1px;">Start Building<br/><span style="color:#a8c0ff;">The Future.</span></h1>
+                    <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:400px;line-height:1.6;">Join our fast-growing community of learners mastering the art of coding, one line at a time.</p>
                 </div>
-              ` : ''}
-
-              <div style="display:flex;gap:var(--space-4);align-items:center">
-                ${slide > 0 ? `<button id="welcome-prev" class="btn btn-ghost" style="padding:var(--space-3)">Back</button>` : ''}
-                <button id="welcome-next" class="btn btn-primary" style="flex:1;padding:var(--space-3) var(--space-6);font-size:1.1rem">
-                  ${isLast ? 'Complete Setup <i class="fa-solid fa-check" style="margin-left:8px"></i>' : 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:8px"></i>'}
-                </button>
-              </div>
             </div>
-          </div>
+
+            <div class="wizard-right" style="flex:1;background:var(--bg-secondary);padding:var(--space-10);display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;">
+                <div style="width:100%;max-width:400px;">
+                    <div class="wizard-dots" style="display:flex;gap:8px;margin-bottom:var(--space-10);justify-content:center;">
+                        ${slides.map((_, i) => `<div style="width:${i === slide ? '24px' : '8px'};height:8px;border-radius:4px;background:${i === slide ? 'var(--brand-primary)' : 'var(--border-subtle)'};transition:all 0.3s ease;"></div>`).join('')}
+                    </div>
+                    
+                    <div class="wizard-slide" style="text-align:center;animation:wizSlideUp 0.5s ease-out;">
+                        <div style="width:80px;height:80px;background:rgba(108,92,231,0.1);color:var(--brand-primary);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-6);box-shadow:inset 0 0 0 1px rgba(108,92,231,0.2);">
+                            ${s.icon}
+                        </div>
+                        <h2 style="font-size:2rem;font-weight:700;margin-bottom:var(--space-4);color:var(--text-primary);">${s.title}</h2>
+                        <p style="color:var(--text-secondary);font-size:1.1rem;line-height:1.6;margin-bottom:var(--space-8);">
+                            ${s.text}
+                        </p>
+
+                        ${isLast ? `
+                        <div style="text-align:left;margin-bottom:var(--space-8);">
+                            <label style="display:block;margin-bottom:8px;font-size:0.9rem;color:var(--text-muted);font-weight:500;">How should we address you?</label>
+                            <div style="position:relative;">
+                                <i class="fa-solid fa-user" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+                                <input id="welcome-name" class="input" style="width:100%;padding:14px 16px 14px 48px;font-size:1.05rem;background:var(--bg-input);border:2px solid transparent;border-radius:12px;transition:all 0.2s;outline:none;" placeholder="John Doe" type="text" autocomplete="off" />
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div style="display:flex;gap:var(--space-4);width:100%;">
+                            ${slide > 0 ? `<button id="welcome-prev" class="btn btn-ghost" style="padding:12px 24px;border-radius:12px;font-weight:600;">Back</button>` : ''}
+                            <button id="welcome-next" class="btn btn-primary" style="flex:1;padding:14px 0;font-size:1.1rem;border-radius:12px;font-weight:600;box-shadow:0 8px 16px rgba(108,92,231,0.25);transition:transform 0.2s, box-shadow 0.2s;">
+                                ${isLast ? 'Enter Platform <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i>' : 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i>'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
         `;
+
+        const input = document.getElementById('welcome-name');
+        if (input) {
+            input.addEventListener('focus', () => input.style.borderColor = 'var(--brand-primary)');
+            input.addEventListener('blur', () => input.style.borderColor = 'transparent');
+            input.focus();
+        }
 
         const next = $('#welcome-next');
         const prev = $('#welcome-prev');
@@ -403,7 +451,12 @@ function showWelcomeModel() {
                     }
                 }
                 localStorage.setItem('procode_onboarding_done', 'true');
-                await startMainApp();
+                
+                const overlay = app.querySelector('.wizard-overlay');
+                overlay.style.animation = 'wizFadeOut 0.4s ease-in forwards';
+                setTimeout(async () => {
+                    await startMainApp();
+                }, 400);
             } else {
                 slide++;
                 renderSlide();
@@ -2114,17 +2167,8 @@ async function initApp() {
     const user = authService.getCurrentUser();
     const hash = window.location.hash.slice(1) || '/';
 
-    // If Firebase is configured but user is not logged in, show login
-    if (isFirebaseConfigured() && !user && hash !== '/signup') {
-        window.location.hash = '/login';
-        // Set up a minimal router for auth pages only
-        const router = new Router();
-        router
-            .on('/login', () => renderLoginPage())
-            .on('/signup', () => renderSignupPage())
-            .on('*', () => renderLoginPage());
-        return;
-    }
+    // Removing the forced redirect to login so unregistered users can browse courses.
+    // Once they attempt to enroll, the app will prompt them to sign in.
 
     // If user is already logged in but trying to access auth pages, redirect to home
     if (user && (hash === '/login' || hash === '/signup')) {
