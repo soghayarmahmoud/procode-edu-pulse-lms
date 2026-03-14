@@ -421,6 +421,68 @@ class StorageService {
         return this.getUserReviews(userName).length;
     }
 
+    // New dashboard stats methods
+
+    getChallengePassRate() {
+        const subs = this.getSubmissions();
+        const total = Object.keys(subs).length;
+        if (total === 0) return 0;
+        const passedCount = this.getPassedSubmissions().length;
+        return Math.round((passedCount / total) * 100);
+    }
+
+    getCurrentStreak() {
+        const act = this._get('daily_activity') || {};
+        let streak = 0;
+        let d = new Date();
+        
+        while (true) {
+            const dateStr = d.toISOString().split('T')[0];
+            const dayData = act[dateStr];
+            
+            if (dayData && (dayData.lessons > 0 || dayData.challenges > 0)) {
+                streak++;
+                d.setDate(d.getDate() - 1);
+            } else {
+                // If today has no activity, check yesterday before breaking streak to 0
+                if (streak === 0) {
+                    let yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yStr = yesterday.toISOString().split('T')[0];
+                    const yData = act[yStr];
+                    if (yData && (yData.lessons > 0 || yData.challenges > 0)) {
+                        streak++;
+                        d.setDate(d.getDate() - 1);
+                        continue;
+                    }
+                }
+                break;
+            }
+        }
+        return streak;
+    }
+
+    getMostActiveCourse(coursesData) {
+        const progress = this.getProgress();
+        let maxLessons = -1;
+        let mostActiveId = null;
+
+        for (const [courseId, data] of Object.entries(progress)) {
+             const completed = (data.completedLessons || []).length;
+             if (completed > maxLessons) {
+                 maxLessons = completed;
+                 mostActiveId = courseId;
+             }
+        }
+
+        if (mostActiveId && coursesData) {
+            const course = coursesData.find(c => c.id === mostActiveId);
+            return course ? course.title : 'N/A';
+        }
+        
+        return 'N/A';
+    }
+
     // ── Reviews ──
 
     getReviews(courseId) {

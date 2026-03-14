@@ -443,3 +443,75 @@
     .docs-layout { grid-template-columns: 1fr; }
     .docs-sidebar { display: none; } /* On mobile, we can use a dropdown or hide it for simplicity initially */
 }
+
+/* ── Profile Dashboard Enhancements ── */
+.css-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 100%;
+    width: 100%;
+    padding-top: var(--space-6);
+}
+
+.css-chart-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    flex: 1;
+    gap: var(--space-2);
+}
+
+.css-bar {
+    width: 32px;
+    background: linear-gradient(to top, var(--brand-secondary), var(--brand-primary));
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+}
+
+.css-bar:hover {
+    filter: brightness(1.2);
+    transform: scaleY(1.02);
+    transform-origin: bottom;
+}
+
+.css-bar-tooltip {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tooltip, #333);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.css-bar:hover .css-bar-tooltip {
+    opacity: 1;
+}
+
+.css-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--brand-primary-light), var(--brand-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Custom Share buttons */
+.share-btn-twitter:hover { background: #1a91da !important; border-color: #1a91da !important; }
+.share-btn-linkedin:hover { background: #0855a1 !important; border-color: #0855a1 !important; }

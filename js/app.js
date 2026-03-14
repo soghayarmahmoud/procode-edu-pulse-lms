@@ -73,14 +73,162 @@ async function loadData() {
     }
 }
 
-function transitionPage(renderFn) {
+function transitionPage(renderFn, path = window.location.hash) {
     const app = $('#app');
     app.style.opacity = 0;
+    
+    // Inject skeleton based on route immediately while fading out
     setTimeout(() => {
-        renderFn();
-        app.style.opacity = 1;
-    }, 200);
+        if (path.startsWith('#/course/')) {
+            app.innerHTML = renderCourseSkeleton();
+        } else if (path.startsWith('#/lesson/')) {
+            app.innerHTML = renderLessonSkeleton();
+        } else if (path === '#/courses') {
+            app.innerHTML = renderCoursesPageSkeleton();
+        } else if (path === '#/portfolio') {
+            app.innerHTML = renderPortfolioSkeleton();
+        }
+        
+        // After briefly showing skeleton, render real content and fade in
+        setTimeout(() => {
+            renderFn();
+            app.style.opacity = 1;
+        }, 150); // brief skeleton display
+        
+    }, 200); // Wait for fade out
 }
+
+// ══════════════════════════════════════════════
+// SKELETON LOADERS
+// ══════════════════════════════════════════════
+
+function renderCoursesPageSkeleton() {
+    return `
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
+        <div style="margin-bottom:var(--space-10)">
+            <div class="skeleton" style="width: 120px; height: 24px; border-radius: 12px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 300px; height: 40px; border-radius: 8px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 250px; height: 20px; border-radius: 4px;"></div>
+        </div>
+        <div class="grid grid-3 gap-6">
+          ${[1, 2, 3, 4, 5, 6].map(() => `
+            <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+               <div class="skeleton" style="height: 180px; width: 100%; border-radius: 0;"></div>
+               <div style="padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); flex: 1;">
+                  <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-2)">
+                     <div class="skeleton" style="width: 60px; height: 20px; border-radius: 10px;"></div>
+                     <div class="skeleton" style="width: 80px; height: 20px; border-radius: 10px;"></div>
+                  </div>
+                  <div class="skeleton" style="width: 90%; height: 24px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 100%; height: 60px; border-radius: 4px; margin-top: 8px;"></div>
+                  <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-4);">
+                     <div class="skeleton" style="width: 80px; height: 20px; border-radius: 4px;"></div>
+                     <div class="skeleton" style="width: 80px; height: 32px; border-radius: 4px;"></div>
+                  </div>
+               </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCourseSkeleton() {
+    return `
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:800px;">
+        <div style="margin-bottom:var(--space-8); display:flex; flex-direction:column; align-items:center;">
+          <div class="skeleton" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: var(--space-4);"></div>
+          <div class="skeleton" style="width: 120px; height: 24px; border-radius: 12px; margin-bottom: var(--space-4);"></div>
+          <div class="skeleton" style="width: 300px; height: 40px; border-radius: 8px; margin-bottom: var(--space-4);"></div>
+          <div class="skeleton" style="width: 80%; height: 60px; border-radius: 8px; margin-bottom: var(--space-4);"></div>
+        </div>
+        
+        <div class="card" style="margin-bottom:var(--space-8); display: flex; flex-direction: column; gap: var(--space-4);">
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div class="skeleton" style="width: 180px; height: 28px; border-radius: 4px;"></div>
+              <div class="skeleton" style="width: 80px; height: 20px; border-radius: 4px;"></div>
+           </div>
+           ${[1, 2, 3, 4, 5].map(() => `
+             <div class="skeleton" style="width: 100%; height: 72px; border-radius: var(--radius-lg);"></div>
+           `).join('')}
+           <div class="skeleton" style="width: 100%; height: 50px; border-radius: var(--radius-lg); margin-top: var(--space-4);"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderLessonSkeleton() {
+    return `
+    <div class="lesson-layout">
+      <aside class="course-sidebar" style="padding: var(--space-4); border-right: 1px solid var(--border-subtle);">
+        <div class="skeleton" style="width: 100%; height: 30px; border-radius: 4px; margin-bottom: var(--space-4);"></div>
+        <div class="skeleton" style="width: 100%; height: 8px; border-radius: 4px; margin-bottom: var(--space-6);"></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+           ${[1,2,3,4].map(() => `<div class="skeleton" style="width: 100%; height: 40px; border-radius: var(--radius-md);"></div>`).join('')}
+        </div>
+      </aside>
+      <main class="lesson-main">
+        <div class="lesson-header" style="padding-bottom: var(--space-4);">
+           <div class="skeleton" style="width: 200px; height: 16px; border-radius: 4px; margin-bottom: var(--space-2);"></div>
+           <div class="skeleton" style="width: 300px; height: 36px; border-radius: 4px; margin-bottom: var(--space-4);"></div>
+           <div style="display: flex; gap: var(--space-2);">
+              <div class="skeleton" style="width: 80px; height: 24px; border-radius: 12px;"></div>
+              <div class="skeleton" style="width: 80px; height: 24px; border-radius: 12px;"></div>
+           </div>
+        </div>
+        <div class="split-view">
+           <div class="video-section">
+              <div class="skeleton" style="width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-lg);"></div>
+              <div style="display: flex; gap: var(--space-2); margin-top: var(--space-4);">
+                 <div class="skeleton" style="width: 120px; height: 36px; border-radius: var(--radius-md);"></div>
+                 <div class="skeleton" style="width: 120px; height: 36px; border-radius: var(--radius-md);"></div>
+              </div>
+           </div>
+           <div class="editor-section" style="display: flex; flex-direction: column; gap: var(--space-4);">
+              <div class="skeleton" style="width: 100%; height: 50%; border-radius: var(--radius-lg);"></div>
+              <div class="skeleton" style="width: 100%; height: 50%; border-radius: var(--radius-lg);"></div>
+           </div>
+        </div>
+      </main>
+    </div>`;
+}
+
+function renderPortfolioSkeleton() {
+    return `
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
+        <div style="margin-bottom:var(--space-10); text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div class="skeleton" style="width: 120px; height: 24px; border-radius: 12px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 300px; height: 40px; border-radius: 8px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 400px; height: 24px; border-radius: 4px; margin-bottom: var(--space-6);"></div>
+            <div style="display: flex; gap: var(--space-2);">
+                <div class="skeleton" style="width: 80px; height: 36px; border-radius: var(--radius-full);"></div>
+                <div class="skeleton" style="width: 80px; height: 36px; border-radius: var(--radius-full);"></div>
+                <div class="skeleton" style="width: 80px; height: 36px; border-radius: var(--radius-full);"></div>
+            </div>
+        </div>
+        <div class="grid grid-3 gap-6">
+          ${[1, 2, 3, 4, 5, 6].map(() => `
+            <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+               <div class="skeleton" style="height: 200px; width: 100%; border-radius: 0;"></div>
+               <div style="padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); flex: 1;">
+                  <div class="skeleton" style="width: 80%; height: 24px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 100%; height: 16px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 90%; height: 16px; border-radius: 4px;"></div>
+                  <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2)">
+                     <div class="skeleton" style="width: 50px; height: 20px; border-radius: 4px;"></div>
+                     <div class="skeleton" style="width: 50px; height: 20px; border-radius: 4px;"></div>
+                  </div>
+               </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
 
 // ══════════════════════════════════════════════
 // AUTH PAGES
@@ -1320,7 +1468,10 @@ function renderProfile() {
             <span class="section-badge"><i class="fa-solid fa-user"></i> Dashboard</span>
             <h1 class="section-title">Developer Profile</h1>
           </div>
-          <button class="btn btn-outline btn-sm" id="edit-profile-btn"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+          <div style="display:flex; gap:var(--space-3);">
+             <button class="btn btn-primary btn-sm" id="share-progress-btn"><i class="fa-solid fa-share-nodes"></i> Share Progress</button>
+             <button class="btn btn-outline btn-sm" id="edit-profile-btn"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+          </div>
         </div>
 
         <!-- Top Overview -->
@@ -1361,47 +1512,62 @@ function renderProfile() {
           <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap:var(--space-4); align-items:start;">
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
-                   <span>Lessons Completed</span>
-                   <i class="fa-solid fa-graduation-cap text-gradient"></i>
+                   <span>Learning Hours</span>
+                   <i class="fa-solid fa-hourglass-end text-gradient"></i>
                 </div>
-                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalCompleted}</div>
-                <div class="text-sm" style="color:var(--color-success);"><i class="fa-solid fa-arrow-trend-up"></i> +4 this week</div>
+                <div class="text-gradient" style="font-size: 2.5rem; font-weight:800; line-height:1; display:inline-block;">${totalLearningHours}</div>
+                <div class="text-sm text-muted">Active site time</div>
             </div>
             
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
-                   <span>Challenges Solved</span>
-                   <i class="fa-solid fa-code text-gradient"></i>
+                   <span>Challenge Pass Rate</span>
+                   <i class="fa-solid fa-bullseye text-gradient"></i>
                 </div>
-                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalChallenges}</div>
-                <div class="text-sm" style="color:var(--color-success);"><i class="fa-solid fa-arrow-trend-up"></i> +2 this week</div>
+                <div class="text-gradient" style="font-size: 2.5rem; font-weight:800; line-height:1; display:inline-block;">${storage.getChallengePassRate()}%</div>
+                <div class="text-sm text-muted">Accuracy rate</div>
             </div>
 
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
-                   <span>Learning Hours</span>
-                   <i class="fa-solid fa-hourglass-end text-gradient"></i>
+                   <span>Current Streak</span>
+                   <i class="fa-solid fa-fire text-gradient" style="color:#fd9644;"></i>
                 </div>
-                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${totalLearningHours}</div>
-                <div class="text-sm text-muted">Active site time</div>
+                <div class="text-gradient" style="font-size: 2.5rem; font-weight:800; line-height:1; display:inline-block;">${storage.getCurrentStreak()}</div>
+                <div class="text-sm text-muted">Consecutive days</div>
             </div>
 
             <div class="card-glass" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="text-muted" style="font-size:var(--text-sm); display:flex; justify-content:space-between;">
-                   <span>Total Gems</span>
-                   <i class="fa-solid fa-gem" style="color:#00cec9; text-shadow:0 0 5px rgba(0,206,201,0.5);"></i>
+                   <span>Most Active Course</span>
+                   <i class="fa-solid fa-book-open text-gradient"></i>
                 </div>
-                <div style="font-size: 2.5rem; font-weight:800; line-height:1;">${storage.getGems()}</div>
-                <div class="text-sm text-muted">Keep earning!</div>
+                <div class="text-gradient" style="font-size: 1.5rem; font-weight:800; line-height:1.2; display:inline-block;">${storage.getMostActiveCourse(coursesData)}</div>
+                <div class="text-sm text-muted">Highest completions</div>
             </div>
 
             <!-- Chart Section span full width -->
             <div class="card" style="grid-column: span 4; padding:var(--space-6);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
-                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-line"></i> Activity Overview (Last 7 Days)</h3>
+                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-column"></i> Lessons per Week</h3>
                 </div>
-                <div style="position: relative; height: 260px; width: 100%;">
-                    <canvas id="activityChart"></canvas>
+                <div class="css-chart-container" style="position: relative; height: 260px; width: 100%;">
+                    ${(() => {
+                        const activityData = storage.getActivityLast7Days();
+                        let maxVal = Math.max(...activityData.datasets.lessons, 1); // Avoid div by 0
+                        return '<div class="css-bar-chart">';
+                        return activityData.datasets.lessons.map((val, i) => {
+                            const percent = (val / maxVal) * 100;
+                            return `
+                              <div class="css-chart-col">
+                                <div class="css-bar" style="height: ${Math.max(percent, 5)}%">
+                                  <div class="css-bar-tooltip">${val} lessons</div>
+                                </div>
+                                <div class="css-label">${activityData.labels[i]}</div>
+                              </div>
+                            `;
+                        }).join('') + '</div>';
+                    })()}
                 </div>
             </div>
           </div>
@@ -1530,60 +1696,74 @@ function renderProfile() {
             </div>
         </div>
     </div>
+
+    <!-- Share Modal Fallback -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <div class="modal-header" style="border-bottom:none; padding-bottom:0;">
+                <h3 class="modal-title">Share Your Progress</h3>
+                <button class="modal-close" id="close-share-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:var(--space-4); text-align:center;">
+                <p class="text-secondary" style="margin-bottom:var(--space-6);">Let your network know you're leveling up!</p>
+                <div style="background:var(--bg-input); padding:var(--space-4); border-radius:var(--radius-md); border:1px solid var(--border-subtle); margin-bottom:var(--space-6); font-family:monospace; color:var(--text-primary); text-align:left;" id="share-preview-text">
+                </div>
+                
+                <div class="grid grid-2" style="gap:var(--space-4);">
+                    <button class="btn btn-primary share-btn-twitter" id="share-btn-twitter" style="background:#1DA1F2; border-color:#1DA1F2;"><i class="fa-brands fa-twitter"></i> Twitter / X</button>
+                    <button class="btn btn-primary share-btn-linkedin" id="share-btn-linkedin" style="background:#0A66C2; border-color:#0A66C2;"><i class="fa-brands fa-linkedin"></i> LinkedIn</button>
+                    <button class="btn btn-outline share-btn-copy" id="share-btn-copy" style="grid-column: span 2;"><i class="fa-solid fa-copy"></i> Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
   `;
 
-  // Render Charts
-  setTimeout(() => {
-        const ctx = document.getElementById('activityChart');
-        if (ctx && window.Chart) {
-            Chart.defaults.color = theme === 'dark' ? '#94a3b8' : '#64748b';
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            
-            const activityData = storage.getActivityLast7Days();
+    // Share Progress Logic
+    const shareProgressBtn = $('#share-progress-btn');
+    const shareModal = $('#share-modal');
+    
+    // Build share text
+    const totalLessonsText = storage.getTotalCompletedLessons();
+    const shareText = `I completed ${totalLessonsText} lessons on ProCode EduPulse! Building my portfolio and leveling up my dev skills! 🚀 #LearnToCode #WebDev #ProCode`;
+    
+    if(shareProgressBtn) {
+        shareProgressBtn.addEventListener('click', () => {
+             if (navigator.share) {
+                 navigator.share({ 
+                     title: 'ProCode Progress', 
+                     text: shareText
+                 }).catch(console.error);
+             } else {
+                 if(shareModal) {
+                     $('#share-preview-text').innerText = shareText;
+                     shareModal.classList.add('active');
+                 } else {
+                     navigator.clipboard.writeText(shareText);
+                     showToast('Progress copied!', 'success');
+                 }
+             }
+        });
+    }
 
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: activityData.labels,
-                    datasets: [
-                        {
-                            label: 'Lessons',
-                            data: activityData.datasets.lessons,
-                            backgroundColor: 'rgba(108, 92, 231, 0.8)',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Challenges',
-                            data: activityData.datasets.challenges,
-                            backgroundColor: 'rgba(0, 206, 201, 0.8)',
-                            borderRadius: 4,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            align: 'end',
-                            labels: { boxWidth: 12, usePointStyle: true }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-                            ticks: { precision: 0 }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-    }, 100);
+    $('#close-share-modal')?.addEventListener('click', () => shareModal.classList.remove('active'));
+    
+    $('#share-btn-twitter')?.addEventListener('click', () => {
+         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
+         shareModal.classList.remove('active');
+    });
+    
+    $('#share-btn-linkedin')?.addEventListener('click', () => {
+         // LinkedIn doesn't easily accept prefilled text without a URL, but we pass it anyway. Usually best to use generic share endpoint.
+         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}&summary=${encodeURIComponent(shareText)}`, '_blank');
+         shareModal.classList.remove('active');
+    });
+
+    $('#share-btn-copy')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(shareText);
+        showToast('Progress copied to clipboard!', 'success');
+        shareModal.classList.remove('active');
+    });
 
     // Edit Profile Modal Logic
     const modal = document.getElementById('edit-profile-modal');
@@ -2316,23 +2496,23 @@ async function startMainApp() {
 
     const router = new Router();
     router
-        .on('/', () => transitionPage(renderLanding))
-        .on('/courses', () => transitionPage(renderCoursesPage))
-        .on('/course/:courseId', (params) => transitionPage(() => renderCourse(params)))
-        .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params)))
-        .on('/roadmaps', () => transitionPage(renderRoadmapsPage))
-        .on('/docs', () => transitionPage(renderDocsPage))
-        .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params)))
-        .on('/portfolio', () => transitionPage(renderPortfolio))
-        .on('/profile', () => transitionPage(renderProfile))
-        .on('/admin', () => transitionPage(renderAdminDashboard))
-        .on('/about', () => transitionPage(renderAboutPage))
-        .on('/careers', () => transitionPage(renderCareersPage))
-        .on('/login', () => transitionPage(renderLoginPage))
-        .on('/signup', () => transitionPage(renderSignupPage))
-        .on('/404', () => transitionPage(renderErrorPage))
-        .on('/offline', () => transitionPage(renderOfflinePage))
-        .on('*', () => transitionPage(renderErrorPage));
+        .on('/', () => transitionPage(renderLanding, '/'))
+        .on('/courses', () => transitionPage(renderCoursesPage, '#/courses'))
+        .on('/course/:courseId', (params) => transitionPage(() => renderCourse(params), `#/course/${params.courseId}`))
+        .on('/lesson/:courseId/:lessonId', (params) => transitionPage(() => renderLesson(params), `#/lesson/${params.courseId}/${params.lessonId}`))
+        .on('/roadmaps', () => transitionPage(renderRoadmapsPage, '#/roadmaps'))
+        .on('/docs', () => transitionPage(renderDocsPage, '#/docs'))
+        .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params), `#/docs/${params.docId}`))
+        .on('/portfolio', () => transitionPage(renderPortfolio, '#/portfolio'))
+        .on('/profile', () => transitionPage(renderProfile, '#/profile'))
+        .on('/admin', () => transitionPage(renderAdminDashboard, '#/admin'))
+        .on('/about', () => transitionPage(renderAboutPage, '#/about'))
+        .on('/careers', () => transitionPage(renderCareersPage, '#/careers'))
+        .on('/login', () => transitionPage(renderLoginPage, '#/login'))
+        .on('/signup', () => transitionPage(renderSignupPage, '#/signup'))
+        .on('/404', () => transitionPage(renderErrorPage, '#/404'))
+        .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
+        .on('*', () => transitionPage(renderErrorPage, window.location.hash));
 
     // network status handling
     window.addEventListener('offline', () => {
