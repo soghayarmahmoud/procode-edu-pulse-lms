@@ -2027,7 +2027,7 @@ function renderCareersPage() {
             <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" class="btn btn-outline"><i class="fa-brands fa-github"></i> View Repository</a>
         </div>
 
-        <div class="grid" style="grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:var(--space-6);">
+        <div class="grid" style="grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:var(--space-6);">
           ${jobs.map((job, idx) => `
             <div class="card animate-slideUp" style="animation-delay:${idx * 0.1}s;display:flex;flex-direction:column;height:100%;transition:all 0.3s;border:1px solid var(--border-subtle);background:var(--bg-secondary);">
                 <div style="padding:var(--space-6);flex:1;">
@@ -2252,6 +2252,51 @@ function setupGlobalSearch() {
         }
     });
 }
+
+// ══════════════════════════════════════════════
+// ERROR & OFFLINE PAGES
+// ══════════════════════════════════════════════
+
+function renderErrorPage() {
+    const app = $('#app');
+    app.innerHTML = `
+      <div class="container page-wrapper" style="display:flex;align-items:center;justify-content:center;min-height:70vh;">
+        <div class="card text-center animate-scaleIn" style="max-width:500px;padding:var(--space-10);">
+          <div class="error-offline-icon" style="font-size:5rem;color:var(--brand-primary);margin-bottom:var(--space-6);">
+            <i class="fa-solid fa-satellite-dish"></i>
+          </div>
+          <h1 style="font-size:2.5rem;margin-bottom:var(--space-2);">Lost in Space</h1>
+          <p class="text-muted" style="margin-bottom:var(--space-8);font-size:1.1rem;line-height:1.6;">
+            We can't seem to find the page you're looking for. It might have been moved or deleted.
+          </p>
+          <a href="#/" class="btn btn-primary btn-lg" style="width:100%;">Return to Mission Control</a>
+        </div>
+      </div>
+    `;
+}
+
+function renderOfflinePage() {
+    const app = $('#app');
+    app.innerHTML = `
+      <div class="container page-wrapper" style="display:flex;align-items:center;justify-content:center;min-height:70vh;">
+        <div class="card text-center animate-scaleIn" style="max-width:500px;padding:var(--space-10);">
+          <div class="error-offline-icon" style="font-size:5rem;color:var(--color-error);margin-bottom:var(--space-6);">
+            <i class="fa-solid fa-wifi" style="position:relative;">
+              <div style="position:absolute;top:50%;left:50%;width:120%;height:4px;background:var(--color-error);transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;"></div>
+            </i>
+          </div>
+          <h1 style="font-size:2.5rem;margin-bottom:var(--space-2);">Connection Lost</h1>
+          <p class="text-muted" style="margin-bottom:var(--space-8);font-size:1.1rem;line-height:1.6;">
+            It seems you've lost your internet connection. Please check your network settings and try again.
+          </p>
+          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="window.location.reload()">
+            <i class="fa-solid fa-rotate-right"></i> Try Again
+          </button>
+        </div>
+      </div>
+    `;
+}
+
 
 // ══════════════════════════════════════════════
 // APP INITIALIZATION

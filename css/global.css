@@ -559,11 +559,15 @@ select {
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 0 var(--space-4); /* Ensure containers aren't cut off */
+    }
+
     h1 {
-        font-size: var(--text-3xl);
+        font-size: var(--text-2xl); /* Decrease huge headers to wrap gracefully */
     }
 
     h2 {
-        font-size: var(--text-2xl);
+        font-size: var(--text-xl);
     }
 }

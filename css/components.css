@@ -111,9 +111,11 @@
 }
 
 .card-flat {
-    composes: card;
     background: var(--bg-secondary);
-    backdrop-filter: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    transition: all var(--transition-base);
 }
 
 .card-flat:hover {
@@ -164,8 +166,6 @@
     transform: translateY(-50%);
     color: var(--color-success);
     font-size: 0.9rem;
-}
-    -webkit-backdrop-filter: blur(20px);
 }
 
 /* ── Badges ── */
@@ -656,4 +656,22 @@
     color: var(--text-muted);
     max-width: 400px;
     margin: 0 auto;
+}
+
+/* ── Mobile Overrides ── */
+@media (max-width: 480px) {
+    .card, .card-glass, .card-flat {
+        padding: var(--space-4);
+    }
+    .modal {
+        padding: var(--space-6);
+    }
+    .btn {
+        padding: var(--space-2) var(--space-4);
+        font-size: var(--text-xs);
+    }
+    .btn-lg {
+        padding: var(--space-3) var(--space-6);
+        font-size: var(--text-sm);
+    }
 }
