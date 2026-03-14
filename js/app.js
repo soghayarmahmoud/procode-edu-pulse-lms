@@ -1647,9 +1647,8 @@ function renderProfile() {
                 <div class="css-chart-container" style="position: relative; height: 260px; width: 100%;">
                     ${(() => {
                         const activityData = storage.getActivityLast7Days();
-                        let maxVal = Math.max(...activityData.datasets.lessons, 1); // Avoid div by 0
-                        return '<div class="css-bar-chart">';
-                        return activityData.datasets.lessons.map((val, i) => {
+                        let maxVal = Math.max(...activityData.datasets.lessons, 1);
+                        return '<div class="css-bar-chart">' + activityData.datasets.lessons.map((val, i) => {
                             const percent = (val / maxVal) * 100;
                             return `
                               <div class="css-chart-col">
@@ -1778,7 +1777,7 @@ function renderProfile() {
         <div class="grid" style="grid-template-columns:1fr;gap:var(--space-6)">
           <!-- Settings -->
           <div class="card">
-            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Preferences</div>
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-gear"></i> Preferences</h3>
             <div style="display:flex; flex-direction:column; gap:var(--space-6);">
               <div>
                 <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Account</h4>
@@ -2041,30 +2040,7 @@ async function renderAdminDashboard() {
     container.innerHTML = cards.join('');
 }
 
-function renderErrorPage() {
-    const app = $('#app');
-    app.innerHTML = `
-    <div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);text-align:center">
-        <div class="error-offline-icon" style="font-size:6rem;">😕</div>
-        <h1 style="margin-top:var(--space-6)">404 - Page Not Found</h1>
-        <p class="text-muted" style="margin-bottom:var(--space-6);">Sorry, the page you're looking for doesn't exist.</p>
-        <a href="#/" class="btn btn-primary">Go to Home</a>
-    </div>
-    `;
-}
 
-function renderOfflinePage() {
-    const app = $('#app');
-    app.innerHTML = `
-    <div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);text-align:center">
-        <div class="error-offline-icon" style="font-size:6rem;">📡</div>
-        <h1 style="margin-top:var(--space-6)">No Internet Connection</h1>
-        <p class="text-muted" style="margin-bottom:var(--space-6);">Please check your network and try again.</p>
-        <button id="retry-connection" class="btn btn-primary">Retry</button>
-    </div>
-    `;
-    $('#retry-connection').addEventListener('click', () => window.location.reload());
-}
 
 // ══════════════════════════════════════════════
 // NEW PAGES (Roadmaps, Docs, About, Careers)

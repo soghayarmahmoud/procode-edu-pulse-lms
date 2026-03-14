@@ -10,7 +10,13 @@ export class Router {
         this.afterHooks = [];
 
         window.addEventListener('hashchange', () => this._handleRoute());
-        window.addEventListener('load', () => this._handleRoute());
+        
+        // Handle initial route immediately once ready
+        if (document.readyState === 'complete') {
+            this._handleRoute();
+        } else {
+            window.addEventListener('load', () => this._handleRoute());
+        }
     }
 
     on(path, handler) {
