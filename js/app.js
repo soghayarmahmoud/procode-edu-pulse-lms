@@ -36,40 +36,74 @@ let modulesData = null;
 
 async function loadData() {
     const base = getBasePath();
-    const [courses, lessons, quizzes, challenges, roadmaps, docs, modules] = await Promise.all([
-        fetch(`${base}data/courses.json`).then(r => r.json()),
-        fetch(`${base}data/lessons.json`).then(r => r.json()),
-        fetch(`${base}data/quizzes.json`).then(r => r.json()),
-        fetch(`${base}data/challenges.json`).then(r => r.json()),
-        fetch(`${base}data/roadmaps.json`).then(r => r.json()).catch(() => ({ roadmaps: [] })),
-        fetch(`${base}data/docs.json`).then(r => r.json()).catch(() => ({ categories: [] })),
-        fetch(`${base}data/modules.json`).then(r => r.json()).catch(() => ({ modules: [] }))
-    ]);
-    coursesData = courses.courses;
-    lessonsData = lessons.lessons;
-    quizzesData = quizzes.quizzes;
-    challengesData = challenges.challenges;
-    roadmapsData = roadmaps.roadmaps || [];
-    docsData = docs.categories || [];
-    modulesData = modules.modules || [];
+    const manifest = [
+        { key: 'courses', file: 'courses.json' },
+        { key: 'lessons', file: 'lessons.json' },
+        { key: 'quizzes', file: 'quizzes.json' },
+        { key: 'challenges', file: 'challenges.json' },
+        { key: 'roadmaps', file: 'roadmaps.json' },
+        { key: 'docs', file: 'docs.json' },
+        { key: 'modules', file: 'modules.json' }
+    ];
 
-    // Sync reviews from cloud to local storage for all courses
     try {
-        if (isFirebaseConfigured()) {
-            const allReviews = {};
-            for (const course of coursesData) {
+        const results = await Promise.allSettled(
+            manifest.map(item => fetch(`${base}data/${item.file}`).then(r => r.json()))
+        );
+
+        const data = {};
+        results.forEach((res, i) => {
+            const key = manifest[i].key;
+            if (res.status === 'fulfilled') {
+                data[key] = res.value;
+            } else {
+                console.warn(`Failed to load ${key}:`, res.reason);
+                data[key] = key === 'docs' ? { categories: [] } : (key === 'roadmaps' ? { roadmaps: [] } : { [key]: [] });
+            }
+        });
+
+        coursesData = data.courses.courses || [];
+        lessonsData = data.lessons.lessons || [];
+        quizzesData = data.quizzes.quizzes || [];
+        challengesData = data.challenges.challenges || [];
+        roadmapsData = data.roadmaps.roadmaps || [];
+        docsData = data.docs.categories || [];
+        modulesData = data.modules.modules || [];
+
+        // Start Review Sync in Background (Non-blocking)
+        syncReviewsInBackground();
+        
+    } catch (e) {
+        console.error('Critical failure in loadData:', e);
+    }
+}
+
+async function syncReviewsInBackground() {
+    if (!isFirebaseConfigured() || !coursesData) return;
+    
+    // Process in small batches or with low priority
+    try {
+        const allReviews = {};
+        // Use a subset or limit parallel calls to avoid hitting quotas/blocking
+        const limitedCourses = coursesData.slice(0, 10); 
+        
+        await Promise.allSettled(limitedCourses.map(async (course) => {
+            try {
                 const reviews = await firestoreService.getCourseReviews(course.id);
                 if (reviews && reviews.length > 0) {
                     allReviews[course.id] = reviews;
                 }
+            } catch (err) {
+                // Ignore individual course failures
             }
-            if (Object.keys(allReviews).length > 0) {
-                const existingReviews = storage._get('reviews') || {};
-                storage._set('reviews', { ...existingReviews, ...allReviews });
-            }
+        }));
+
+        if (Object.keys(allReviews).length > 0) {
+            const existingReviews = storage._get('reviews') || {};
+            storage._set('reviews', { ...existingReviews, ...allReviews });
         }
     } catch (e) {
-        console.warn('Failed to sync reviews:', e);
+        console.warn('Review background sync failed:', e);
     }
 }
 
