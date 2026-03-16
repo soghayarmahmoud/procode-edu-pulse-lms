@@ -21,8 +21,8 @@ export class CodeEditor {
     async _init() {
         // Use CodeMirror 6 via CDN
         try {
-            const { EditorView, basicSetup } = await import('https://esm.sh/@codemirror/basic-setup@0.20.0');
-            const { EditorState } = await import('https://esm.sh/@codemirror/state@6.2.0');
+            const { EditorView, basicSetup } = await import('https://esm.sh/codemirror@6.0.1');
+            const { EditorState } = await import('https://esm.sh/@codemirror/state@6.0.0');
             const { html } = await import('https://esm.sh/@codemirror/lang-html@6.4.0');
             const { css } = await import('https://esm.sh/@codemirror/lang-css@6.2.0');
             const { javascript } = await import('https://esm.sh/@codemirror/lang-javascript@6.1.5');

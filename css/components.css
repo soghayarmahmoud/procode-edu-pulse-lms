@@ -580,22 +580,51 @@
     opacity: 1;
     pointer-events: auto;
 }
-/* ── Shortcuts Tooltip ── */
-.shortcuts-tooltip {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
-    min-width: 240px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-4px);
-    transition: all 0.2s ease;
-    z-index: 300;
-    box-shadow: var(--shadow-lg);
+/* ── Search Highlighting ── */
+mark.search-highlight {
+    background: rgba(0, 120, 212, 0.25);
+    color: var(--brand-primary-light);
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 600;
+}
+
+/* ── Breadcrumbs ── */
+.breadcrumb-nav {
+    margin-bottom: var(--space-4);
+}
+.breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: var(--text-sm);
+}
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+}
+.breadcrumb-item a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+    color: var(--brand-primary-light);
+}
+.breadcrumb-item.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.breadcrumb-separator {
+    color: var(--text-muted);
+    opacity: 0.5;
+    font-size: 0.8rem;
 }
 
 .shortcuts-tooltip.visible {

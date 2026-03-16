@@ -48,9 +48,20 @@ async function loadData() {
         { key: 'modules', file: 'modules.json' }
     ];
 
+    const fetchWithTimeout = (url, timeout = 5000) => {
+        return Promise.race([
+            fetch(url).then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+        ]);
+    };
+
     try {
+        console.log('Loading manifest data...');
         const results = await Promise.allSettled(
-            manifest.map(item => fetch(`${base}data/${item.file}`).then(r => r.json()))
+            manifest.map(item => fetchWithTimeout(`${base}data/${item.file}`))
         );
 
         const data = {};
@@ -58,9 +69,14 @@ async function loadData() {
             const key = manifest[i].key;
             if (res.status === 'fulfilled') {
                 data[key] = res.value;
+                console.log(`Loaded ${key}`);
             } else {
                 console.warn(`Failed to load ${key}:`, res.reason);
-                data[key] = key === 'docs' ? { categories: [] } : (key === 'roadmaps' ? { roadmaps: [] } : { [key]: [] });
+                // Assign sensible defaults
+                if (key === 'docs') data[key] = { categories: [] };
+                else if (key === 'roadmaps') data[key] = { roadmaps: [] };
+                else if (key === 'modules') data[key] = { modules: [] };
+                else data[key] = { [key]: [] };
             }
         });
 
@@ -81,10 +97,16 @@ async function loadData() {
         });
 
         // Start Review Sync in Background (Non-blocking)
+        console.log('Manifest loading complete. Starting background sync...');
         syncReviewsInBackground();
         
     } catch (e) {
         console.error('Critical failure in loadData:', e);
+        // Ensure some basic data structures exist even on failure
+        coursesData = coursesData || [];
+        lessonsData = lessonsData || [];
+        roadmapsData = roadmapsData || [];
+        modulesData = modulesData || [];
     }
 }
 
@@ -2542,7 +2564,7 @@ function setupGlobalSearch() {
             const searchableItems = [
                 ...coursesData.map(c => ({ title: c.title, desc: c.description || '', type: 'Course', icon: c.icon, link: `#/course/${c.id}` })),
                 ...lessonsData.map(l => ({ title: l.title, desc: '', type: 'Lesson', icon: 'fa-solid fa-book-open', link: `#/lesson/${l.courseId}/${l.id}` })),
-                ...docsData.flatMap(cat => cat.docs.map(d => ({ 
+                ...docsData.flatMap(cat => (cat.docs || []).map(d => ({ 
                     title: d.title, 
                     desc: 'Documentation: ' + cat.title, 
                     type: 'Docs', 
@@ -2550,6 +2572,10 @@ function setupGlobalSearch() {
                     link: `#/docs/${d.id}` 
                 })))
             ];
+            console.log(`Fuse initialized with ${searchableItems.length} items`);
+            if (searchableItems.length === 0) {
+                console.warn('Searchable items is empty! Check coursesData:', coursesData);
+            }
 
             fuse = new Fuse(searchableItems, {
                 keys: [

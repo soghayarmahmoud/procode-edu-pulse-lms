@@ -12,6 +12,7 @@ export class BreadcrumbComponent {
     }
 
     render(courseId, lessonId = null) {
+        console.log(`Breadcrumb render: courseId=${courseId}, lessonId=${lessonId}`);
         const path = [];
         
         // 1. Home
@@ -21,11 +22,13 @@ export class BreadcrumbComponent {
         path.push({ title: 'Courses', url: '#/courses' });
 
         // 3. Find Roadmap
-        const roadmap = this.roadmaps.find(r => r.courses.some(c => c.id === courseId));
+        if (!this.roadmaps || this.roadmaps.length === 0) {
+            console.warn('Breadcrumb: roadmapsData is empty');
+        }
+        const roadmap = this.roadmaps.find(r => r.courses && r.courses.some(c => c.id === courseId));
         if (roadmap) {
-            // Insert Roadmap between Home/Courses and Course?
-            // Let's replace 'Courses' with the Roadmap if it exists for a better path
-            path[1] = { title: roadmap.title, url: `#/roadmaps` }; // Link to roadmap view
+            console.log(`Breadcrumb: Found roadmap ${roadmap.title}`);
+            path[1] = { title: roadmap.title, url: `#/roadmaps` }; 
         }
 
         // 4. Course
