@@ -11,6 +11,7 @@ import { PortfolioComponent } from './components/portfolio.js';
 import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
+import { BreadcrumbComponent } from './components/breadcrumb.js';
 import 'https://cdn.jsdelivr.net/npm/chart.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
@@ -33,6 +34,7 @@ let challengesData = null;
 let roadmapsData = null;
 let docsData = null;
 let modulesData = null;
+let breadcrumb = null;
 
 async function loadData() {
     const base = getBasePath();
@@ -69,6 +71,14 @@ async function loadData() {
         roadmapsData = data.roadmaps.roadmaps || [];
         docsData = data.docs.categories || [];
         modulesData = data.modules.modules || [];
+
+        // Initialize Breadcrumb Component
+        breadcrumb = new BreadcrumbComponent({
+            roadmaps: roadmapsData,
+            courses: coursesData,
+            modules: modulesData,
+            lessons: lessonsData
+        });
 
         // Start Review Sync in Background (Non-blocking)
         syncReviewsInBackground();
@@ -970,6 +980,7 @@ async function renderCourse(params) {
     app.innerHTML = `
     <div class="page-wrapper bg-dots-pattern">
       <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:800px;">
+        ${breadcrumb ? breadcrumb.render(course.id) : ''}
         
         <!-- Course Meta Header -->
         <div style="margin-bottom:var(--space-8); text-align:center;">
@@ -1343,13 +1354,14 @@ async function renderLesson(params) {
       
       <main class="lesson-main">
         <div class="lesson-header">
+          ${breadcrumb ? breadcrumb.render(courseId, lessonId) : `
           <div class="lesson-breadcrumb">
             <a href="#/courses">Courses</a>
             <span>›</span>
             <a href="#/course/${courseId}">${course.title}</a>
             <span>›</span>
             <span style="color:var(--text-primary)">${lesson.title}</span>
-          </div>
+          </div>`}
           <h1 class="lesson-title">${lesson.title}</h1>
           <div class="lesson-meta">
             <span class="lesson-meta-item">${lessonTypeIcon}</span>
@@ -1673,21 +1685,27 @@ function renderProfile() {
                 <div class="text-sm text-muted">Highest completions</div>
             </div>
 
-            <!-- Chart Section span full width -->
-            <div class="card" style="grid-column: span 4; padding:var(--space-6);">
+            <!-- Activity Chart Card -->
+            <div class="card" style="grid-column: span 4; padding:var(--space-6); background: var(--bg-secondary); border-color: var(--border-primary);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
-                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-column"></i> Lessons per Week</h3>
+                    <h3 style="font-size:var(--text-lg);"><i class="fa-solid fa-chart-column text-gradient"></i> Weekly Learning Activity</h3>
+                    <div class="text-xs text-muted">Last 7 days</div>
                 </div>
-                <div class="css-chart-container" style="position: relative; height: 260px; width: 100%;">
+                <div class="css-chart-container" style="position: relative; height: 220px; width: 100%; margin-top: 20px;">
                     ${(() => {
                         const activityData = storage.getActivityLast7Days();
-                        let maxVal = Math.max(...activityData.datasets.lessons, 1);
-                        return '<div class="css-bar-chart">' + activityData.datasets.lessons.map((val, i) => {
+                        // Combine lessons and challenges for total activity
+                        const totals = activityData.datasets.lessons.map((l, idx) => l + activityData.datasets.challenges[idx]);
+                        const maxVal = Math.max(...totals, 5); // Minimum scale of 5
+                        
+                        return '<div class="css-bar-chart">' + totals.map((val, i) => {
                             const percent = (val / maxVal) * 100;
+                            const hasActivity = val > 0;
                             return `
                               <div class="css-chart-col">
-                                <div class="css-bar" style="height: ${Math.max(percent, 5)}%">
-                                  <div class="css-bar-tooltip">${val} lessons</div>
+                                <div class="css-bar ${hasActivity ? 'active' : ''}" style="height: ${Math.max(percent, 2)}%;">
+                                  <div class="css-bar-tooltip">${val} activities</div>
+                                  ${hasActivity ? '<div class="css-bar-shimmer"></div>' : ''}
                                 </div>
                                 <div class="css-label">${activityData.labels[i]}</div>
                               </div>
@@ -2534,9 +2552,13 @@ function setupGlobalSearch() {
             ];
 
             fuse = new Fuse(searchableItems, {
-                keys: ['title', 'desc'],
+                keys: [
+                    { name: 'title', weight: 0.7 },
+                    { name: 'desc', weight: 0.3 }
+                ],
                 threshold: 0.4,
-                includeScore: true
+                includeScore: true,
+                includeMatches: true
             });
         } catch (e) {
             console.error('Fuse.js failed to load:', e);
@@ -2554,22 +2576,42 @@ function setupGlobalSearch() {
 
         if (fuse) {
             const results = fuse.search(query);
-            const topResults = results.slice(0, 8).map(r => r.item);
+            const topResults = results.slice(0, 8);
             
             selectedIndex = -1;
 
             if (topResults.length === 0) {
                 resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
             } else {
-                resultsContainer.innerHTML = topResults.map((r, i) => `
-                    <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
-                        <div class="search-result-title">
-                            <i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> 
-                            ${r.title}
-                        </div>
-                        <div class="search-result-desc">${r.type}${r.desc ? ' • ' + r.desc : ''}</div>
-                    </a>
-                `).join('');
+                resultsContainer.innerHTML = topResults.map((result, i) => {
+                    const item = result.item;
+                    let displayTitle = item.title;
+                    let displayDesc = item.desc;
+
+                    // Simple highlighting logic
+                    if (result.matches) {
+                        result.matches.forEach(match => {
+                            const text = match.key === 'title' ? displayTitle : displayDesc;
+                            // Sort indices descending to replace without breaking indices
+                            const highlighted = [...match.indices].reverse().reduce((acc, [start, end]) => {
+                                return acc.slice(0, start) + '<mark class="search-highlight">' + acc.slice(start, end + 1) + '</mark>' + acc.slice(end + 1);
+                            }, text);
+                            
+                            if (match.key === 'title') displayTitle = highlighted;
+                            else displayDesc = highlighted;
+                        });
+                    }
+
+                    return `
+                      <a href="${item.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
+                          <div class="search-result-title">
+                              <i class="${item.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> 
+                              ${displayTitle}
+                          </div>
+                          <div class="search-result-desc">${item.type}${displayDesc ? ' • ' + displayDesc : ''}</div>
+                      </a>
+                    `;
+                }).join('');
             }
         } else {
             // Fallback to simple includes search if Fuse failed
@@ -2643,6 +2685,11 @@ function setupGlobalSearch() {
             e.preventDefault();
             if (overlay.classList.contains('active')) closeSearch();
             else openSearch();
+        }
+        if (e.key === '/' && !overlay.classList.contains('active') && 
+            e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            openSearch();
         }
         if (e.key === 'Escape' && overlay.classList.contains('active')) {
             closeSearch();

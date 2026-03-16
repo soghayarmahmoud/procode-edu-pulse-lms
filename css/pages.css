@@ -480,6 +480,19 @@
     transform-origin: bottom;
 }
 
+.css-bar.active {
+    box-shadow: 0 0 20px rgba(0, 120, 212, 0.4);
+}
+
+.css-bar-shimmer {
+    position: absolute;
+    top: 0; left: 0; height: 100%; width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+
 .css-bar-tooltip {
     position: absolute;
     top: -30px;
