@@ -13,6 +13,7 @@ export class QuizComponent {
         this.lessonId = lessonId;
         this.answers = {};
         this.submitted = false;
+        this.realTime = quizData.realTime !== false; // Enable by default
         this.render();
     }
 
@@ -80,13 +81,35 @@ export class QuizComponent {
                 const questionId = option.dataset.question;
                 const optionIndex = parseInt(option.dataset.option);
 
-                // Deselect siblings
-                this.container.querySelectorAll(`.quiz-option[data-question="${questionId}"]`).forEach(o => {
-                    o.classList.remove('selected');
-                });
+                if (this.realTime) {
+                    if (this.answers[questionId] !== undefined) return; // Prevent changing answer in real-time mode
 
-                option.classList.add('selected');
-                this.answers[questionId] = optionIndex;
+                    const q = this.quiz.questions.find(item => item.id == questionId);
+                    const isCorrect = optionIndex === q.correctIndex;
+                    
+                    option.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    if (!isCorrect) {
+                        this.container.querySelector(`.quiz-option[data-question="${questionId}"][data-option="${q.correctIndex}"]`).classList.add('correct');
+                    }
+                    
+                    const exp = $(`#explanation-${questionId}`, this.container);
+                    if (exp) exp.classList.add('visible');
+                    
+                    this.answers[questionId] = optionIndex;
+                    
+                    // Check if all answered to highlight submit
+                    if (Object.keys(this.answers).length === this.quiz.questions.length) {
+                        $('#quiz-submit', this.container).classList.add('pulse-animation');
+                    }
+                } else {
+                    // Deselect siblings
+                    this.container.querySelectorAll(`.quiz-option[data-question="${questionId}"]`).forEach(o => {
+                        o.classList.remove('selected');
+                    });
+
+                    option.classList.add('selected');
+                    this.answers[questionId] = optionIndex;
+                }
             });
         });
 
@@ -131,11 +154,38 @@ export class QuizComponent {
         const score = Math.round((correct / this.quiz.questions.length) * 100);
         const passed = score >= (this.quiz.passingScore || 70);
 
+        // Render detailed feedback
+        $('#quiz-questions', this.container).insertAdjacentHTML('afterend', `
+            <div class="quiz-summary-card animate-slideUp">
+                <h3>Exam Results</h3>
+                <div class="quiz-stats-grid">
+                    <div class="quiz-stat-item">
+                        <span class="label">Correct</span>
+                        <span class="value" style="color:var(--color-success)">${correct}</span>
+                    </div>
+                    <div class="quiz-stat-item">
+                        <span class="label">Incorrect</span>
+                        <span class="value" style="color:var(--color-error)">${this.quiz.questions.length - correct}</span>
+                    </div>
+                    <div class="quiz-stat-item">
+                        <span class="label">Score</span>
+                        <span class="value">${score}%</span>
+                    </div>
+                </div>
+                <div class="quiz-result-message">
+                    ${passed 
+                        ? `<p style="color:var(--color-success)"><i class="fa-solid fa-trophy"></i> Congratulations! You passed this module.</p>` 
+                        : `<p style="color:var(--color-error)"><i class="fa-solid fa-circle-exclamation"></i> You didn't reach the passing score of ${this.quiz.passingScore || 70}%. Keep learning!</p>`
+                    }
+                </div>
+            </div>
+        `);
+
         $('#quiz-score', this.container).innerHTML = `
-      <span style="color: ${passed ? 'var(--color-success)' : 'var(--color-error)'}">
-        <i class="fa-solid ${passed ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> Score: ${score}% (${correct}/${this.quiz.questions.length})
-      </span>
-    `;
+            <span style="font-weight:bold; font-size:1.2rem; color: ${passed ? 'var(--color-success)' : 'var(--color-error)'}">
+                Final Score: ${score}%
+            </span>
+        `;
 
         $('#quiz-submit', this.container).style.display = 'none';
         $('#quiz-reset', this.container).style.display = 'inline-flex';

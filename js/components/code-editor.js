@@ -26,10 +26,26 @@ export class CodeEditor {
             const { html } = await import('https://esm.sh/@codemirror/lang-html@6.4.0');
             const { css } = await import('https://esm.sh/@codemirror/lang-css@6.2.0');
             const { javascript } = await import('https://esm.sh/@codemirror/lang-javascript@6.1.5');
+            const { python } = await import('https://esm.sh/@codemirror/lang-python@6.1.2');
+            const { java } = await import('https://esm.sh/@codemirror/lang-java@6.0.1');
+            const { cpp } = await import('https://esm.sh/@codemirror/lang-cpp@6.0.2');
+            const { php } = await import('https://esm.sh/@codemirror/lang-php@6.0.1');
+            const { rust } = await import('https://esm.sh/@codemirror/lang-rust@6.0.1');
+            const { sql } = await import('https://esm.sh/@codemirror/lang-sql@6.4.1');
             const { oneDark } = await import('https://esm.sh/@codemirror/theme-one-dark@6.1.0');
 
-            const langMap = { html, css, javascript: javascript, js: javascript };
-            const langExt = langMap[this.options.language] || html;
+            const langMap = { 
+                html, 
+                css, 
+                javascript, js: javascript,
+                python, py: python,
+                java,
+                cpp, 'c++': cpp,
+                php,
+                rust, rs: rust,
+                sql
+            };
+            const langExt = langMap[this.options.language.toLowerCase()] || html;
 
             const extensions = [
                 basicSetup,

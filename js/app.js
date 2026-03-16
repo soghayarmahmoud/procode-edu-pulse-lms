@@ -2514,53 +2514,97 @@ function setupGlobalSearch() {
         if (e.target === overlay) closeSearch();
     });
 
-    let selectedIndex = -1;
+    let fuse = null;
 
-    input.addEventListener('input', (e) => {
+    async function initFuse() {
+        if (fuse) return;
+        try {
+            const { default: Fuse } = await import('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs');
+            
+            const searchableItems = [
+                ...coursesData.map(c => ({ title: c.title, desc: c.description || '', type: 'Course', icon: c.icon, link: `#/course/${c.id}` })),
+                ...lessonsData.map(l => ({ title: l.title, desc: '', type: 'Lesson', icon: 'fa-solid fa-book-open', link: `#/lesson/${l.courseId}/${l.id}` })),
+                ...docsData.flatMap(cat => cat.docs.map(d => ({ 
+                    title: d.title, 
+                    desc: 'Documentation: ' + cat.title, 
+                    type: 'Docs', 
+                    icon: cat.icon, 
+                    link: `#/docs/${d.id}` 
+                })))
+            ];
+
+            fuse = new Fuse(searchableItems, {
+                keys: ['title', 'desc'],
+                threshold: 0.4,
+                includeScore: true
+            });
+        } catch (e) {
+            console.error('Fuse.js failed to load:', e);
+        }
+    }
+
+    input.addEventListener('input', async (e) => {
         const query = e.target.value.toLowerCase().trim();
         if (!query) {
             resultsContainer.innerHTML = '';
             return;
         }
 
-        const results = [];
-        
-        // Search Courses
-        coursesData.forEach(c => {
-            if (c.title.toLowerCase().includes(query) || c.description.toLowerCase().includes(query)) {
-                results.push({ title: c.title, desc: 'Course', icon: c.icon, link: `#/course/${c.id}` });
-            }
-        });
+        await initFuse();
 
-        // Search Lessons
-        lessonsData.forEach(l => {
-            if (l.title.toLowerCase().includes(query)) {
-                results.push({ title: l.title, desc: 'Lesson', icon: 'fa-solid fa-book-open', link: `#/lesson/${l.courseId}/${l.id}` });
-            }
-        });
+        if (fuse) {
+            const results = fuse.search(query);
+            const topResults = results.slice(0, 8).map(r => r.item);
+            
+            selectedIndex = -1;
 
-        // Search Docs
-        docsData.forEach(cat => {
-            cat.docs.forEach(d => {
-                if (d.title.toLowerCase().includes(query)) {
-                    results.push({ title: d.title, desc: 'Documentation: ' + cat.title, icon: cat.icon, link: `#/docs/${d.id}` });
+            if (topResults.length === 0) {
+                resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
+            } else {
+                resultsContainer.innerHTML = topResults.map((r, i) => `
+                    <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
+                        <div class="search-result-title">
+                            <i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> 
+                            ${r.title}
+                        </div>
+                        <div class="search-result-desc">${r.type}${r.desc ? ' • ' + r.desc : ''}</div>
+                    </a>
+                `).join('');
+            }
+        } else {
+            // Fallback to simple includes search if Fuse failed
+            const results = [];
+            coursesData.forEach(c => {
+                if (c.title.toLowerCase().includes(query) || (c.description && c.description.toLowerCase().includes(query))) {
+                    results.push({ title: c.title, type: 'Course', icon: c.icon, link: `#/course/${c.id}`, desc: c.description });
                 }
             });
-        });
+            lessonsData.forEach(l => {
+                if (l.title.toLowerCase().includes(query)) {
+                    results.push({ title: l.title, type: 'Lesson', icon: 'fa-solid fa-book-open', link: `#/lesson/${l.courseId}/${l.id}` });
+                }
+            });
+            docsData.forEach(cat => {
+                cat.docs.forEach(d => {
+                    if (d.title.toLowerCase().includes(query)) {
+                        results.push({ title: d.title, type: 'Docs', icon: cat.icon, link: `#/docs/${d.id}`, desc: 'Documentation: ' + cat.title });
+                    }
+                });
+            });
 
-        // Render limits
-        const topResults = results.slice(0, 8);
-        selectedIndex = -1;
+            const topResults = results.slice(0, 8);
+            selectedIndex = -1;
 
-        if (topResults.length === 0) {
-            resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
-        } else {
-            resultsContainer.innerHTML = topResults.map((r, i) => `
-                <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
-                    <div class="search-result-title"><i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> ${r.title}</div>
-                    <div class="search-result-desc">${r.desc}</div>
-                </a>
-            `).join('');
+            if (topResults.length === 0) {
+                resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
+            } else {
+                resultsContainer.innerHTML = topResults.map((r, i) => `
+                    <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
+                        <div class="search-result-title"><i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> ${r.title}</div>
+                        <div class="search-result-desc">${r.type}${r.desc ? ' • ' + r.desc : ''}</div>
+                    </a>
+                `).join('');
+            }
         }
     });
 
