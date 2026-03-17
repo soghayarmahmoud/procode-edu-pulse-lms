@@ -39,24 +39,24 @@ ProCode EduPulse transforms passive YouTube viewers into active students by prov
 
 ---
 
-## ✨ Features
+##  Features
 
 ### Core Features
-- 📺 **YouTube Integration** — Videos embedded alongside lesson notes, cheat sheets, and resources
-- 💻 **Interactive Code Playground** — CodeMirror 6 editor with syntax highlighting and live preview
-- 📊 **Progress Tracking** — Persistent progress bars, completion status, and quiz scores
-- 📝 **Quizzes** — Multiple-choice assessments with explanations and scoring
-- 🚀 **Coding Challenges** — Automated DOM-based validation for hands-on practice
+-  **YouTube Integration** — Videos embedded alongside lesson notes, cheat sheets, and resources
+-  **Interactive Code Playground** — CodeMirror 6 editor with syntax highlighting and live preview
+-  **Progress Tracking** — Persistent progress bars, completion status, and quiz scores
+-  **Quizzes** — Multiple-choice assessments with explanations and scoring
+-  **Coding Challenges** — Automated DOM-based validation for hands-on practice
 
 ### Elite Features
-- 🤖 **AI-Powered Hints** — Context-aware clues via Gemini API (configurable)
-- 📁 **Project Portfolio** — Auto-compiled from completed challenges, downloadable as ZIP
-- 🕐 **Timestamped Notes** — Personal notes linked to video timestamps, click to seek
-- 🌙 **Dark/Light Mode** — Dev-friendly UI optimized for long coding sessions
+-  **AI-Powered Hints** — Context-aware clues via Gemini API (configurable)
+-  **Project Portfolio** — Auto-compiled from completed challenges, downloadable as ZIP
+- **Timestamped Notes** — Personal notes linked to video timestamps, click to seek
+-  **Dark/Light Mode** — Dev-friendly UI optimized for long coding sessions
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -71,7 +71,7 @@ ProCode EduPulse transforms passive YouTube viewers into active students by prov
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 procode-edu-pulse-lms/
@@ -166,13 +166,13 @@ npx serve .
 - [x] Mobile responsive design
 
 ### Phase 3: Future Enhancements
-- [ ] User authentication (Supabase/Firebase)
-- [ ] Cloud-based progress sync
-- [ ] Discussion forums per lesson
-- [ ] Leaderboard & achievements
+- [x] User authentication (Supabase/Firebase)
+- [x] Cloud-based progress sync
+- [x] Discussion forums per lesson
+- [x] Leaderboard & achievements
 - [ ] More courses (React, Node.js, Python)
 - [ ] Instructor dashboard
-- [ ] Certificate generation
+- [x] Certificate generation
 
 ---
 
