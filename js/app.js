@@ -98,7 +98,7 @@ async function loadData() {
 
         // Start Review Sync in Background (Non-blocking)
         console.log('Manifest loading complete. Starting background sync...');
-        syncReviewsInBackground();
+        setTimeout(() => syncReviewsInBackground(), 100);
         
     } catch (e) {
         console.error('Critical failure in loadData:', e);
@@ -2582,9 +2582,12 @@ function setupGlobalSearch() {
                     { name: 'title', weight: 0.7 },
                     { name: 'desc', weight: 0.3 }
                 ],
-                threshold: 0.4,
+                threshold: 0.3,
+                distance: 100,
+                location: 0,
                 includeScore: true,
-                includeMatches: true
+                includeMatches: true,
+                minMatchCharLength: 2
             });
         } catch (e) {
             console.error('Fuse.js failed to load:', e);
@@ -2593,6 +2596,7 @@ function setupGlobalSearch() {
 
     input.addEventListener('input', async (e) => {
         const query = e.target.value.toLowerCase().trim();
+        console.log(`Global search query: "${query}"`);
         if (!query) {
             resultsContainer.innerHTML = '';
             return;
@@ -2602,7 +2606,8 @@ function setupGlobalSearch() {
 
         if (fuse) {
             const results = fuse.search(query);
-            const topResults = results.slice(0, 8);
+            console.log(`Search results for "${query}":`, results.length);
+            const topResults = results.slice(0, 10);
             
             selectedIndex = -1;
 
