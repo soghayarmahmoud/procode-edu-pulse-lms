@@ -358,6 +358,70 @@ class FirestoreService {
             return null;
         }
     }
+
+    // ==========================================
+    // INSTRUCTOR CMS DATA METHODS
+    // ==========================================
+    
+    async saveDynamicCourse(courseData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_courses', courseData.id);
+            await setDoc(ref, {
+                ...courseData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic course:', e);
+            return false;
+        }
+    }
+
+    async getDynamicCourses() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_courses'));
+            const courses = [];
+            snap.forEach(doc => courses.push(doc.data()));
+            return courses;
+        } catch (e) {
+            console.error('Error getting dynamic courses:', e);
+            return [];
+        }
+    }
+
+    async saveDynamicLesson(lessonData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_lessons', lessonData.id);
+            await setDoc(ref, {
+                ...lessonData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic lesson:', e);
+            return false;
+        }
+    }
+
+    async getDynamicLessons() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_lessons'));
+            const lessons = [];
+            snap.forEach(doc => lessons.push(doc.data()));
+            return lessons;
+        } catch (e) {
+            console.error('Error getting dynamic lessons:', e);
+            return [];
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();

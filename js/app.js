@@ -88,6 +88,22 @@ async function loadData() {
         docsData = data.docs.categories || [];
         modulesData = data.modules.modules || [];
 
+        // Merge CMS Dynamic Content
+        if (isFirebaseConfigured()) {
+            try {
+                const dynamicCourses = await firestoreService.getDynamicCourses();
+                if (dynamicCourses && dynamicCourses.length > 0) {
+                    coursesData = [...coursesData, ...dynamicCourses];
+                }
+                const dynamicLessons = await firestoreService.getDynamicLessons();
+                if (dynamicLessons && dynamicLessons.length > 0) {
+                    lessonsData = [...lessonsData, ...dynamicLessons];
+                }
+            } catch (err) {
+                console.warn('Failed to load dynamic CMS content:', err);
+            }
+        }
+
         // Initialize Breadcrumb Component
         breadcrumb = new BreadcrumbComponent({
             roadmaps: roadmapsData,
@@ -2782,6 +2798,18 @@ function renderOfflinePage() {
 
 
 // ══════════════════════════════════════════════
+// CMS DASHBOARD
+// ══════════════════════════════════════════════
+
+function renderInstructorDashboard() {
+    const app = $('#app');
+    app.innerHTML = '<div id="instructor-mount"></div>';
+    import('./components/instructor-dashboard.js')
+        .then(m => new m.InstructorDashboard('#instructor-mount', coursesData))
+        .catch(err => console.error('Failed to load CMS:', err));
+}
+
+// ══════════════════════════════════════════════
 // APP INITIALIZATION
 // ══════════════════════════════════════════════
 
@@ -2821,6 +2849,7 @@ async function startMainApp() {
         .on('/careers', () => transitionPage(renderCareersPage, '#/careers'))
         .on('/login', () => transitionPage(renderLoginPage, '#/login'))
         .on('/signup', () => transitionPage(renderSignupPage, '#/signup'))
+        .on('/instructor-dashboard', () => transitionPage(renderInstructorDashboard, '#/instructor-dashboard'))
         .on('/404', () => transitionPage(renderErrorPage, '#/404'))
         .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
         .on('*', () => transitionPage(renderErrorPage, window.location.hash));
