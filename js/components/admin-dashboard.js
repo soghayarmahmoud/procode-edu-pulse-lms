@@ -1,12 +1,16 @@
 import { $, showToast } from '../utils/dom.js';
 import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
+import { mediaService } from '../services/media-service.js';
 
 export class AdminDashboard {
     constructor(containerSelector, systemData) {
         this.containerContainer = $(containerSelector);
         this.systemData = systemData || {};
         this.currentTab = 'overview';
+        // Local state for builders
+        this.courseThumbnail = '';
+        this.lessonVideoUrl = '';
         this.render();
     }
 
@@ -358,17 +362,17 @@ export class AdminDashboard {
                     <h3 style="margin-bottom:var(--space-4);"><i class="fa-solid fa-cloud"></i> Cloudinary Integrations</h3>
                     <p class="text-muted" style="margin-bottom:var(--space-6);">To upload custom Course Thumbnails and Video materials, enter your free Cloudinary API credentials below. This allows massive scale via their CDN.</p>
                     
-                    <form onsubmit="event.preventDefault();" style="display:flex; flex-direction:column; gap:var(--space-4); flex:1;">
+                    <form id="cloudinary-config-form" style="display:flex; flex-direction:column; gap:var(--space-4); flex:1;">
                         <div class="input-group">
                             <label>Cloud Name</label>
-                            <input type="text" class="input" placeholder="e.g. dpqjxyz12">
+                            <input type="text" id="cloud-name" class="input" placeholder="e.g. dpqjxyz12" value="${config.cloudName || ''}">
                         </div>
                         <div class="input-group">
                             <label>Upload Preset (Unsigned)</label>
-                            <input type="text" class="input" placeholder="e.g. procode_uploads">
+                            <input type="text" id="upload-preset" class="input" placeholder="e.g. procode_uploads" value="${config.uploadPreset || ''}">
                         </div>
                         <div style="margin-top:auto; display:flex; justify-content:flex-end;">
-                            <button class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Config</button>
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Save Config</button>
                         </div>
                     </form>
                 </div>
@@ -430,6 +434,20 @@ export class AdminDashboard {
                         <div class="input-group" style="margin-top:var(--space-4);">
                             <label>Total Estimated Lessons</label>
                             <input type="number" id="course-total-lessons" class="input" value="10" required>
+                        </div>
+
+                        <!-- Course Thumbnail Upload -->
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Course Thumbnail (Image)</label>
+                            <div style="display:flex; gap:var(--space-4); align-items:center;">
+                                <button type="button" class="btn btn-secondary" id="btn-upload-thumbnail">
+                                    <i class="fa-solid fa-image"></i> Upload Thumbnail
+                                </button>
+                                <div id="thumbnail-preview" style="width:60px; height:40px; border-radius:4px; background:var(--bg-tertiary); display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--border-subtle);">
+                                    <i class="fa-solid fa-photo-film text-muted"></i>
+                                </div>
+                                <span id="thumbnail-status" class="text-muted" style="font-size:var(--text-xs);">No file uploaded</span>
+                            </div>
                         </div>
                         <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
                             <button class="btn btn-primary" id="btn-save-course" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Course to Cloud</button>
@@ -494,8 +512,20 @@ export class AdminDashboard {
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>YouTube Video ID</label>
+                                <label>YouTube Video ID (Optional)</label>
                                 <input type="text" id="lesson-youtube" class="input" placeholder="e.g. dQw4w9WgXcQ">
+                            </div>
+                            <div class="input-group">
+                                <label>Cloudinary Video (Phase 2)</label>
+                                <div style="display:flex; gap:var(--space-2); align-items:center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-video" style="padding: 0 var(--space-3); height:38px;">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                                    </button>
+                                    <div id="video-preview-icon" style="color:var(--color-success); display:none;">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    </div>
+                                    <span id="video-status" class="text-muted" style="font-size:var(--text-xs); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">No video</span>
+                                </div>
                             </div>
                             <div class="input-group">
                                 <label>Duration (minutes)</label>
@@ -586,6 +616,57 @@ export class AdminDashboard {
             display.style.borderColor = 'var(--border-subtle)';
         });
 
+        // -- Cloudinary Config Form --
+        const configForm = document.getElementById('cloudinary-config-form');
+        if (configForm) {
+            configForm.onsubmit = (e) => {
+                e.preventDefault();
+                const cloudName = document.getElementById('cloud-name').value.trim();
+                const uploadPreset = document.getElementById('upload-preset').value.trim();
+                mediaService.saveConfig(cloudName, uploadPreset);
+            };
+        }
+
+        // -- Course Thumbnail Upload --
+        const btnUploadThumbnail = document.getElementById('btn-upload-thumbnail');
+        if (btnUploadThumbnail) {
+            btnUploadThumbnail.onclick = () => {
+                mediaService.openUploadWidget({
+                    clientAllowedFormats: ["jpg", "png", "jpeg", "webp"],
+                    maxFileSize: 2000000, // 2MB
+                    multiple: false,
+                    folder: 'course_thumbnails'
+                }, (info) => {
+                    this.courseThumbnail = info.secure_url;
+                    const preview = document.getElementById('thumbnail-preview');
+                    const status = document.getElementById('thumbnail-status');
+                    if (preview) preview.innerHTML = `<img src="${info.secure_url}" style="width:100%; height:100%; object-fit:cover;">`;
+                    if (status) status.textContent = 'Upload successful!';
+                });
+            };
+        }
+
+        // -- Lesson Video Upload --
+        const btnUploadVideo = document.getElementById('btn-upload-video');
+        if (btnUploadVideo) {
+            btnUploadVideo.onclick = () => {
+                mediaService.openUploadWidget({
+                    resourceType: 'video',
+                    clientAllowedFormats: ["mp4", "mov", "avi"],
+                    maxFileSize: 100000000, // 100MB
+                    multiple: false,
+                    folder: 'lesson_videos'
+                }, (info) => {
+                    this.lessonVideoUrl = info.secure_url;
+                    const icon = document.getElementById('video-preview-icon');
+                    const status = document.getElementById('video-status');
+                    if (icon) icon.style.display = 'block';
+                    if (status) status.textContent = info.original_filename || 'Video uploaded';
+                    showToast('Video uploaded successfully!', 'success');
+                });
+            };
+        }
+
         // -- Form Submits --
         const btnSaveCourse = document.getElementById('btn-save-course');
         if (btnSaveCourse) {
@@ -600,6 +681,7 @@ export class AdminDashboard {
                     id: document.getElementById('course-id').value.trim(),
                     title: document.getElementById('course-title').value.trim(),
                     icon: document.getElementById('course-icon').value.trim(),
+                    thumbnail: this.courseThumbnail || '', // Cloudinary URL
                     difficulty: document.getElementById('course-difficulty').value,
                     description: document.getElementById('course-desc').value.trim(),
                     totalLessons: parseInt(document.getElementById('course-total-lessons').value, 10),
@@ -610,6 +692,13 @@ export class AdminDashboard {
                 if (success) {
                     showToast('Course successfully published to the cloud!', 'success');
                     form.reset();
+                    // Reset internal state and preview
+                    this.courseThumbnail = '';
+                    const preview = document.getElementById('thumbnail-preview');
+                    const status = document.getElementById('thumbnail-status');
+                    if (preview) preview.innerHTML = '<i class="fa-solid fa-photo-film text-muted"></i>';
+                    if (status) status.textContent = 'No file uploaded';
+
                     // Update dropdown
                     if (optionsContainer) {
                         const newOptionHTML = `
@@ -646,6 +735,7 @@ export class AdminDashboard {
                     title: document.getElementById('lesson-title').value.trim(),
                     type: document.getElementById('lesson-type').value,
                     youtubeId: document.getElementById('lesson-youtube').value.trim(),
+                    videoUrl: this.lessonVideoUrl || '', // Cloudinary URL
                     duration: document.getElementById('lesson-duration').value.trim(),
                     order: parseInt(document.getElementById('lesson-order').value, 10),
                     content: document.getElementById('lesson-content').value.trim(),
@@ -656,6 +746,13 @@ export class AdminDashboard {
                 if (success) {
                     showToast('Lesson successfully published to the cloud!', 'success');
                     form.reset();
+                    // Reset internal state and UI
+                    this.lessonVideoUrl = '';
+                    const icon = document.getElementById('video-preview-icon');
+                    const videoStatus = document.getElementById('video-status');
+                    if (icon) icon.style.display = 'none';
+                    if (videoStatus) videoStatus.textContent = 'No video';
+
                     valueDisplay.textContent = 'Select target course...';
                     valueDisplay.classList.add('text-muted');
                     hiddenInput.value = '';

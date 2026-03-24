@@ -9,14 +9,16 @@ export class Router {
         this.beforeHooks = [];
         this.afterHooks = [];
 
+        // Listen for future hash changes
         window.addEventListener('hashchange', () => this._handleRoute());
-        
-        // Handle initial route immediately once ready
-        if (document.readyState === 'complete') {
-            this._handleRoute();
-        } else {
-            window.addEventListener('load', () => this._handleRoute());
-        }
+    }
+
+    /**
+     * Manually trigger initial route resolution.
+     * Should be called after all routes and hooks are defined.
+     */
+    async resolve() {
+        await this._handleRoute();
     }
 
     on(path, handler) {

@@ -28,16 +28,48 @@ export class VideoPlayer {
         this.videoId = videoId;
         this.options = options;
         this.player = null;
+        this.videoElement = null; // for native video
         this.onTimeUpdate = options.onTimeUpdate || null;
         this._timeInterval = null;
 
-        loadYTAPI();
-
-        if (apiReady) {
-            this._createPlayer();
+        const isUrl = videoId && (videoId.startsWith('http') || videoId.includes('/'));
+        
+        if (isUrl) {
+            this._createNativePlayer();
         } else {
-            onReadyCallbacks.push(() => this._createPlayer());
+            loadYTAPI();
+            if (apiReady) {
+                this._createPlayer();
+            } else {
+                onReadyCallbacks.push(() => this._createPlayer());
+            }
         }
+    }
+
+    _createNativePlayer() {
+        const container = document.getElementById(this.containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <video id="${this.containerId}-native" class="video-native" controls style="width:100%; height:100%; border-radius:var(--radius-lg); overflow:hidden;">
+                <source src="${this.videoId}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+
+        this.videoElement = document.getElementById(`${this.containerId}-native`);
+        this.videoElement.onplay = () => this._startTimeTracking();
+        this.videoElement.onpause = () => this._stopTimeTracking();
+        this.videoElement.onended = () => {
+            this._stopTimeTracking();
+            if (this.options.onStateChange) this.options.onStateChange({ data: 0 }); // simulate YT.PlayerState.ENDED
+        };
+
+        if (this.options.onReady) {
+            setTimeout(() => this.options.onReady({ target: this.videoElement }), 100);
+        }
+
+        playerInstance = this;
     }
 
     _createPlayer() {
@@ -84,8 +116,8 @@ export class VideoPlayer {
     _startTimeTracking() {
         this._stopTimeTracking();
         this._timeInterval = setInterval(() => {
-            if (this.onTimeUpdate && this.player) {
-                const time = this.player.getCurrentTime();
+            if (this.onTimeUpdate) {
+                const time = this.getCurrentTime();
                 this.onTimeUpdate(time);
             }
         }, 1000);
@@ -99,26 +131,40 @@ export class VideoPlayer {
     }
 
     getCurrentTime() {
-        return this.player ? this.player.getCurrentTime() : 0;
+        if (this.videoElement) return this.videoElement.currentTime;
+        return this.player ? (this.player.getCurrentTime ? this.player.getCurrentTime() : 0) : 0;
     }
 
     seekTo(seconds) {
-        if (this.player) {
+        if (this.videoElement) {
+            this.videoElement.currentTime = seconds;
+        } else if (this.player && this.player.seekTo) {
             this.player.seekTo(seconds, true);
         }
     }
 
     play() {
-        if (this.player) this.player.playVideo();
+        if (this.videoElement) this.videoElement.play();
+        else if (this.player && this.player.playVideo) this.player.playVideo();
     }
 
     pause() {
-        if (this.player) this.player.pauseVideo();
+        if (this.videoElement) this.videoElement.pause();
+        else if (this.player && this.player.pauseVideo) this.player.pauseVideo();
     }
 
     destroy() {
         this._stopTimeTracking();
-        if (this.player) {
+        if (this.videoElement) {
+            this.videoElement.onplay = null;
+            this.videoElement.onpause = null;
+            this.videoElement.onended = null;
+            this.videoElement.src = "";
+            this.videoElement.load();
+            this.videoElement.remove();
+            this.videoElement = null;
+        }
+        if (this.player && this.player.destroy) {
             this.player.destroy();
             this.player = null;
         }

@@ -842,7 +842,10 @@ function renderLanding() {
         const isEnrolled = storage.isEnrolled(course.id);
         return `
             <div class="course-card" data-animate onclick="location.hash='/course/${course.id}'">
-              ${course.thumbnail ? `<div class="course-thumb"><img src="${base}${course.thumbnail}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`}
+              ${(() => {
+                  const thumbUrl = course.thumbnail ? (course.thumbnail.startsWith('http') ? course.thumbnail : `${base}${course.thumbnail}`) : null;
+                  return thumbUrl ? `<div class="course-thumb"><img src="${thumbUrl}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`;
+              })()}
               <div class="course-body">
                 <div class="course-meta">
                   <span class="badge badge-primary">${course.difficulty}</span>
@@ -961,7 +964,10 @@ function renderCoursesPage() {
         const isEnrolled = storage.isEnrolled(course.id);
         return `
             <div class="course-card" onclick="location.hash='/course/${course.id}'" data-animate>
-              ${course.thumbnail ? `<div class="course-thumb"><img src="${base}${course.thumbnail}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`}
+              ${(() => {
+                  const thumbUrl = course.thumbnail ? (course.thumbnail.startsWith('http') ? course.thumbnail : `${base}${course.thumbnail}`) : null;
+                  return thumbUrl ? `<div class="course-thumb"><img src="${thumbUrl}" alt="${course.title}" onerror="this.parentElement.innerHTML='<div class=\\'course-thumb-placeholder\\'><i class=\\'${course.icon}\\'></i></div>'"></div>` : `<div class="course-thumb-placeholder"><i class="${course.icon}"></i></div>`;
+              })()}
               <div class="course-body">
                 <div class="course-meta">
                   <span class="badge badge-primary">${course.difficulty}</span>
@@ -1033,8 +1039,11 @@ async function renderCourse(params) {
         
         <!-- Course Meta Header -->
         <div style="margin-bottom:var(--space-8); text-align:center;">
-          <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); background:var(--bg-tertiary); color:var(--brand-primary); font-size:3rem; width:100px; height:100px;">
-            <i class="${course.icon}"></i>
+          <div class="avatar avatar-lg" style="margin: 0 auto var(--space-4); background:var(--bg-tertiary); color:var(--brand-primary); font-size:3rem; width:120px; height:120px; overflow:hidden; border-radius:var(--radius-lg);">
+            ${(() => {
+                const thumbUrl = course.thumbnail ? (course.thumbnail.startsWith('http') ? course.thumbnail : `${base}${course.thumbnail}`) : null;
+                return thumbUrl ? `<img src="${thumbUrl}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="${course.icon}"></i>`;
+            })()}
           </div>
           <span class="badge ${isCompleted ? 'badge-success' : 'badge-primary'}" style="margin-bottom:var(--space-4)">
             ${isCompleted ? '<i class="fa-solid fa-check"></i> Course Completed' : isEnrolled ? 'In Progress' : course.difficulty}
@@ -1528,7 +1537,7 @@ async function renderLesson(params) {
 
     // ── Init Video Player ──
     const { VideoPlayer } = await import('./components/video-player.js');
-    new VideoPlayer('yt-player', lesson.youtubeId);
+    new VideoPlayer('yt-player', lesson.videoUrl || lesson.youtubeId);
 
     // ── Init Code Editor ──
     const { CodeEditor, updatePreview } = await import('./components/code-editor.js');
@@ -2889,6 +2898,9 @@ async function startMainApp() {
         .on('/404', () => transitionPage(renderErrorPage, '#/404'))
         .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
         .on('*', () => transitionPage(renderErrorPage, window.location.hash));
+
+    // Resolve initial route after registration
+    await router.resolve();
 
     // network status handling
     window.addEventListener('offline', () => {
