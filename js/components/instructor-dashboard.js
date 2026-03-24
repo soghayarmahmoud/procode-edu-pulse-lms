@@ -94,9 +94,29 @@ export class InstructorDashboard {
                             <form id="lesson-builder-form" onsubmit="event.preventDefault();">
                                 <div class="input-group" style="margin-bottom:var(--space-4);">
                                     <label>Select Course</label>
-                                    <select id="lesson-course-id" class="input" required>
-                                        ${this.coursesData.map(c => `<option value="${c.id}">${c.title}</option>`).join('')}
-                                    </select>
+                                    <div class="custom-select-container" id="course-select-container" style="position:relative;">
+                                        <div class="input custom-select-display" tabindex="0" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="lesson-course-display">
+                                            <span class="custom-select-value text-muted" data-value="">Search and select a course...</span>
+                                            <i class="fa-solid fa-chevron-down text-muted"></i>
+                                        </div>
+                                        <div class="custom-select-dropdown" id="lesson-course-dropdown" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); z-index:var(--z-tooltip); box-shadow:var(--shadow-lg); overflow:hidden;">
+                                            <div style="padding:var(--space-2); border-bottom:1px solid var(--border-subtle); background:var(--bg-secondary);">
+                                                <div style="position:relative;">
+                                                    <i class="fa-solid fa-magnifying-glass text-muted" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.9rem;"></i>
+                                                    <input type="text" id="lesson-course-search" class="input" placeholder="Search courses..." style="width:100%; padding-left:32px; height:36px; font-size:var(--text-sm);">
+                                                </div>
+                                            </div>
+                                            <div class="custom-select-options" id="lesson-course-options" style="max-height:220px; overflow-y:auto; padding:var(--space-1) 0;">
+                                                ${this.coursesData.map(c => `
+                                                    <div class="custom-select-option" data-value="${c.id}" data-search="${c.title.toLowerCase()}" style="padding:var(--space-2) var(--space-4); cursor:pointer; display:flex; align-items:center; gap:var(--space-3); transition:background 0.2s; font-size:var(--text-sm);">
+                                                        <div class="avatar-sm" style="width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)); color:white; font-size:10px;"><i class="${c.icon || 'fa-solid fa-book'}"></i></div>
+                                                        <span style="color:var(--text-primary); font-weight:500;">${c.title}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="lesson-course-id" required>
+                                    </div>
                                 </div>
                                 <div class="grid grid-2" style="gap:var(--space-4);">
                                     <div class="input-group">
@@ -142,6 +162,113 @@ export class InstructorDashboard {
         `;
 
         this._attachEvents();
+        this._initCustomSelect();
+    }
+
+    _initCustomSelect() {
+        const container = document.getElementById('course-select-container');
+        const display = document.getElementById('lesson-course-display');
+        const dropdown = document.getElementById('lesson-course-dropdown');
+        const searchInput = document.getElementById('lesson-course-search');
+        const optionsContainer = document.getElementById('lesson-course-options');
+        const hiddenInput = document.getElementById('lesson-course-id');
+        const valueDisplay = display?.querySelector('.custom-select-value');
+
+        if (!container || !display || !dropdown) return;
+
+        // Toggle dropdown
+        display.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.style.display === 'block';
+            dropdown.style.display = isOpen ? 'none' : 'block';
+            display.style.borderColor = isOpen ? 'var(--border-subtle)' : 'var(--brand-primary)';
+            if (!isOpen) {
+                searchInput.value = '';
+                this._filterOptions('');
+                setTimeout(() => searchInput.focus(), 50);
+            }
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                dropdown.style.display = 'none';
+                display.style.borderColor = 'var(--border-subtle)';
+            }
+        });
+
+        // Prevent closing when clicking inside dropdown
+        dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+        // Search filtering
+        searchInput.addEventListener('input', (e) => {
+            this._filterOptions(e.target.value.toLowerCase());
+        });
+
+        // Option selection delegator
+        optionsContainer.addEventListener('click', (e) => {
+            const option = e.target.closest('.custom-select-option');
+            if (!option) return;
+
+            const val = option.dataset.value;
+            const title = option.querySelector('span').textContent;
+            
+            hiddenInput.value = val;
+            valueDisplay.textContent = title;
+            valueDisplay.classList.remove('text-muted');
+            valueDisplay.style.color = 'var(--text-primary)';
+            
+            // Mark visually active
+            const allOptions = optionsContainer.querySelectorAll('.custom-select-option');
+            allOptions.forEach(opt => opt.style.background = 'transparent');
+            option.style.background = 'rgba(0, 120, 212, 0.1)';
+
+            dropdown.style.display = 'none';
+            display.style.borderColor = 'var(--border-subtle)';
+        });
+
+        // Hover effect delegator
+        optionsContainer.addEventListener('mouseover', (e) => {
+            const option = e.target.closest('.custom-select-option');
+            if (option && option.dataset.value !== hiddenInput.value) {
+                option.style.background = 'var(--bg-tertiary)';
+            }
+        });
+        optionsContainer.addEventListener('mouseout', (e) => {
+            const option = e.target.closest('.custom-select-option');
+            if (option && option.dataset.value !== hiddenInput.value) {
+                option.style.background = 'transparent';
+            }
+        });
+    }
+
+    _filterOptions(query) {
+        const optionsContainer = document.getElementById('lesson-course-options');
+        if (!optionsContainer) return;
+        const options = optionsContainer.querySelectorAll('.custom-select-option');
+        let hasVisible = false;
+
+        options.forEach(opt => {
+            const searchData = opt.dataset.search || '';
+            if (searchData.includes(query)) {
+                opt.style.display = 'flex';
+                hasVisible = true;
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+
+        // Handle empty state
+        let emptyMsg = optionsContainer.querySelector('.empty-search');
+        if (!hasVisible) {
+            if (!emptyMsg) {
+                optionsContainer.insertAdjacentHTML('beforeend', '<div class="empty-search text-muted" style="padding:var(--space-4); text-align:center; font-size:var(--text-sm);">No courses found matching criteria.</div>');
+            } else {
+                emptyMsg.style.display = 'block';
+            }
+        } else if (emptyMsg) {
+            emptyMsg.style.display = 'none';
+        }
     }
 
     _attachEvents() {
@@ -169,8 +296,31 @@ export class InstructorDashboard {
                     showToast('Course successfully published to the cloud!', 'success');
                     form.reset();
                     // Add option to select dynamically
-                    const sel = document.getElementById('lesson-course-id');
-                    if (sel) sel.innerHTML += `<option value="${courseData.id}">${courseData.title}</option>`;
+                    const optionsContainer = document.getElementById('lesson-course-options');
+                    if (optionsContainer) {
+                        const emptyMsg = optionsContainer.querySelector('.empty-search');
+                        if (emptyMsg) emptyMsg.style.display = 'none';
+
+                        const newOptionHTML = `
+                            <div class="custom-select-option" data-value="${courseData.id}" data-search="${courseData.title.toLowerCase()}" style="padding:var(--space-2) var(--space-4); cursor:pointer; display:flex; align-items:center; gap:var(--space-3); transition:background 0.2s; font-size:var(--text-sm);">
+                                <div class="avatar-sm" style="width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)); color:white; font-size:10px;"><i class="${courseData.icon}"></i></div>
+                                <span style="color:var(--text-primary); font-weight:500;">${courseData.title}</span>
+                            </div>
+                        `;
+                        optionsContainer.insertAdjacentHTML('beforeend', newOptionHTML);
+                        
+                        // In case it's the first one, auto select it
+                        const hiddenInput = document.getElementById('lesson-course-id');
+                        if (!hiddenInput.value) {
+                            hiddenInput.value = courseData.id;
+                            const displayVal = document.getElementById('lesson-course-display')?.querySelector('.custom-select-value');
+                            if (displayVal) {
+                                displayVal.textContent = courseData.title;
+                                displayVal.classList.remove('text-muted');
+                                displayVal.style.color = 'var(--text-primary)';
+                            }
+                        }
+                    }
                 } else {
                     showToast('Failed to publish course.', 'error');
                 }
@@ -186,12 +336,18 @@ export class InstructorDashboard {
                 const form = document.getElementById('lesson-builder-form');
                 if (!form.checkValidity()) return;
 
+                const courseIdVal = document.getElementById('lesson-course-id').value;
+                if (!courseIdVal) {
+                    showToast('Please select a course first.', 'error');
+                    return;
+                }
+
                 btnSaveLesson.disabled = true;
                 btnSaveLesson.innerHTML = '<div class="spinner-sm"></div> Publishing...';
 
                 const lessonData = {
                     id: document.getElementById('lesson-id').value.trim(),
-                    courseId: document.getElementById('lesson-course-id').value,
+                    courseId: courseIdVal,
                     title: document.getElementById('lesson-title').value.trim(),
                     type: document.getElementById('lesson-type').value,
                     youtubeId: document.getElementById('lesson-youtube').value.trim(),
@@ -205,6 +361,16 @@ export class InstructorDashboard {
                 if (success) {
                     showToast('Lesson successfully published to the cloud!', 'success');
                     form.reset();
+                    // Reset custom select visual state
+                    const displayVal = document.getElementById('lesson-course-display')?.querySelector('.custom-select-value');
+                    if (displayVal) {
+                        displayVal.textContent = 'Search and select a course...';
+                        displayVal.classList.add('text-muted');
+                        displayVal.style.color = '';
+                    }
+                    document.getElementById('lesson-course-id').value = '';
+                    const allOpts = document.querySelectorAll('#lesson-course-options .custom-select-option');
+                    allOpts.forEach(opt => opt.style.background = 'transparent');
                 } else {
                     showToast('Failed to publish lesson.', 'error');
                 }
