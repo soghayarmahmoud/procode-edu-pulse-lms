@@ -88,6 +88,22 @@ class FirestoreService {
     }
 
     /**
+     * Save enrollments to Firestore.
+     */
+    async saveEnrollments(uid, enrollments) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                enrollments,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveEnrollments failed:', e);
+        }
+    }
+
+    /**
      * Sync all localStorage data to Firestore (one-time migration).
      */
     async syncLocalToCloud(uid, localData) {

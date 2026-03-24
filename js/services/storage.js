@@ -2,6 +2,9 @@
 // ProCode EduPulse — localStorage Persistence
 // ============================================
 
+import { authService } from './auth-service.js';
+import { firestoreService } from './firestore-service.js';
+
 const STORAGE_PREFIX = 'procode_';
 
 class StorageService {
@@ -27,9 +30,42 @@ class StorageService {
     _set(key, value) {
         try {
             localStorage.setItem(this._key(key), JSON.stringify(value));
+            this._syncToCloud(key, value);
         } catch (e) {
             console.warn('Storage write failed:', e);
         }
+    }
+
+    _syncToCloud(key, value) {
+        const uid = authService.getUid();
+        if (!uid) return;
+
+        // Run sync asynchronously to not block UI
+        setTimeout(() => {
+            switch (key) {
+                case 'profile':
+                    firestoreService.saveUserProfile(uid, value);
+                    break;
+                case 'progress':
+                    firestoreService.saveProgress(uid, value);
+                    break;
+                case 'notes':
+                    firestoreService.saveNotes(uid, value);
+                    break;
+                case 'submissions':
+                    firestoreService.saveSubmissions(uid, value);
+                    break;
+                case 'enrollments':
+                    firestoreService.saveEnrollments(uid, value);
+                    break;
+                case 'certifications':
+                    firestoreService.saveCertifications(uid, value);
+                    break;
+                case 'active_time':
+                    firestoreService.saveActivityTime(uid, value);
+                    break;
+            }
+        }, 0);
     }
 
     _initDefaults() {
