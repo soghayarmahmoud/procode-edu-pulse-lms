@@ -39,7 +39,17 @@ class AuthService {
                 return;
             }
 
+            // Safety timeout to prevent infinite loading if Firebase hangs
+            const timeoutId = setTimeout(() => {
+                if (!this._initialized) {
+                    console.warn('AuthService init timed out after 7s. Proceeding in offline/anonymous mode.');
+                    this._initialized = true;
+                    resolve(null);
+                }
+            }, 7000);
+
             onAuthStateChanged(auth, async (user) => {
+                clearTimeout(timeoutId);
                 this._user = user;
                 this._profile = null; // Clear profile on auth change
                 

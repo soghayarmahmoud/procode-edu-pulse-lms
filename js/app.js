@@ -87,25 +87,35 @@ async function loadData() {
         docsData = data.docs.categories || [];
         modulesData = data.modules.modules || [];
 
-        // Merge CMS Dynamic Content
+        // Merge CMS Dynamic Content (Parallelized with Timeout)
         if (isFirebaseConfigured()) {
             try {
-                const dynamicCourses = await firestoreService.getDynamicCourses();
-                if (dynamicCourses && dynamicCourses.length > 0) {
-                    coursesData = [...coursesData, ...dynamicCourses];
+                const firestoreTimeout = 8000; // 8 seconds
+                const withTimeout = (promise) => Promise.race([
+                    promise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Timeout')), firestoreTimeout))
+                ]);
+
+                console.log('Fetching dynamic CMS content...');
+                const [coursesRes, lessonsRes] = await Promise.allSettled([
+                    withTimeout(firestoreService.getDynamicCourses()),
+                    withTimeout(firestoreService.getDynamicLessons())
+                ]);
+
+                if (coursesRes.status === 'fulfilled' && coursesRes.value) {
+                    coursesData = [...coursesData, ...coursesRes.value];
                 }
-                const dynamicLessons = await firestoreService.getDynamicLessons();
-                if (dynamicLessons && dynamicLessons.length > 0) {
-                    lessonsData = [...lessonsData, ...dynamicLessons];
+                if (lessonsRes.status === 'fulfilled' && lessonsRes.value) {
+                    lessonsData = [...lessonsData, ...lessonsRes.value];
                 }
             } catch (err) {
-                console.warn('Failed to load dynamic CMS content:', err);
+                console.warn('Non-blocking error loading dynamic content:', err);
             }
         }
 
         // Start Review Sync in Background (Non-blocking)
         console.log('Manifest loading complete. Starting background sync...');
-        setTimeout(() => syncReviewsInBackground(), 100);
+        setTimeout(() => syncReviewsInBackground(), 200);
         
     } catch (e) {
         console.error('Critical failure in loadData:', e);
@@ -118,31 +128,41 @@ async function loadData() {
 }
 
 async function syncReviewsInBackground() {
-    if (!isFirebaseConfigured() || !coursesData) return;
+    if (!isFirebaseConfigured() || !coursesData || coursesData.length === 0) return;
     
-    // Process in small batches or with low priority
     try {
         const allReviews = {};
-        // Use a subset or limit parallel calls to avoid hitting quotas/blocking
-        const limitedCourses = coursesData.slice(0, 10); 
+        // Use a subset or limit parallel calls to avoid hitting quotas
+        const limitedCourses = coursesData.slice(0, 15); 
+        
+        console.log(`Background Sync: Fetching reviews for ${limitedCourses.length} courses...`);
         
         await Promise.allSettled(limitedCourses.map(async (course) => {
             try {
-                const reviews = await firestoreService.getCourseReviews(course.id);
+                // Add a local timeout per course review fetch
+                const reviews = await Promise.race([
+                    firestoreService.getCourseReviews(course.id),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                ]);
+                
                 if (reviews && reviews.length > 0) {
                     allReviews[course.id] = reviews;
                 }
             } catch (err) {
-                // Ignore individual course failures
+                // Silently handle individual course permission/timeout errors
+                if (err.code === 'permission-denied') {
+                    console.debug(`Permission denied for reviews of course: ${course.id}`);
+                }
             }
         }));
 
         if (Object.keys(allReviews).length > 0) {
             const existingReviews = storage._get('reviews') || {};
             storage._set('reviews', { ...existingReviews, ...allReviews });
+            console.log('Background Sync: Reviews updated.');
         }
     } catch (e) {
-        console.warn('Review background sync failed:', e);
+        console.warn('Review background sync encountered a batch failure:', e);
     }
 }
 
