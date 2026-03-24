@@ -38,8 +38,7 @@ export function renderNavbar() {
         <a href="#/portfolio" class="nav-link ${currentHash === '/portfolio' ? 'active' : ''}" data-route="/portfolio">Portfolio</a>
         <a href="#/careers" class="nav-link ${currentHash.startsWith('/careers') ? 'active' : ''}" data-route="/careers">Volunteer</a>
         <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
-        ${user && user.admin ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin">Admin</a>` : ''}
-        ${user ? `<a href="#/instructor-dashboard" class="nav-link ${currentHash === '/instructor-dashboard' ? 'active' : ''}" data-route="/instructor-dashboard"><i class="fa-solid fa-chalkboard-user"></i> Instructor</a>` : ''}
+        ${authService.isAdminSync() ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin"><i class="fa-solid fa-gauge"></i> Admin Panel</a>` : ''}
       </div>
 
       <div class="nav-actions">
@@ -78,7 +77,7 @@ export function renderNavbar() {
       <a href="#/portfolio" class="nav-link" data-route="/portfolio">Portfolio</a>
       <a href="#/careers" class="nav-link" data-route="/careers">Volunteer</a>
       <a href="#/about" class="nav-link" data-route="/about">About</a>
-      ${user ? `<a href="#/instructor-dashboard" class="nav-link" data-route="/instructor-dashboard"><i class="fa-solid fa-chalkboard-user"></i> Instructor</a>` : ''}
+      ${authService.isAdminSync() ? `<a href="#/admin" class="nav-link" data-route="/admin"><i class="fa-solid fa-gauge"></i> Admin Panel</a>` : ''}
     </div>
   `;
 

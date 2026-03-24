@@ -12,12 +12,14 @@ import {
     onAuthStateChanged,
     updateProfile
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { firestoreService } from './firestore-service.js';
 
 const googleProvider = new GoogleAuthProvider();
 
 class AuthService {
     constructor() {
         this._user = null;
+        this._profile = null; // Cache for Firestore user profile
         this._listeners = [];
         this._initialized = false;
         this._initPromise = null;
@@ -37,8 +39,18 @@ class AuthService {
                 return;
             }
 
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 this._user = user;
+                this._profile = null; // Clear profile on auth change
+                
+                if (user) {
+                    try {
+                        this._profile = await firestoreService.getUserProfile(user.uid);
+                    } catch (e) {
+                        console.warn('Profile fetch failed during auth change:', e);
+                    }
+                }
+                
                 this._initialized = true;
                 this._listeners.forEach(cb => cb(user));
                 resolve(user);
@@ -96,6 +108,7 @@ class AuthService {
         if (!isFirebaseConfigured()) return;
         await fbSignOut(auth);
         this._user = null;
+        this._profile = null;
     }
 
     /**
@@ -145,12 +158,50 @@ class AuthService {
     }
 
     /**
+     * Get the current user profile from Firestore.
+     */
+    async getUserProfile() {
+        if (!this._user) return null;
+        if (this._profile) return this._profile;
+        
+        try {
+            this._profile = await firestoreService.getUserProfile(this._user.uid);
+            return this._profile;
+        } catch (e) {
+            console.warn('Manual profile fetch failed:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Check if the current user has admin privileges.
+     */
+    async isAdmin() {
+        const profile = await this.getUserProfile();
+        if (!profile) return false;
+        
+        // Match logic from admin-dashboard.js
+        return profile.isAdmin === true || profile.profile?.isAdmin === true;
+    }
+
+    /**
+     * Update user display name in Firebase Auth profile.
+     */
+    /**
      * Update user display name in Firebase Auth profile.
      */
     async updateDisplayName(name) {
         if (this._user && name) {
             await updateProfile(this._user, { displayName: name });
         }
+    }
+
+    /**
+     * Check if the current user has admin privileges (synchronous, uses cache).
+     */
+    isAdminSync() {
+        if (!this._profile) return false;
+        return this._profile.isAdmin === true || this._profile.profile?.isAdmin === true;
     }
 }
 

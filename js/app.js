@@ -2794,6 +2794,18 @@ function renderInstructorDashboard() {
 }
 
 // ══════════════════════════════════════════════
+// MASTER ADMIN DASHBOARD
+// ══════════════════════════════════════════════
+
+function renderAdminDashboard() {
+    const app = $('#app');
+    app.innerHTML = '<div id="admin-mount"></div>';
+    import('./components/admin-dashboard.js')
+        .then(m => new m.AdminDashboard('#admin-mount', { coursesData, lessonsData, roadmapsData }))
+        .catch(err => console.error('Failed to load Admin Dashboard:', err));
+}
+
+// ══════════════════════════════════════════════
 // APP INITIALIZATION
 // ══════════════════════════════════════════════
 
@@ -2818,6 +2830,22 @@ async function startMainApp() {
     }, 300000);
 
     const router = new Router();
+    
+    // ── Route Guards ──
+    router.before(async (path) => {
+        const protectedRoutes = ['/admin', '/instructor-dashboard'];
+        if (protectedRoutes.some(r => path.startsWith(r))) {
+            const isAdmin = await authService.isAdmin();
+            if (!isAdmin) {
+                showToast('Restricted Access: Administrator privileges required.', 'error');
+                // Redirect to home if trying to access admin
+                window.location.hash = '#/';
+                return false;
+            }
+        }
+        return true;
+    });
+
     router
         .on('/', () => transitionPage(renderLanding, '/'))
         .on('/courses', () => transitionPage(renderCoursesPage, '#/courses'))
@@ -2833,7 +2861,11 @@ async function startMainApp() {
         .on('/careers', () => transitionPage(renderCareersPage, '#/careers'))
         .on('/login', () => transitionPage(renderLoginPage, '#/login'))
         .on('/signup', () => transitionPage(renderSignupPage, '#/signup'))
-        .on('/instructor-dashboard', () => transitionPage(renderInstructorDashboard, '#/instructor-dashboard'))
+        .on('/instructor-dashboard', () => {
+            // Elevate to Admin Panel
+            showToast('Redirecting to Unified Admin Panel...', 'info');
+            window.location.hash = '#/admin';
+        })
         .on('/404', () => transitionPage(renderErrorPage, '#/404'))
         .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
         .on('*', () => transitionPage(renderErrorPage, window.location.hash));
