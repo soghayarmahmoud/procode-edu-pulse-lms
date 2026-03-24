@@ -11,7 +11,7 @@ import { PortfolioComponent } from './components/portfolio.js';
 import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
-import { BreadcrumbComponent } from './components/breadcrumb.js';
+import { renderBreadcrumb } from './components/breadcrumb.js';
 import 'https://cdn.jsdelivr.net/npm/chart.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
@@ -34,7 +34,6 @@ let challengesData = null;
 let roadmapsData = null;
 let docsData = null;
 let modulesData = null;
-let breadcrumb = null;
 
 async function loadData() {
     const base = getBasePath();
@@ -103,14 +102,6 @@ async function loadData() {
                 console.warn('Failed to load dynamic CMS content:', err);
             }
         }
-
-        // Initialize Breadcrumb Component
-        breadcrumb = new BreadcrumbComponent({
-            roadmaps: roadmapsData,
-            courses: coursesData,
-            modules: modulesData,
-            lessons: lessonsData
-        });
 
         // Start Review Sync in Background (Non-blocking)
         console.log('Manifest loading complete. Starting background sync...');
@@ -1392,14 +1383,7 @@ async function renderLesson(params) {
       
       <main class="lesson-main">
         <div class="lesson-header">
-          ${breadcrumb ? breadcrumb.render(courseId, lessonId) : `
-          <div class="lesson-breadcrumb">
-            <a href="#/courses">Courses</a>
-            <span>›</span>
-            <a href="#/course/${courseId}">${course.title}</a>
-            <span>›</span>
-            <span style="color:var(--text-primary)">${lesson.title}</span>
-          </div>`}
+          ${renderBreadcrumb({ courseId, lessonId, coursesData, modulesData, lessonsData })}
           <h1 class="lesson-title">${lesson.title}</h1>
           <div class="lesson-meta">
             <span class="lesson-meta-item">${lessonTypeIcon}</span>

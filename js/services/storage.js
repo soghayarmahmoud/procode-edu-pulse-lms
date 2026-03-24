@@ -124,10 +124,21 @@ class StorageService {
 
     recordActivity(type) { // type can be 'lesson' or 'challenge'
         const act = this._get('daily_activity') || {};
-        const today = new Date().toISOString().split('T')[0];
         
-        if (!act[today]) {
-            act[today] = { lessons: 0, challenges: 0 };
+        // Ensure local timezone accuracy to match user days (YYYY-MM-DD local)
+        const d = new Date();
+        const today = [
+            d.getFullYear(),
+            String(d.getMonth() + 1).padStart(2, '0'),
+            String(d.getDate()).padStart(2, '0')
+        ].join('-');
+        
+        if (!act[today] || typeof act[today] === 'number') {
+            // Backward compatibility: If an old entry was a number, carry it over as lesson count
+            act[today] = { 
+                lessons: typeof act[today] === 'number' ? act[today] : 0, 
+                challenges: 0 
+            };
         }
         
         if (type === 'lesson') {
@@ -147,13 +158,21 @@ class StorageService {
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+            
+            const dateStr = [
+                d.getFullYear(),
+                String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0')
+            ].join('-');
+            
             const displayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
             
             labels.push(displayStr);
             const dayData = act[dateStr] || { lessons: 0, challenges: 0 };
-            datasets.lessons.push(dayData.lessons);
-            datasets.challenges.push(dayData.challenges);
+            
+            // Backward compatibility for when dayData was just a raw number
+            datasets.lessons.push(typeof dayData === 'number' ? dayData : (dayData.lessons || 0));
+            datasets.challenges.push(dayData.challenges || 0);
         }
         
         return { labels, datasets };
