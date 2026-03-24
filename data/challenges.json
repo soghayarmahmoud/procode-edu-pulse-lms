@@ -251,6 +251,15 @@
                     "errorMessage": "Make message textarea required."
                 }
             ]
+        },
+        "python-calculator-challenge": {
+            "title": "Build a Simple Calculator",
+            "type": "backend",
+            "difficulty": "Medium",
+            "instructions": "Write a Python function called `calculate(a, b, op)` that takes two numbers and an operator ('+', '-', '*', '/') and returns the result.\n\nNote: If division by zero occurs, return 'Error'.\n\nRun this fully in the browser via our secure code execution sandbox!",
+            "starterCode": "def calculate(a, b, op):\n    # Write your code here\n    pass\n",
+            "language": "python",
+            "testCode": "import sys\n\ntry:\n    assert calculate(5, 3, '+') == 8, '5 + 3 should be 8'\n    assert calculate(10, 2, '-') == 8, '10 - 2 should be 8'\n    assert calculate(4, 3, '*') == 12, '4 * 3 should be 12'\n    assert calculate(15, 3, '/') in [5.0, 5], '15 / 3 should be 5.0'\n    assert calculate(5, 0, '/') == 'Error', 'Division by zero should return \"Error\"'\n    print('TESTS_PASSED')\nexcept AssertionError as e:\n    print(str(e))\n    sys.exit(1)\nexcept Exception as e:\n    print('Code error:', str(e))\n    sys.exit(1)\n"
         }
     }
 }

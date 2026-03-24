@@ -6,6 +6,7 @@ import { $, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 import { ValidationEngine } from '../services/validation.js';
 import { aiService } from '../services/ai-service.js';
+import { RemoteExecutionService } from '../services/remote-execution.js';
 import { CodeEditor, updatePreview } from './code-editor.js';
 
 export class ChallengeComponent {
@@ -125,19 +126,45 @@ export class ChallengeComponent {
         });
     }
 
-    submit() {
+    async submit() {
         if (!this.editor) return;
 
         const code = this.editor.getCode();
-        const result = ValidationEngine.validate(code, this.challenge.validationRules);
-
         const resultEl = $('#challenge-result', this.container);
+        const btn = $('#challenge-submit-btn', this.container);
+
+        btn.disabled = true;
+        
+        // Add minimal inline styles for spinner just in case
+        btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite;margin-right:8px;"></span> Executing...';
+
+        let result;
+
+        try {
+            if (this.challenge.type === 'backend' || this.challenge.testCode) {
+                // Remote Execution via Piston API
+                result = await RemoteExecutionService.execute(
+                    this.challenge.language || 'python', 
+                    code, 
+                    this.challenge.testCode
+                );
+            } else {
+                // Frontend DOM/Regex Validation
+                result = ValidationEngine.validate(code, this.challenge.validationRules);
+            }
+        } catch (e) {
+            result = { pass: false, feedback: `Execution Error: ${e.message}` };
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Submit Solution';
+
         resultEl.className = `challenge-result visible ${result.pass ? 'success' : 'failure'}`;
         resultEl.innerHTML = `
       <span style="font-size:1.5rem"><i class="fa-solid ${result.pass ? 'fa-circle-check' : 'fa-circle-xmark'}"></i></span>
       <div>
         <strong>${result.pass ? 'All checks passed!' : 'Some checks failed'}</strong>
-        <div style="margin-top:var(--space-2);white-space:pre-line">${result.feedback}</div>
+        <div style="margin-top:var(--space-2);white-space:pre-line;font-family:monospace;">${result.feedback}</div>
       </div>
     `;
 
