@@ -7,6 +7,8 @@ import { storage } from '../services/storage.js';
 import { ValidationEngine } from '../services/validation.js';
 import { aiService } from '../services/ai-service.js';
 import { RemoteExecutionService } from '../services/remote-execution.js';
+import { discussionService } from '../services/discussion-service.js';
+import { DiscussionComponent } from './discussion.js';
 import { CodeEditor, updatePreview } from './code-editor.js';
 
 export class ChallengeComponent {
@@ -75,10 +77,18 @@ export class ChallengeComponent {
             <button class="btn btn-outline btn-sm" id="challenge-hint-btn">
               <i class="fa-solid fa-lightbulb"></i> Get a Hint
             </button>
+            <button class="btn btn-secondary btn-sm" id="challenge-discuss-btn">
+              <i class="fa-solid fa-comments"></i> Discussions
+            </button>
+            <button class="btn btn-secondary btn-sm" id="challenge-review-btn">
+              <i class="fa-solid fa-users"></i> Code Review
+            </button>
             <button class="btn btn-primary" id="challenge-submit-btn">
               <i class="fa-solid fa-check"></i> Submit Solution
             </button>
           </div>
+          
+          <div id="challenge-discussion-panel" style="display:none; margin-top:var(--space-6); border-top:1px solid var(--border-subtle); padding-top:var(--space-6);"></div>
         </div>
       </div>
     `;
@@ -107,6 +117,12 @@ export class ChallengeComponent {
 
         // Hint
         $('#challenge-hint-btn', this.container).addEventListener('click', () => this.getHint());
+
+        // Discussions toggle
+        $('#challenge-discuss-btn', this.container).addEventListener('click', () => this.toggleDiscussions());
+
+        // Request Code Review
+        $('#challenge-review-btn', this.container).addEventListener('click', () => this.requestCodeReview());
 
         // Reset
         $('#challenge-reset-code', this.container).addEventListener('click', () => {
@@ -227,6 +243,51 @@ export class ChallengeComponent {
         });
 
         hintContent.textContent = hint;
+    }
+
+    async toggleDiscussions() {
+        const panel = $('#challenge-discussion-panel', this.container);
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            if (!this.discussionComponent) {
+                this.discussionComponent = new DiscussionComponent('#challenge-discussion-panel', this.challenge.title, { title: 'Challenge Discussions' });
+            }
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    async requestCodeReview() {
+        if (!this.editor) return;
+        const code = this.editor.getCode();
+        
+        if (!code || code.trim().length === 0) {
+            return showToast('Please write some code before requesting a review.', 'warning');
+        }
+
+        const btn = $('#challenge-review-btn', this.container);
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner-sm"></div> Sending...';
+
+        const thread = await discussionService.createThread(
+            this.challenge.title, 
+            'Code Review Request', 
+            'Can someone please review my approach to this challenge?', 
+            code
+        );
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-users"></i> Code Review';
+
+        if (thread) {
+            showToast('Code Review requested successfully!', 'success');
+            // Force open the discussion panel to see it
+            const panel = $('#challenge-discussion-panel', this.container);
+            panel.style.display = 'block';
+            this.discussionComponent = new DiscussionComponent('#challenge-discussion-panel', this.challenge.title, { title: 'Challenge Discussions' });
+        } else {
+            showToast('Failed to request review.', 'error');
+        }
     }
 
     destroy() {

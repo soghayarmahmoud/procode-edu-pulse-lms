@@ -1406,6 +1406,7 @@ async function renderLesson(params) {
                 <div class="content-tab active" data-tab="notes"><i class="fa-solid fa-book"></i> Lesson Notes</div>
                 <div class="content-tab" data-tab="cheatsheet"><i class="fa-solid fa-clipboard"></i> Cheat Sheet</div>
                 <div class="content-tab" data-tab="resources"><i class="fa-solid fa-link"></i> Resources</div>
+                <div class="content-tab" data-tab="qa"><i class="fa-solid fa-comments"></i> Q&A</div>
               </div>
               <div class="content-tab-panel active" data-panel="notes">
                 <div class="lesson-notes-content">${lesson.content}</div>
@@ -1427,6 +1428,9 @@ async function renderLesson(params) {
                     `).join('')}
                   </div>
                 ` : '<p class="text-muted">No external resources for this lesson.</p>'}
+              </div>
+              <div class="content-tab-panel" data-panel="qa" id="qa-panel-container">
+                <!-- Discussion component mounts here -->
               </div>
             </div>
           </div>
@@ -1545,6 +1549,10 @@ async function renderLesson(params) {
     // ── Init Notes ──
     const { NotesComponent } = await import('./components/notes.js');
     new NotesComponent('#notes-container', lessonId);
+
+    // ── Init Q&A Discussion ──
+    const { DiscussionComponent } = await import('./components/discussion.js');
+    new DiscussionComponent('#qa-panel-container', lessonId, { title: 'Lesson Q&A' });
 
     // ── Content Tabs ──
     const contentTabs = app.querySelectorAll('.content-tab');
