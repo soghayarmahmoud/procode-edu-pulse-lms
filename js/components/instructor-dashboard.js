@@ -48,7 +48,14 @@ export class InstructorDashboard {
                     </div>
 
                     <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                        <div class="tabs" id="cms-builder-tabs" style="margin-bottom:var(--space-2)">
+                            <span class="tab active" data-tab-target="tab-course">Course Builder</span>
+                            <span class="tab" data-tab-target="tab-lesson">Lesson Builder</span>
+                            <span class="tab" data-tab-target="tab-challenge">Create Challenge</span>
+                        </div>
+
                         <!-- Course Builder -->
+                        <div class="tab-panel" data-tab-panel="tab-course">
                         <div class="card">
                             <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-folder-plus"></i> Create New Course</h3>
                             <form id="course-builder-form" onsubmit="event.preventDefault();">
@@ -92,8 +99,10 @@ export class InstructorDashboard {
                                 </div>
                             </form>
                         </div>
+                        </div>
 
                         <!-- Lesson Builder -->
+                        <div class="tab-panel" data-tab-panel="tab-lesson" style="display:none;">
                         <div class="card">
                             <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-video"></i> Add Lesson to Course</h3>
                             <form id="lesson-builder-form" onsubmit="event.preventDefault();">
@@ -168,6 +177,52 @@ export class InstructorDashboard {
                                 </div>
                             </form>
                         </div>
+                        </div>
+
+                        <!-- Challenge Builder -->
+                        <div class="tab-panel" data-tab-panel="tab-challenge" style="display:none;">
+                        <div class="card">
+                            <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-code"></i> Create Coding Challenge</h3>
+                            <form id="challenge-builder-form" onsubmit="event.preventDefault();">
+                                <div class="grid grid-2" style="gap:var(--space-4);">
+                                    <div class="input-group">
+                                        <label>Challenge ID (e.g. html-card-layout)</label>
+                                        <input type="text" id="challenge-id" class="input" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Course / Module ID</label>
+                                        <input type="text" id="challenge-course-id" class="input" placeholder="e.g. html-fundamentals" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Challenge Title</label>
+                                        <input type="text" id="challenge-title" class="input" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Programming Language</label>
+                                        <select id="challenge-language" class="input">
+                                            <option value="html">HTML/CSS/JS</option>
+                                            <option value="python">Python</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Instructions (Markdown supported)</label>
+                                    <textarea id="challenge-instructions" class="input textarea" rows="4" placeholder="## Task\nDescribe the challenge..." required></textarea>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Starter Code</label>
+                                    <textarea id="challenge-starter" class="input textarea" rows="6" placeholder="&lt;!-- Starter code --&gt;" required></textarea>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Validation / Test Logic (Regex / Assertions)</label>
+                                    <textarea id="challenge-validation" class="input textarea" rows="4" placeholder="{\n  \"type\": \"regex\",\n  \"pattern\": \"...\"\n}" required></textarea>
+                                </div>
+                                <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                                    <button class="btn btn-primary" id="btn-save-challenge" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge</button>
+                                </div>
+                            </form>
+                        </div>
+                        </div>
 
                         <!-- Manage Content -->
                         <div class="card">
@@ -199,6 +254,7 @@ export class InstructorDashboard {
         this._initCustomSelect();
         this._initMarkdownPreview();
         this._loadManageContent();
+        this._initBuilderTabs();
     }
 
     _initCustomSelect() {
@@ -441,10 +497,58 @@ export class InstructorDashboard {
             });
         }
 
+        const btnSaveChallenge = document.getElementById('btn-save-challenge');
+        if (btnSaveChallenge) {
+            btnSaveChallenge.addEventListener('click', async () => {
+                const form = document.getElementById('challenge-builder-form');
+                if (!form.checkValidity()) return;
+
+                btnSaveChallenge.disabled = true;
+                btnSaveChallenge.innerHTML = '<div class="spinner-sm"></div> Publishing...';
+
+                const challengeData = {
+                    id: document.getElementById('challenge-id').value.trim(),
+                    courseId: document.getElementById('challenge-course-id').value.trim(),
+                    title: document.getElementById('challenge-title').value.trim(),
+                    language: document.getElementById('challenge-language').value,
+                    instructions: document.getElementById('challenge-instructions').value.trim(),
+                    starterCode: document.getElementById('challenge-starter').value.trim(),
+                    validation: document.getElementById('challenge-validation').value.trim(),
+                    isDynamic: true
+                };
+
+                const success = await firestoreService.saveDynamicChallenge(challengeData);
+                if (success) {
+                    showToast('Challenge successfully published!', 'success');
+                    form.reset();
+                } else {
+                    showToast('Failed to publish challenge.', 'error');
+                }
+
+                btnSaveChallenge.disabled = false;
+                btnSaveChallenge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
+            });
+        }
+
         const refreshBtn = document.getElementById('btn-refresh-content');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this._loadManageContent());
         }
+    }
+
+    _initBuilderTabs() {
+        const tabs = document.querySelectorAll('#cms-builder-tabs .tab');
+        if (!tabs.length) return;
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tabTarget;
+                document.querySelectorAll('.tab-panel').forEach(panel => {
+                    panel.style.display = panel.dataset.tabPanel === target ? 'block' : 'none';
+                });
+            });
+        });
     }
 
     async _loadManageContent() {

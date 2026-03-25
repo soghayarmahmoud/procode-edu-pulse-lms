@@ -431,6 +431,22 @@ class FirestoreService {
         }
     }
 
+    async saveDynamicChallenge(challengeData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_challenges', challengeData.id);
+            await setDoc(ref, {
+                ...challengeData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic challenge:', e);
+            return false;
+        }
+    }
+
     async uploadImage(file, courseId) {
         if (!isFirebaseConfigured() || !file || !courseId) return '';
         try {
