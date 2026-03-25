@@ -35,6 +35,11 @@ let roadmapsData = null;
 let docsData = null;
 let modulesData = null;
 
+function getCourseLessonCount(courseId, fallback = 0) {
+  const count = (lessonsData || []).filter(lesson => lesson.courseId === courseId).length;
+  return count || fallback;
+}
+
 async function loadData() {
     const base = getBasePath();
     const manifest = [
@@ -722,7 +727,7 @@ function showWelcomeModel() {
 function renderLanding() {
     const app = $('#app');
     const base = getBasePath();
-    const totalLessons = coursesData.reduce((sum, c) => sum + c.totalLessons, 0);
+  const totalLessons = (lessonsData || []).length;
     const userName = authService.getDisplayName();
 
     app.innerHTML = `
@@ -843,7 +848,8 @@ function renderLanding() {
 
         <div class="grid grid-3 gap-6">
           ${coursesData.map(course => {
-        const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+        const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+        const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
         const avgRating = storage.getCourseAverageRating(course.id);
         const reviews = storage.getReviews(course.id);
         const isEnrolled = storage.isEnrolled(course.id);
@@ -876,7 +882,7 @@ function renderLanding() {
                 </div>
                 ` : ''}
                 <div class="course-footer">
-                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
+                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${lessonCount} lessons</span>
                   ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? '<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>' : '<span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>')}
                 </div>
               </div>
@@ -965,7 +971,8 @@ function renderCoursesPage() {
 
         <div class="grid grid-3 gap-6">
           ${coursesData.map(course => {
-        const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+        const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+        const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
         const avgRating = storage.getCourseAverageRating(course.id);
         const reviews = storage.getReviews(course.id);
         const isEnrolled = storage.isEnrolled(course.id);
@@ -997,7 +1004,7 @@ function renderCoursesPage() {
                   <span class="text-sm text-muted">${percent}% complete</span>
                 </div>` : ''}
                 <div class="course-footer">
-                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
+                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${lessonCount} lessons</span>
                   ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? `<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>` : `<span class="btn btn-sm btn-primary">Start <i class="fa-solid fa-arrow-right"></i></span>`)}
                 </div>
               </div>
@@ -1022,7 +1029,8 @@ async function renderCourse(params) {
     }
 
     const courseLessons = lessonsData.filter(l => l.courseId === course.id).sort((a, b) => a.order - b.order);
-    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+    const lessonCount = getCourseLessonCount(course.id, courseLessons.length || course.totalLessons);
+    const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
     const isEnrolled = storage.isEnrolled(course.id);
     const isCompleted = percent === 100;
     
@@ -1083,7 +1091,7 @@ async function renderCourse(params) {
         <div class="card" style="margin-bottom:var(--space-8);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
             <h3 style="font-size:var(--text-lg)"><i class="fa-solid fa-list-ol"></i> Curriculum Overview</h3>
-            <span class="text-sm text-muted">${course.totalLessons} Lessons</span>
+            <span class="text-sm text-muted">${lessonCount} Lessons</span>
           </div>
           
           <div style="display:flex; flex-direction:column; gap:var(--space-3);">
@@ -1817,12 +1825,16 @@ function renderProfile() {
           <div class="card">
             <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Current Courses</h3>
             ${(() => {
-                const enrolledCourses = coursesData.filter(course => storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, course.totalLessons) > 0);
+                const enrolledCourses = coursesData.filter(course => {
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  return storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, lessonCount) > 0;
+                });
                 if (enrolledCourses.length === 0) {
                     return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">You haven\'t enrolled in any courses yet. <a href="#/courses">Browse courses</a> to get started!</p>';
                 }
                 return enrolledCourses.map(course => {
-                    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
                     const isCompleted = percent === 100;
                     return `
                       <div style="margin-bottom:var(--space-5)">
@@ -1844,7 +1856,10 @@ function renderProfile() {
             ${(() => {
                 const certifications = storage.getCertifications();
                 const totalCerts = storage.getCertificateCount();
-                const completedCourses = coursesData.filter(course => storage.getCourseCompletionPercent(course.id, course.totalLessons) === 100);
+                const completedCourses = coursesData.filter(course => {
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  return storage.getCourseCompletionPercent(course.id, lessonCount) === 100;
+                });
                 
                 if (totalCerts === 0) {
                     return `

@@ -292,7 +292,8 @@ class StorageService {
     getCourseCompletionPercent(courseId, totalLessons) {
         const cp = this.getCourseProgress(courseId);
         if (totalLessons === 0) return 0;
-        return Math.round((cp.completedLessons.length / totalLessons) * 100);
+        const rawPercent = Math.round((cp.completedLessons.length / totalLessons) * 100);
+        return Math.min(100, rawPercent);
     }
 
     // ── Quiz Scores ──
