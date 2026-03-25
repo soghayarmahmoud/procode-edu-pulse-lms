@@ -2,13 +2,25 @@ import { $, showToast } from '../utils/dom.js';
 import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
 
+/**
+ * Instructor dashboard UI component.
+ */
 export class InstructorDashboard {
+    /**
+     * Create an InstructorDashboard instance.
+     * @param {string} containerSelector
+     * @param {Array<object>} coursesData
+     */
     constructor(containerSelector, coursesData) {
         this.containerContainer = $(containerSelector);
         this.coursesData = coursesData || [];
         this.render();
     }
 
+    /**
+     * Render instructor dashboard.
+     * @returns {void}
+     */
     render() {
         if (!this.containerContainer) return;
         
@@ -257,6 +269,10 @@ export class InstructorDashboard {
         this._initBuilderTabs();
     }
 
+    /**
+     * Initialize custom course select.
+     * @returns {void}
+     */
     _initCustomSelect() {
         const container = document.getElementById('course-select-container');
         const display = document.getElementById('lesson-course-display');
@@ -334,6 +350,11 @@ export class InstructorDashboard {
         });
     }
 
+    /**
+     * Filter course options by query.
+     * @param {string} query
+     * @returns {void}
+     */
     _filterOptions(query) {
         const optionsContainer = document.getElementById('lesson-course-options');
         if (!optionsContainer) return;
@@ -363,6 +384,10 @@ export class InstructorDashboard {
         }
     }
 
+    /**
+     * Attach UI events.
+     * @returns {void}
+     */
     _attachEvents() {
         const thumbnailInput = document.getElementById('course-thumbnail');
         const thumbnailStatus = document.getElementById('course-thumbnail-status');
@@ -536,6 +561,10 @@ export class InstructorDashboard {
         }
     }
 
+    /**
+     * Initialize builder tab switching.
+     * @returns {void}
+     */
     _initBuilderTabs() {
         const tabs = document.querySelectorAll('#cms-builder-tabs .tab');
         if (!tabs.length) return;
@@ -551,6 +580,10 @@ export class InstructorDashboard {
         });
     }
 
+    /**
+     * Load and render dynamic courses/lessons.
+     * @returns {Promise<void>}
+     */
     async _loadManageContent() {
         const coursesContainer = document.getElementById('manage-courses-list');
         const lessonsContainer = document.getElementById('manage-lessons-list');
@@ -611,6 +644,10 @@ export class InstructorDashboard {
         this._bindManageContentActions();
     }
 
+    /**
+     * Bind manage content actions.
+     * @returns {void}
+     */
     _bindManageContentActions() {
         document.querySelectorAll('[data-edit-course]').forEach(btn => {
             btn.addEventListener('click', () => this._editCourse(btn.dataset.editCourse));
@@ -626,6 +663,11 @@ export class InstructorDashboard {
         });
     }
 
+    /**
+     * Load course data into the form for editing.
+     * @param {string} courseId
+     * @returns {void}
+     */
     _editCourse(courseId) {
         const course = this.dynamicCourses?.find(c => c.id === courseId);
         if (!course) return;
@@ -639,6 +681,11 @@ export class InstructorDashboard {
         showToast('Course loaded for editing.', 'info');
     }
 
+    /**
+     * Delete a course by ID.
+     * @param {string} courseId
+     * @returns {Promise<void>}
+     */
     async _deleteCourse(courseId) {
         if (!confirm('Delete this course? This cannot be undone.')) return;
         const ok = await firestoreService.deleteDynamicCourse(courseId);
@@ -650,6 +697,11 @@ export class InstructorDashboard {
         }
     }
 
+    /**
+     * Load lesson data into the form for editing.
+     * @param {string} lessonId
+     * @returns {void}
+     */
     _editLesson(lessonId) {
         const lesson = this.dynamicLessons?.find(l => l.id === lessonId);
         if (!lesson) return;
@@ -677,6 +729,11 @@ export class InstructorDashboard {
         showToast('Lesson loaded for editing.', 'info');
     }
 
+    /**
+     * Delete a lesson by ID.
+     * @param {string} lessonId
+     * @returns {Promise<void>}
+     */
     async _deleteLesson(lessonId) {
         if (!confirm('Delete this lesson? This cannot be undone.')) return;
         const ok = await firestoreService.deleteDynamicLesson(lessonId);
@@ -688,6 +745,10 @@ export class InstructorDashboard {
         }
     }
 
+    /**
+     * Initialize markdown preview for lesson content.
+     * @returns {void}
+     */
     _initMarkdownPreview() {
         const textarea = document.getElementById('lesson-content');
         const preview = document.getElementById('lesson-content-preview');

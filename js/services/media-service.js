@@ -5,7 +5,13 @@
 import { storage } from './storage.js';
 import { showToast } from '../utils/dom.js';
 
+/**
+ * Cloudinary media upload helper.
+ */
 class MediaService {
+    /**
+     * Create a MediaService instance.
+     */
     constructor() {
         this.configKey = 'cloudinary_config';
         this.scriptUrl = 'https://upload-widget.cloudinary.com/global/all.js';
@@ -14,6 +20,7 @@ class MediaService {
 
     /**
      * Get the current Cloudinary configuration from storage.
+     * @returns {{cloudName: string, uploadPreset: string}}
      */
     getConfig() {
         return storage._get(this.configKey) || { cloudName: '', uploadPreset: '' };
@@ -21,6 +28,9 @@ class MediaService {
 
     /**
      * Save the Cloudinary configuration.
+     * @param {string} cloudName
+     * @param {string} uploadPreset
+     * @returns {boolean}
      */
     saveConfig(cloudName, uploadPreset) {
         if (!cloudName || !uploadPreset) {
@@ -34,6 +44,7 @@ class MediaService {
 
     /**
      * Dynamically load the Cloudinary Upload Widget script.
+     * @returns {Promise<boolean>}
      */
     async loadWidgetScript() {
         if (this.isScriptLoaded) return true;
@@ -56,8 +67,9 @@ class MediaService {
 
     /**
      * Open the Cloudinary Upload Widget.
-     * @param {Object} options - Custom widget options (sources, folder, etc.)
-     * @param {Function} callback - Called on success/error
+     * @param {object} [options={}] Custom widget options.
+     * @param {(info: object) => void} [callback] Called on success.
+     * @returns {Promise<void>}
      */
     async openUploadWidget(options = {}, callback) {
         const config = this.getConfig();

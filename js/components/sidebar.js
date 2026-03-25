@@ -5,8 +5,19 @@
 import { $, $$ } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 
+/**
+ * Sidebar component for course navigation.
+ */
 export class SidebarComponent {
-    constructor(container, course, lessons, currentLessonId, modules = []) {
+  /**
+   * Create a SidebarComponent instance.
+   * @param {string|Element} container
+   * @param {object} course
+   * @param {Array<object>} lessons
+   * @param {string} currentLessonId
+   * @param {Array<object>} [modules=[]]
+   */
+  constructor(container, course, lessons, currentLessonId, modules = []) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.course = course;
         this.lessons = lessons;
@@ -15,6 +26,10 @@ export class SidebarComponent {
         this.render();
     }
 
+    /**
+     * Render sidebar UI.
+     * @returns {void}
+     */
     render() {
         const courseProgress = storage.getCourseProgress(this.course.id);
         const completedCount = courseProgress.completedLessons.length;

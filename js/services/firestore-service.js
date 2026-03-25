@@ -7,9 +7,15 @@ import {
     doc, setDoc, getDoc, updateDoc, serverTimestamp, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+/**
+ * Firestore data access service.
+ */
 class FirestoreService {
     /**
      * Save or update user profile in Firestore.
+     * @param {string} uid
+     * @param {object} data
+     * @returns {Promise<void>}
      */
     async saveUserProfile(uid, data) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -26,6 +32,8 @@ class FirestoreService {
 
     /**
      * Get user profile from Firestore.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async getUserProfile(uid) {
         if (!isFirebaseConfigured() || !uid) return null;
@@ -41,6 +49,9 @@ class FirestoreService {
 
     /**
      * Save user progress to Firestore.
+     * @param {string} uid
+     * @param {object} progress
+     * @returns {Promise<void>}
      */
     async saveProgress(uid, progress) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -57,6 +68,9 @@ class FirestoreService {
 
     /**
      * Save user submissions to Firestore.
+     * @param {string} uid
+     * @param {object} submissions
+     * @returns {Promise<void>}
      */
     async saveSubmissions(uid, submissions) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -73,6 +87,9 @@ class FirestoreService {
 
     /**
      * Save notes to Firestore.
+     * @param {string} uid
+     * @param {object} notes
+     * @returns {Promise<void>}
      */
     async saveNotes(uid, notes) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -89,6 +106,9 @@ class FirestoreService {
 
     /**
      * Save enrollments to Firestore.
+     * @param {string} uid
+     * @param {object} enrollments
+     * @returns {Promise<void>}
      */
     async saveEnrollments(uid, enrollments) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -105,6 +125,9 @@ class FirestoreService {
 
     /**
      * Sync all localStorage data to Firestore (one-time migration).
+     * @param {string} uid
+     * @param {object} localData
+     * @returns {Promise<void>}
      */
     async syncLocalToCloud(uid, localData) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -134,6 +157,8 @@ class FirestoreService {
 
     /**
      * Load all user data from Firestore to populate localStorage.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async loadCloudData(uid) {
         if (!isFirebaseConfigured() || !uid) return null;
@@ -149,6 +174,9 @@ class FirestoreService {
 
     /**
      * Save a review for a course.
+     * @param {string} courseId
+     * @param {object} reviewData
+     * @returns {Promise<void>}
      */
     async saveReview(courseId, reviewData) {
         if (!isFirebaseConfigured() || !courseId) return;
@@ -165,7 +193,11 @@ class FirestoreService {
     }
 
     /**
-     * Add a reply to a review document
+     * Add a reply to a review document.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {object} replyData
+     * @returns {Promise<void>}
      */
     async addReply(courseId, reviewId, replyData) {
         if (!isFirebaseConfigured() || !courseId || !reviewId) return;
@@ -186,6 +218,9 @@ class FirestoreService {
 
     /**
      * Save certifications to Firestore.
+     * @param {string} uid
+     * @param {object} certifications
+     * @returns {Promise<void>}
      */
     async saveCertifications(uid, certifications) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -202,6 +237,9 @@ class FirestoreService {
 
     /**
      * Save activity time to Firestore.
+     * @param {string} uid
+     * @param {number} activeTime
+     * @returns {Promise<void>}
      */
     async saveActivityTime(uid, activeTime) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -218,6 +256,8 @@ class FirestoreService {
 
     /**
      * Get all reviews for a course.
+     * @param {string} courseId
+     * @returns {Promise<Array<object>>}
      */
     async getCourseReviews(courseId) {
         if (!isFirebaseConfigured() || !courseId) return [];
@@ -235,7 +275,9 @@ class FirestoreService {
     }
 
     /**
-     * Get aggregated statistics for a specific course
+     * Get aggregated statistics for a specific course.
+     * @param {string} courseId
+     * @returns {Promise<object|null>}
      */
     async getCourseStats(courseId) {
         if (!isFirebaseConfigured() || !courseId) return null;
@@ -290,7 +332,9 @@ class FirestoreService {
     }
 
     /**
-     * Get aggregated statistics for a user
+     * Get aggregated statistics for a user.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async getUserStats(uid) {
         if (!isFirebaseConfigured() || !uid) return null;
@@ -328,7 +372,8 @@ class FirestoreService {
     }
 
     /**
-     * Admin dashboard statistics
+     * Admin dashboard statistics.
+     * @returns {Promise<object|null>}
      */
     async getAdminStats() {
         if (!isFirebaseConfigured()) return null;
@@ -370,7 +415,12 @@ class FirestoreService {
     // ==========================================
     // INSTRUCTOR CMS DATA METHODS
     // ==========================================
-    
+
+    /**
+     * Save or update a dynamic course.
+     * @param {object} courseData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicCourse(courseData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -387,13 +437,17 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Get all dynamic courses.
+     * @returns {Promise<Array<object>>}
+     */
     async getDynamicCourses() {
         if (!isFirebaseConfigured()) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_courses'));
             const courses = [];
-            snap.forEach(doc => courses.push(doc.data()));
+            snap.forEach(docSnap => courses.push(docSnap.data()));
             return courses;
         } catch (e) {
             console.error('Error getting dynamic courses:', e);
@@ -401,6 +455,11 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Save or update a dynamic lesson.
+     * @param {object} lessonData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicLesson(lessonData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -417,13 +476,17 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Get all dynamic lessons.
+     * @returns {Promise<Array<object>>}
+     */
     async getDynamicLessons() {
         if (!isFirebaseConfigured()) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_lessons'));
             const lessons = [];
-            snap.forEach(doc => lessons.push(doc.data()));
+            snap.forEach(docSnap => lessons.push(docSnap.data()));
             return lessons;
         } catch (e) {
             console.error('Error getting dynamic lessons:', e);
@@ -431,6 +494,11 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Save or update a dynamic challenge.
+     * @param {object} challengeData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicChallenge(challengeData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -447,6 +515,12 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Upload an image to storage and return a download URL.
+     * @param {File} file
+     * @param {string} courseId
+     * @returns {Promise<string>}
+     */
     async uploadImage(file, courseId) {
         if (!isFirebaseConfigured() || !file || !courseId) return '';
         try {
@@ -461,6 +535,11 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Delete a dynamic course.
+     * @param {string} id
+     * @returns {Promise<boolean>}
+     */
     async deleteDynamicCourse(id) {
         if (!isFirebaseConfigured() || !id) return false;
         try {
@@ -473,6 +552,11 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Delete a dynamic lesson.
+     * @param {string} id
+     * @returns {Promise<boolean>}
+     */
     async deleteDynamicLesson(id) {
         if (!isFirebaseConfigured() || !id) return false;
         try {

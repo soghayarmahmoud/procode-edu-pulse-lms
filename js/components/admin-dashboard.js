@@ -3,7 +3,15 @@ import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
 import { mediaService } from '../services/media-service.js';
 
+/**
+ * Admin dashboard UI component.
+ */
 export class AdminDashboard {
+    /**
+     * Create an AdminDashboard instance.
+     * @param {string} containerSelector
+     * @param {object} systemData
+     */
     constructor(containerSelector, systemData) {
         this.containerContainer = $(containerSelector);
         this.systemData = systemData || {};
@@ -14,6 +22,10 @@ export class AdminDashboard {
         this.render();
     }
 
+    /**
+     * Render admin dashboard.
+     * @returns {Promise<void>}
+     */
     async render() {
         if (!this.containerContainer) return;
 
@@ -130,6 +142,10 @@ export class AdminDashboard {
         this._renderActiveTab();
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const tabs = this.containerContainer.querySelectorAll('.admin-tab-btn');
         tabs.forEach(tab => {
@@ -146,6 +162,10 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render the active tab panel.
+     * @returns {void}
+     */
     _renderActiveTab() {
         const area = document.getElementById('admin-content-area');
         const title = document.getElementById('admin-workspace-title');
@@ -188,6 +208,11 @@ export class AdminDashboard {
 
     // ── Tab Renderers ──
 
+    /**
+     * Render overview tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderOverviewTab(container) {
         container.innerHTML = `
             <div class="grid grid-3" style="gap:var(--space-6); margin-bottom:var(--space-8);">
@@ -255,6 +280,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render users tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderUsersTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); margin-bottom:var(--space-6);">
@@ -334,6 +364,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render content tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderContentTab(container) {
         container.innerHTML = `
             <div class="grid grid-2" style="gap:var(--space-6);">
@@ -388,6 +423,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render courses tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderCoursesTab(container) {
         // Integrate InstructorDashboard logic here
         container.innerHTML = `
@@ -560,6 +600,10 @@ export class AdminDashboard {
         this._initMarkdownPreview();
     }
 
+    /**
+     * Initialize course/lesson builder logic.
+     * @returns {void}
+     */
     _initCourseBuilderLogic() {
         // This is a port of the logic from InstructorDashboard._initCustomSelect and _attachEvents
         const container = document.getElementById('course-select-container');
@@ -773,6 +817,10 @@ export class AdminDashboard {
         }
     }
 
+    /**
+     * Initialize markdown preview for lesson content.
+     * @returns {void}
+     */
     _initMarkdownPreview() {
         const textarea = document.getElementById('lesson-content');
         const preview = document.getElementById('lesson-content-preview');
@@ -798,6 +846,11 @@ export class AdminDashboard {
         render();
     }
 
+    /**
+     * Filter course select options.
+     * @param {string} query
+     * @returns {void}
+     */
     _filterOptions(query) {
         const optionsContainer = document.getElementById('lesson-course-options');
         if (!optionsContainer) return;
@@ -808,6 +861,11 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render gamification tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderGamificationTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); max-width:800px; margin:0 auto;">
@@ -890,6 +948,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render submissions tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderSubmissionsTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6);">
@@ -957,6 +1020,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render access denied state.
+     * @param {string} [reason='You must be an authenticated Administrator to access this control panel.']
+     * @returns {void}
+     */
     _renderAccessDenied(reason = 'You must be an authenticated Administrator to access this control panel.') {
         this.containerContainer.innerHTML = `
             <div class="container" style="padding:var(--space-16); min-height:80vh; display:flex; align-items:center; justify-content:center;">

@@ -31,12 +31,20 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js').Analytics} */
 export const analytics = getAnalytics(app);
+/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').Auth} */
 export const auth = getAuth(app);
+/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').Firestore} */
 export const db = getFirestore(app);
+/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js').FirebaseStorage} */
 export const storage = getStorage(app);
 
 // Check if Firebase is configured (not using placeholder values)
+/**
+ * Check if Firebase configuration is populated with real values.
+ * @returns {boolean}
+ */
 export function isFirebaseConfigured() {
     return firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.apiKey.length > 10;
 }

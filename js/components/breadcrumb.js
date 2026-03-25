@@ -2,11 +2,12 @@
  * renderBreadcrumb
  * Generates dynamic breadcrumbs based on the user's current context
  * Always builds hierarchically: Home > Course > Module/Section > Lesson
+/**
+ * Generates dynamic breadcrumbs based on the user's current context.
+ * Always builds hierarchically: Home > Course > Module/Section > Lesson.
+ * @param {{courseId: string, lessonId?: string, coursesData: Array<object>, modulesData?: Array<object>, lessonsData: Array<object>}} params
+ * @returns {string}
  */
-
-export function renderBreadcrumb({ courseId, lessonId, coursesData, modulesData, lessonsData }) {
-    const path = [];
-    
     // 1. Home Base
     path.push({ title: 'Home', url: '#/' });
     path.push({ title: 'Courses', url: '#/courses' });

@@ -5,8 +5,18 @@
 import { $, createElement, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 
+/**
+ * Quiz UI component.
+ */
 export class QuizComponent {
-    constructor(container, quizData, courseId, lessonId) {
+  /**
+   * Create a QuizComponent instance.
+   * @param {string|Element} container
+   * @param {object} quizData
+   * @param {string} courseId
+   * @param {string} lessonId
+   */
+  constructor(container, quizData, courseId, lessonId) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.quiz = quizData;
         this.courseId = courseId;
@@ -17,6 +27,10 @@ export class QuizComponent {
         this.render();
     }
 
+    /**
+     * Render quiz UI.
+     * @returns {void}
+     */
     render() {
         const existingScore = storage.getQuizScore(this.courseId, this.quiz.title);
 
@@ -50,6 +64,12 @@ export class QuizComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a quiz question.
+     * @param {object} question
+     * @param {number} index
+     * @returns {string}
+     */
     _renderQuestion(question, index) {
         return `
       <div class="quiz-question" data-question-id="${question.id}">
@@ -72,6 +92,10 @@ export class QuizComponent {
     `;
     }
 
+    /**
+     * Attach UI events.
+     * @returns {void}
+     */
     _attachEvents() {
         // Option click
         this.container.querySelectorAll('.quiz-option').forEach(option => {
@@ -120,6 +144,10 @@ export class QuizComponent {
         $('#quiz-reset', this.container).addEventListener('click', () => this.reset());
     }
 
+    /**
+     * Submit quiz answers.
+     * @returns {void}
+     */
     submit() {
         if (this.submitted) return;
 
@@ -202,6 +230,10 @@ export class QuizComponent {
         }
     }
 
+    /**
+     * Reset quiz state.
+     * @returns {void}
+     */
     reset() {
         this.answers = {};
         this.submitted = false;

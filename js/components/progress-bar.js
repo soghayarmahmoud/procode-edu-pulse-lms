@@ -4,6 +4,13 @@
 
 import { storage } from '../services/storage.js';
 
+/**
+ * Render a course progress bar.
+ * @param {string|Element} container
+ * @param {string} courseId
+ * @param {number} totalLessons
+ * @returns {void}
+ */
 export function renderProgressBar(container, courseId, totalLessons) {
     const el = typeof container === 'string' ? document.querySelector(container) : container;
     if (!el) return;

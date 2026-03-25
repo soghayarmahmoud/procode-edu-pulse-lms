@@ -8,6 +8,10 @@ import { authService } from '../services/auth-service.js';
 import { db, isFirebaseConfigured } from '../services/firebase-config.js';
 import { collection, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+/**
+ * Render the global navigation bar.
+ * @returns {void}
+ */
 export function renderNavbar() {
     const navbar = document.createElement('nav');
     navbar.className = 'navbar';
@@ -149,6 +153,10 @@ export function renderNavbar() {
     }
 }
 
+/**
+ * Update active nav link state based on hash.
+ * @returns {void}
+ */
 function updateActiveLink() {
     const hash = window.location.hash.slice(1) || '/';
     $$('.nav-link').forEach(link => {

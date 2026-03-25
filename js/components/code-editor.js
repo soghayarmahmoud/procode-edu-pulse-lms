@@ -4,7 +4,15 @@
 
 let editorView = null;
 
+/**
+ * CodeMirror-backed editor component with fallback.
+ */
 export class CodeEditor {
+    /**
+     * Create a CodeEditor instance.
+     * @param {string|Element} container
+     * @param {{language?: string, initialCode?: string, onChange?: Function|null, readOnly?: boolean}} [options={}]
+     */
     constructor(container, options = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
@@ -18,6 +26,10 @@ export class CodeEditor {
         this._init();
     }
 
+    /**
+     * Initialize CodeMirror editor.
+     * @returns {Promise<void>}
+     */
     async _init() {
         // Use CodeMirror 6 via CDN
         try {
@@ -105,6 +117,10 @@ export class CodeEditor {
         }
     }
 
+    /**
+     * Create fallback textarea editor.
+     * @returns {void}
+     */
     _createFallback() {
         const textarea = document.createElement('textarea');
         textarea.className = 'editor-fallback';
@@ -148,6 +164,10 @@ export class CodeEditor {
         this._fallbackTextarea = textarea;
     }
 
+    /**
+     * Get current editor code.
+     * @returns {string}
+     */
     getCode() {
         if (this.view) {
             return this.view.state.doc.toString();
@@ -158,6 +178,11 @@ export class CodeEditor {
         return '';
     }
 
+    /**
+     * Set editor code.
+     * @param {string} code
+     * @returns {void}
+     */
     setCode(code) {
         if (this.view) {
             this.view.dispatch({
@@ -173,6 +198,10 @@ export class CodeEditor {
         }
     }
 
+    /**
+     * Destroy the editor.
+     * @returns {void}
+     */
     destroy() {
         if (this.view) {
             this.view.destroy();
@@ -184,6 +213,9 @@ export class CodeEditor {
 
 /**
  * Update the live preview iframe with the given code.
+ * @param {string|HTMLIFrameElement} iframeSelector
+ * @param {string} code
+ * @returns {void}
  */
 export function updatePreview(iframeSelector, code) {
     const iframe = typeof iframeSelector === 'string'
