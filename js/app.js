@@ -3042,11 +3042,19 @@ function renderOfflinePage() {
 // ══════════════════════════════════════════════
 
 function renderInstructorDashboard() {
-    const app = $('#app');
-    app.innerHTML = '<div id="instructor-mount"></div>';
-    import('./components/instructor-dashboard.js')
-        .then(m => new m.InstructorDashboard('#instructor-mount', coursesData))
-        .catch(err => console.error('Failed to load CMS:', err));
+  const profile = storage.getProfile ? storage.getProfile() : {};
+  const isAuthorized = !!(profile?.isAdmin || profile?.isInstructor);
+  if (!isAuthorized) {
+    showToast('Access denied. Instructor permissions required.', 'error');
+    window.location.hash = '#/';
+    return;
+  }
+
+  const app = $('#app');
+  app.innerHTML = '<div id="instructor-mount"></div>';
+  import('./components/instructor-dashboard.js')
+    .then(m => new m.InstructorDashboard('#instructor-mount', coursesData))
+    .catch(err => console.error('Failed to load CMS:', err));
 }
 
 // ══════════════════════════════════════════════
