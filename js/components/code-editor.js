@@ -86,7 +86,10 @@ export class CodeEditor {
             }
 
             if (this.options.readOnly) {
-                extensions.push(EditorState.readOnly.of(true));
+                const readOnlyExt = EditorState.readOnly
+                    ? EditorState.readOnly.of(true)
+                    : (EditorView.editable ? EditorView.editable.of(false) : []);
+                extensions.push(readOnlyExt);
             }
 
             this.view = new EditorView({
