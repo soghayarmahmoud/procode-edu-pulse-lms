@@ -34,6 +34,33 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    match /dynamic_challenges/{challengeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Discussions: Public read, authenticated write
+    match /discussions/{threadId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId || isAdmin()
+      );
+    }
+
+    // Lesson Comments: Public read, authenticated write
+    match /lesson_comments/{commentId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId || isAdmin()
+      );
+    }
+
+    // Notifications subcollection
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
 
     // Default Deny: All other collections are private
     match /{document=**} {

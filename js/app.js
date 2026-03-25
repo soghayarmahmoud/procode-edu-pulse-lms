@@ -13,6 +13,7 @@ import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
 import { renderBreadcrumb } from './components/breadcrumb.js';
 import 'https://cdn.jsdelivr.net/npm/chart.js';
+import { discussionService } from './services/discussion-service.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -34,6 +35,79 @@ let challengesData = null;
 let roadmapsData = null;
 let docsData = null;
 let modulesData = null;
+
+function getCourseLessonCount(courseId, fallback = 0) {
+  const count = (lessonsData || []).filter(lesson => lesson.courseId === courseId).length;
+  return count || fallback;
+}
+
+function formatCommentTime(ts) {
+  try {
+    return new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+function initLessonComments(lessonId) {
+  const list = document.getElementById('lesson-comments-list');
+  const input = document.getElementById('lesson-comment-input');
+  const postBtn = document.getElementById('lesson-comment-post');
+  const limit = document.getElementById('lesson-comment-limit');
+  const count = document.getElementById('lesson-comment-count');
+
+  if (!list || !input || !postBtn || !limit || !count) return;
+
+  const renderList = (comments) => {
+    const sorted = [...(comments || [])].sort((a, b) => b.createdAt - a.createdAt);
+    count.textContent = `${sorted.length} comment${sorted.length === 1 ? '' : 's'}`;
+    if (sorted.length === 0) {
+      list.innerHTML = '<p class="text-muted text-sm" style="padding:var(--space-4);background:var(--bg-input);border-radius:var(--radius-md);">Be the first to comment.</p>';
+      return;
+    }
+
+    list.innerHTML = sorted.map(c => {
+      const initial = (c.authorName || 'Student').charAt(0).toUpperCase();
+      return `
+        <div style="display:flex;gap:var(--space-3);padding:var(--space-4) 0;border-bottom:1px solid var(--border-subtle);">
+        <div class="user-avatar-sm">${initial}</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);">
+          <strong style="font-size:0.95rem;">${c.authorName || 'Student'}</strong>
+          <span class="text-xs text-muted">${formatCommentTime(c.createdAt)}</span>
+          </div>
+          <p style="margin:6px 0 0;color:var(--text-secondary);white-space:pre-wrap;">${c.content}</p>
+        </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  if (window.__lessonCommentsUnsub) window.__lessonCommentsUnsub();
+  window.__lessonCommentsUnsub = discussionService.subscribeLessonComments(lessonId, renderList);
+
+  const updateCounter = () => {
+    limit.textContent = `${input.value.length}/500`;
+  };
+  updateCounter();
+  input.addEventListener('input', updateCounter);
+
+  postBtn.addEventListener('click', async () => {
+    const value = input.value.trim();
+    if (!value) return showToast('Comment cannot be empty.', 'error');
+    if (value.length > 500) return showToast('Comment exceeds 500 characters.', 'error');
+
+    postBtn.disabled = true;
+    const ok = await discussionService.addLessonComment(lessonId, value);
+    if (ok) {
+      input.value = '';
+      updateCounter();
+    } else {
+      showToast('Failed to post comment.', 'error');
+    }
+    postBtn.disabled = false;
+  });
+}
 
 async function loadData() {
     const base = getBasePath();
@@ -662,6 +736,9 @@ function showWelcomeModel() {
                 </div>
             </div>
         </div>
+        <button id="welcome-next-fixed" class="btn btn-primary" style="position:fixed;right:24px;bottom:24px;z-index:10000;padding:12px 20px;border-radius:12px;font-weight:600;box-shadow:0 8px 16px rgba(108,92,231,0.25);">
+            ${isLast ? 'Enter Platform' : 'Continue'}
+        </button>
       </div>
         `;
 
@@ -673,13 +750,14 @@ function showWelcomeModel() {
         }
 
         const next = $('#welcome-next');
+        const nextFixed = $('#welcome-next-fixed');
         const prev = $('#welcome-prev');
 
         if (prev) {
             prev.onclick = () => { slide--; renderSlide(); };
         }
 
-        next.onclick = async () => {
+        const handleNext = async () => {
             if (isLast) {
                 const name = $('#welcome-name')?.value?.trim();
                 if (name) {
@@ -702,7 +780,10 @@ function showWelcomeModel() {
                 slide++;
                 renderSlide();
             }
-        };
+            };
+
+            next.onclick = handleNext;
+            if (nextFixed) nextFixed.onclick = handleNext;
     }
 
     renderSlide();
@@ -715,7 +796,7 @@ function showWelcomeModel() {
 function renderLanding() {
     const app = $('#app');
     const base = getBasePath();
-    const totalLessons = coursesData.reduce((sum, c) => sum + c.totalLessons, 0);
+  const totalLessons = (lessonsData || []).length;
     const userName = authService.getDisplayName();
 
     app.innerHTML = `
@@ -836,7 +917,8 @@ function renderLanding() {
 
         <div class="grid grid-3 gap-6">
           ${coursesData.map(course => {
-        const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+        const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+        const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
         const avgRating = storage.getCourseAverageRating(course.id);
         const reviews = storage.getReviews(course.id);
         const isEnrolled = storage.isEnrolled(course.id);
@@ -869,7 +951,7 @@ function renderLanding() {
                 </div>
                 ` : ''}
                 <div class="course-footer">
-                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
+                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${lessonCount} lessons</span>
                   ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? '<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>' : '<span class="btn btn-sm btn-ghost">Start <i class="fa-solid fa-arrow-right"></i></span>')}
                 </div>
               </div>
@@ -947,22 +1029,29 @@ function renderCoursesPage() {
     const app = $('#app');
     const base = getBasePath();
 
-    app.innerHTML = `
-    <div class="page-wrapper bg-dots-pattern">
-      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
-        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10)">
-          <span class="section-badge"><i class="fa-solid fa-book-open"></i> All Courses</span>
-          <h1 class="section-title">Course Catalog</h1>
-          <p class="section-subtitle" style="margin:0">Choose a course and start your learning journey</p>
-        </div>
+    const filterCourses = (searchTerm, difficulty) => {
+        return coursesData.filter(course => {
+            const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesDifficulty = difficulty === 'all' || course.difficulty.toLowerCase() === difficulty;
+            return matchesSearch && matchesDifficulty;
+        });
+    };
 
-        <div class="grid grid-3 gap-6">
-          ${coursesData.map(course => {
-        const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
-        const avgRating = storage.getCourseAverageRating(course.id);
-        const reviews = storage.getReviews(course.id);
-        const isEnrolled = storage.isEnrolled(course.id);
-        return `
+    const renderCourseCards = (list) => {
+        if (!list.length) {
+            return `
+            <div class="card" style="grid-column:1 / -1; text-align:center; padding:var(--space-8);">
+              <p class="text-muted" style="margin:0;">No courses found.</p>
+            </div>`;
+        }
+
+        return list.map(course => {
+            const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+            const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
+            const avgRating = storage.getCourseAverageRating(course.id);
+            const reviews = storage.getReviews(course.id);
+            const isEnrolled = storage.isEnrolled(course.id);
+            return `
             <div class="course-card" onclick="location.hash='/course/${course.id}'" data-animate>
               ${(() => {
                   const thumbUrl = course.thumbnail ? (course.thumbnail.startsWith('http') ? course.thumbnail : `${base}${course.thumbnail}`) : null;
@@ -990,16 +1079,77 @@ function renderCoursesPage() {
                   <span class="text-sm text-muted">${percent}% complete</span>
                 </div>` : ''}
                 <div class="course-footer">
-                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${course.totalLessons} lessons</span>
+                  <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${lessonCount} lessons</span>
                   ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? `<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>` : `<span class="btn btn-sm btn-primary">Start <i class="fa-solid fa-arrow-right"></i></span>`)}
                 </div>
               </div>
             </div>`;
-    }).join('')}
+        }).join('');
+    };
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
+        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10)">
+          <span class="section-badge"><i class="fa-solid fa-book-open"></i> All Courses</span>
+          <h1 class="section-title">Course Catalog</h1>
+          <p class="section-subtitle" style="margin:0">Choose a course and start your learning journey</p>
+        </div>
+
+        <div class="card" style="padding:var(--space-4); margin-bottom:var(--space-8); display:flex; flex-wrap:wrap; gap:var(--space-4); align-items:center;">
+          <div style="flex:1; min-width:220px;">
+            <input class="input" id="course-search" type="text" placeholder="Search courses..." />
+          </div>
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="all">All</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="beginner">Beginner</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="intermediate">Intermediate</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="advanced">Advanced</button>
+          </div>
+        </div>
+
+        <div class="grid grid-3 gap-6" id="courses-grid">
+          ${renderCourseCards(coursesData)}
         </div>
       </div>
     </div>
   `;
+
+    const searchInput = $('#course-search');
+    const filterButtons = app.querySelectorAll('.course-filter');
+    let currentDifficulty = 'all';
+
+    const updateFilters = () => {
+        const term = searchInput ? searchInput.value.trim() : '';
+        const filtered = filterCourses(term, currentDifficulty);
+        const grid = $('#courses-grid');
+        if (grid) {
+            grid.innerHTML = renderCourseCards(filtered);
+            animateOnScroll();
+        }
+    };
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('btn-primary'));
+            btn.classList.add('btn-primary');
+            btn.classList.remove('btn-outline');
+            filterButtons.forEach(b => {
+                if (b !== btn && !b.classList.contains('btn-outline')) b.classList.add('btn-outline');
+            });
+            currentDifficulty = btn.dataset.difficulty || 'all';
+            updateFilters();
+        });
+    });
+
+    searchInput?.addEventListener('input', updateFilters);
+
+    // Default active filter
+    const defaultBtn = app.querySelector('.course-filter[data-difficulty="all"]');
+    if (defaultBtn) {
+        defaultBtn.classList.add('btn-primary');
+        defaultBtn.classList.remove('btn-outline');
+    }
 
     animateOnScroll();
 }
@@ -1015,7 +1165,8 @@ async function renderCourse(params) {
     }
 
     const courseLessons = lessonsData.filter(l => l.courseId === course.id).sort((a, b) => a.order - b.order);
-    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+    const lessonCount = getCourseLessonCount(course.id, courseLessons.length || course.totalLessons);
+    const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
     const isEnrolled = storage.isEnrolled(course.id);
     const isCompleted = percent === 100;
     
@@ -1035,7 +1186,7 @@ async function renderCourse(params) {
     app.innerHTML = `
     <div class="page-wrapper bg-dots-pattern">
       <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:800px;">
-        ${breadcrumb ? breadcrumb.render(course.id) : ''}
+        ${renderBreadcrumb({ courseId: course.id, coursesData, modulesData, lessonsData })}
         
         <!-- Course Meta Header -->
         <div style="margin-bottom:var(--space-8); text-align:center;">
@@ -1076,7 +1227,7 @@ async function renderCourse(params) {
         <div class="card" style="margin-bottom:var(--space-8);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
             <h3 style="font-size:var(--text-lg)"><i class="fa-solid fa-list-ol"></i> Curriculum Overview</h3>
-            <span class="text-sm text-muted">${course.totalLessons} Lessons</span>
+            <span class="text-sm text-muted">${lessonCount} Lessons</span>
           </div>
           
           <div style="display:flex; flex-direction:column; gap:var(--space-3);">
@@ -1402,6 +1553,7 @@ async function renderLesson(params) {
     const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null;
     const nextLesson = currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null;
     const isCompleted = storage.isLessonCompleted(courseId, lessonId);
+    const isBookmarked = storage.isBookmarked(lessonId);
 
     const lessonTypeIcon = lesson.type === 'theory' ? '<i class="fa-solid fa-book"></i> Theory' : lesson.type === 'practice' ? '<i class="fa-solid fa-laptop-code"></i> Practice' : '<i class="fa-solid fa-bullseye"></i> Project';
 
@@ -1413,7 +1565,12 @@ async function renderLesson(params) {
       <main class="lesson-main">
         <div class="lesson-header">
           ${renderBreadcrumb({ courseId, lessonId, coursesData, modulesData, lessonsData })}
-          <h1 class="lesson-title">${lesson.title}</h1>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
+            <h1 class="lesson-title" style="margin:0;">${lesson.title}</h1>
+            <button class="btn btn-ghost btn-sm" id="bookmark-toggle" title="Toggle bookmark" aria-pressed="${isBookmarked}">
+              <i class="${isBookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+            </button>
+          </div>
           <div class="lesson-meta">
             <span class="lesson-meta-item">${lessonTypeIcon}</span>
             <span class="lesson-meta-item"><i class="fa-regular fa-clock"></i> ${lesson.duration || 'N/A'}</span>
@@ -1504,6 +1661,22 @@ async function renderLesson(params) {
         <!-- Timestamped Notes -->
         <div id="notes-container"></div>
 
+        <!-- Lesson Comments -->
+        <div class="card" id="lesson-comments" style="margin-top:var(--space-8);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+            <h3 style="margin:0;"><i class="fa-solid fa-comment-dots"></i> Lesson Comments</h3>
+            <span class="text-xs text-muted" id="lesson-comment-count">0 comments</span>
+          </div>
+          <div class="input-group" style="margin-bottom:var(--space-4);">
+            <textarea id="lesson-comment-input" class="input textarea" rows="3" maxlength="500" placeholder="Share feedback or ask a question..."></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="text-xs text-muted" id="lesson-comment-limit">0/500</span>
+              <button class="btn btn-primary btn-sm" id="lesson-comment-post"><i class="fa-solid fa-paper-plane"></i> Post</button>
+            </div>
+          </div>
+          <div id="lesson-comments-list"></div>
+        </div>
+
         <!-- Lesson Navigation -->
         <div class="lesson-nav">
           ${prevLesson ? `
@@ -1583,6 +1756,9 @@ async function renderLesson(params) {
     const { DiscussionComponent } = await import('./components/discussion.js');
     new DiscussionComponent('#qa-panel-container', lessonId, { title: 'Lesson Q&A' });
 
+    // ── Init Lesson Comments ──
+    initLessonComments(lessonId);
+
     // ── Content Tabs ──
     const contentTabs = app.querySelectorAll('.content-tab');
     const contentPanels = app.querySelectorAll('.content-tab-panel');
@@ -1629,6 +1805,25 @@ async function renderLesson(params) {
         const badge = $('#lesson-status-badge');
         if (badge) badge.innerHTML = '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>';
     });
+
+    // ── Bookmark Toggle ──
+    const bookmarkBtn = $('#bookmark-toggle');
+    const updateBookmarkIcon = (active) => {
+      if (!bookmarkBtn) return;
+      const icon = bookmarkBtn.querySelector('i');
+      bookmarkBtn.setAttribute('aria-pressed', String(active));
+      if (icon) {
+        icon.className = `${active ? 'fa-solid' : 'fa-regular'} fa-bookmark`;
+      }
+    };
+
+    if (bookmarkBtn) {
+      bookmarkBtn.addEventListener('click', () => {
+        const active = storage.toggleBookmark(lessonId);
+        updateBookmarkIcon(active);
+        showToast(active ? 'Lesson bookmarked!' : 'Bookmark removed.', active ? 'success' : 'info');
+      });
+    }
 
     // ── Sidebar Toggle (Mobile) ──
     $('#sidebar-toggle')?.addEventListener('click', () => {
@@ -1803,6 +1998,34 @@ function renderProfile() {
                 }).join('');
             })()}
           </div>
+
+          <!-- Bookmarked Lessons -->
+          <div class="card">
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-bookmark"></i> Bookmarked</h3>
+            ${(() => {
+                const bookmarked = storage.getBookmarks()
+                  .map(id => lessonsData.find(l => l.id === id))
+                  .filter(Boolean);
+                if (bookmarked.length === 0) {
+                    return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">No bookmarked lessons yet. Save lessons to access them quickly here.</p>';
+                }
+                return bookmarked.map(lesson => {
+                    const course = coursesData.find(c => c.id === lesson.courseId);
+                    const courseName = course ? course.title : 'Unknown Course';
+                    return `
+                      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); display:flex; justify-content:space-between; align-items:center; gap:var(--space-4);">
+                        <div>
+                          <div style="font-weight:600; color:var(--text-primary); margin-bottom:4px; font-size:1rem;">${lesson.title}</div>
+                          <div style="font-size:0.85rem; color:var(--text-muted);">${courseName}</div>
+                        </div>
+                        <a href="#/lesson/${lesson.courseId}/${lesson.id}" class="btn btn-outline btn-sm">
+                          <i class="fa-solid fa-arrow-right"></i> Open
+                        </a>
+                      </div>
+                    `;
+                }).join('');
+            })()}
+          </div>
         </div>
 
         <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-6)">
@@ -1810,12 +2033,16 @@ function renderProfile() {
           <div class="card">
             <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-book-open"></i> Current Courses</h3>
             ${(() => {
-                const enrolledCourses = coursesData.filter(course => storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, course.totalLessons) > 0);
+                const enrolledCourses = coursesData.filter(course => {
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  return storage.isEnrolled(course.id) || storage.getCourseCompletionPercent(course.id, lessonCount) > 0;
+                });
                 if (enrolledCourses.length === 0) {
                     return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">You haven\'t enrolled in any courses yet. <a href="#/courses">Browse courses</a> to get started!</p>';
                 }
                 return enrolledCourses.map(course => {
-                    const percent = storage.getCourseCompletionPercent(course.id, course.totalLessons);
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
                     const isCompleted = percent === 100;
                     return `
                       <div style="margin-bottom:var(--space-5)">
@@ -1837,7 +2064,10 @@ function renderProfile() {
             ${(() => {
                 const certifications = storage.getCertifications();
                 const totalCerts = storage.getCertificateCount();
-                const completedCourses = coursesData.filter(course => storage.getCourseCompletionPercent(course.id, course.totalLessons) === 100);
+                const completedCourses = coursesData.filter(course => {
+                  const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+                  return storage.getCourseCompletionPercent(course.id, lessonCount) === 100;
+                });
                 
                 if (totalCerts === 0) {
                     return `
@@ -1924,6 +2154,18 @@ function renderProfile() {
                     <input type="password" class="input" id="ai-api-key" placeholder="Enter your API key">
                   </div>
                   <button class="btn btn-secondary btn-sm" id="save-api-key" style="width:100%"><i class="fa-solid fa-robot"></i> Save AI Configuration</button>
+                </div>
+              </div>
+
+              <div>
+                <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Data Management</h4>
+                <div style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <p class="text-xs text-muted" style="margin-bottom:var(--space-4);">Export your ProCode data to move it between devices. Import will replace current local data.</p>
+                  <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+                    <button class="btn btn-outline btn-sm" id="export-data-btn"><i class="fa-solid fa-file-export"></i> Export Data</button>
+                    <button class="btn btn-secondary btn-sm" id="import-data-btn"><i class="fa-solid fa-file-import"></i> Import Data</button>
+                    <input type="file" id="import-data-file" accept="application/json" style="display:none" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2097,6 +2339,114 @@ function renderProfile() {
         }
     });
 
+    // Export / Import Data
+    const exportDataBtn = $('#export-data-btn');
+    const importDataBtn = $('#import-data-btn');
+    const importDataFile = $('#import-data-file');
+
+    const buildProcodeExport = () => {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('procode_')) continue;
+        const raw = localStorage.getItem(key);
+        try {
+          data[key] = raw ? JSON.parse(raw) : null;
+        } catch {
+          data[key] = raw;
+        }
+      }
+
+      return {
+        meta: {
+          app: 'procode-edu-pulse',
+          version: 1,
+          exportedAt: new Date().toISOString()
+        },
+        data
+      };
+    };
+
+    const isValidImportPayload = (payload) => {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return { ok: false, message: 'Invalid JSON structure.' };
+      }
+      if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+        return { ok: false, message: 'Missing data object.' };
+      }
+      if (payload.meta?.app && payload.meta.app !== 'procode-edu-pulse') {
+        return { ok: false, message: 'This file is not a ProCode export.' };
+      }
+
+      const entries = Object.entries(payload.data);
+      if (entries.length === 0) {
+        return { ok: false, message: 'No ProCode data found.' };
+      }
+
+      for (const [key] of entries) {
+        if (typeof key !== 'string' || !key.startsWith('procode_')) {
+          return { ok: false, message: 'Invalid key format in data.' };
+        }
+      }
+
+      return { ok: true };
+    };
+
+    exportDataBtn?.addEventListener('click', () => {
+      const payload = buildProcodeExport();
+      const fileName = `procode_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('Export ready. Check your downloads.', 'success');
+    });
+
+    importDataBtn?.addEventListener('click', () => {
+      if (importDataFile) importDataFile.value = '';
+      importDataFile?.click();
+    });
+
+    importDataFile?.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const validation = isValidImportPayload(payload);
+        if (!validation.ok) {
+          showToast(validation.message, 'error');
+          return;
+        }
+
+        if (!confirm('Importing will replace all current local ProCode data. Continue?')) {
+          return;
+        }
+
+        for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('procode_')) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        Object.entries(payload.data).forEach(([key, value]) => {
+          localStorage.setItem(key, JSON.stringify(value));
+        });
+
+        showToast('Data imported successfully.', 'success');
+        renderProfile();
+      } catch (e) {
+        showToast('Import failed. Invalid JSON file.', 'error');
+      }
+    });
+
     // Reset data
     $('#reset-data-btn')?.addEventListener('click', () => {
         if (confirm('Are you absolutely sure? This will permanently delete all your local progress, notes, and submissions.')) {
@@ -2106,52 +2456,6 @@ function renderProfile() {
         }
     });
 }
-
-// ══════════════════════════════════════════════
-// ADMIN & UTILITY PAGES
-// ══════════════════════════════════════════════
-
-async function renderAdminDashboard() {
-    const app = $('#app');
-    app.innerHTML = `<div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);">
-        <div class="container" style="max-width:800px;">
-            <h1 class="section-title">Admin Dashboard</h1>
-            <div id="admin-stats" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-6);"></div>
-        </div>
-    </div>`;
-
-    const stats = await firestoreService.getAdminStats();
-    const container = $('#admin-stats');
-    if (!stats) {
-        container.innerHTML = '<p class="text-muted">Unable to load statistics.</p>';
-        return;
-    }
-
-    const cards = [];
-    cards.push(`<div class="card">
-        <h3>Total Users</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalUsers}</div>
-    </div>`);
-    cards.push(`<div class="card">
-        <h3>Total Courses</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalCourses || 'N/A'}</div>
-    </div>`);
-    cards.push(`<div class="card">
-        <h3>Total Enrollments</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalEnrollments}</div>
-    </div>`);
-    if (stats.mostPopularCourses && stats.mostPopularCourses.length) {
-        cards.push(`<div class="card">
-            <h3>Top Courses</h3>
-            <ul style="padding-left:1rem; margin:0;">
-                ${stats.mostPopularCourses.slice(0,5).map(c=>`<li>${c.courseId} (${c.count})</li>`).join('')}
-            </ul>
-        </div>`);
-    }
-    container.innerHTML = cards.join('');
-}
-
-
 
 // ══════════════════════════════════════════════
 // NEW PAGES (Roadmaps, Docs, About, Careers)
@@ -2206,6 +2510,272 @@ function renderRoadmapsPage() {
         </div>
       </div>
     `;
+}
+
+// ══════════════════════════════════════════════
+// STYLEGUIDE PAGE
+// ══════════════════════════════════════════════
+
+function renderStyleguide() {
+    const app = $('#app');
+
+    app.innerHTML = `
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
+        <div class="text-center" style="margin-bottom:var(--space-10)">
+          <span class="badge badge-primary mb-4">Design System</span>
+          <h1 style="font-size:2.5rem;margin-bottom:var(--space-4)">Styleguide</h1>
+          <p class="text-muted" style="font-size:1.1rem;max-width:720px;margin:0 auto">
+            A complete reference of UI components, patterns, and tokens used across ProCode EduPulse.
+          </p>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Buttons</h2>
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-6)">
+            <div>
+              <p class="text-sm text-muted" style="margin-bottom:var(--space-3)">Variants</p>
+              <div class="flex gap-3" style="flex-wrap:wrap">
+                <button class="btn btn-primary">Primary</button>
+                <button class="btn btn-secondary">Secondary</button>
+                <button class="btn btn-outline">Outline</button>
+                <button class="btn btn-ghost">Ghost</button>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-muted" style="margin-bottom:var(--space-3)">Sizes</p>
+              <div class="flex gap-3" style="align-items:center;flex-wrap:wrap">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-primary">Default</button>
+                <button class="btn btn-primary btn-lg">Large</button>
+              </div>
+            </div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;button class=&quot;btn btn-primary&quot;&gt;Primary&lt;/button&gt;
+&lt;button class=&quot;btn btn-secondary&quot;&gt;Secondary&lt;/button&gt;
+&lt;button class=&quot;btn btn-outline&quot;&gt;Outline&lt;/button&gt;
+&lt;button class=&quot;btn btn-ghost&quot;&gt;Ghost&lt;/button&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Cards & Badges</h2>
+          <div class="grid grid-3 gap-6">
+            <div class="card" style="padding:var(--space-6)">
+              <div class="badge badge-primary mb-4">Primary</div>
+              <h3 style="margin-bottom:var(--space-2)">Card Title</h3>
+              <p class="text-muted">Use cards for grouped content and features.</p>
+            </div>
+            <div class="card" style="padding:var(--space-6)">
+              <div class="badge badge-success mb-4">Success</div>
+              <h3 style="margin-bottom:var(--space-2)">Completion</h3>
+              <p class="text-muted">Badges highlight states and statuses.</p>
+            </div>
+            <div class="card" style="padding:var(--space-6)">
+              <div class="badge badge-warning mb-4">Warning</div>
+              <h3 style="margin-bottom:var(--space-2)">Attention</h3>
+              <p class="text-muted">Card layout is consistent across pages.</p>
+            </div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;card&quot;&gt;...&lt;/div&gt;
+&lt;span class=&quot;badge badge-success&quot;&gt;Success&lt;/span&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Progress Bars</h2>
+          <div class="progress-label">Lesson Progress</div>
+          <div class="progress-track" style="margin-bottom:var(--space-4)">
+            <div class="progress-fill" style="width:65%"></div>
+          </div>
+          <div class="progress-label">Course Completion</div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:35%"></div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;progress-track&quot;&gt;
+  &lt;div class=&quot;progress-fill&quot; style=&quot;width:65%&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Form Inputs</h2>
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-6)">
+            <div class="input-group">
+              <label>Email</label>
+              <input class="input" type="email" placeholder="name@example.com" />
+            </div>
+            <div class="input-group">
+              <label>Password</label>
+              <input class="input" type="password" placeholder="••••••••" />
+            </div>
+            <div class="input-group">
+              <label>About you</label>
+              <textarea class="input textarea" rows="3" placeholder="Short bio"></textarea>
+            </div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;input-group&quot;&gt;
+  &lt;label&gt;Email&lt;/label&gt;
+  &lt;input class=&quot;input&quot; type=&quot;email&quot; /&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Tabs</h2>
+          <div class="tabs" id="styleguide-tabs">
+            <span class="tab active" data-tab-target="tab-a">Overview</span>
+            <span class="tab" data-tab-target="tab-b">Details</span>
+            <span class="tab" data-tab-target="tab-c">Notes</span>
+          </div>
+          <div class="card" style="margin-top:var(--space-4);padding:var(--space-6)">
+            <div class="tab-panel" data-tab-panel="tab-a">Use tabs to switch between content views.</div>
+            <div class="tab-panel" data-tab-panel="tab-b" style="display:none;">Tabs are styled with .tabs and .tab.</div>
+            <div class="tab-panel" data-tab-panel="tab-c" style="display:none;">Keep tab content concise and readable.</div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;tabs&quot;&gt;
+  &lt;span class=&quot;tab active&quot;&gt;Overview&lt;/span&gt;
+  &lt;span class=&quot;tab&quot;&gt;Details&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Accordion</h2>
+          <div class="accordion" id="styleguide-accordion">
+            <div class="accordion-item active">
+              <div class="accordion-header">What is ProCode EduPulse? <i class="fa-solid fa-chevron-down accordion-icon"></i></div>
+              <div class="accordion-body">
+                <div class="accordion-content">A hands-on LMS for coding education built with vanilla JS.</div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <div class="accordion-header">How are components styled? <i class="fa-solid fa-chevron-down accordion-icon"></i></div>
+              <div class="accordion-body">
+                <div class="accordion-content">Use CSS variables and component classes from components.css.</div>
+              </div>
+            </div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;accordion-item&quot;&gt;
+  &lt;div class=&quot;accordion-header&quot;&gt;Title&lt;/div&gt;
+  &lt;div class=&quot;accordion-body&quot;&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Toasts & Modals</h2>
+          <div class="flex gap-3" style="flex-wrap:wrap">
+            <button class="btn btn-primary" data-toast="success">Show Success Toast</button>
+            <button class="btn btn-secondary" data-toast="info">Show Info Toast</button>
+            <button class="btn btn-outline" data-toast="error">Show Error Toast</button>
+            <button class="btn btn-ghost" id="open-styleguide-modal">Open Modal</button>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>showToast('Saved!', 'success');
+document.querySelector('#open-modal').onclick = () => modal.classList.add('active');</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
+          <h2 class="section-title">Colors</h2>
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-4)">
+            <div class="card" style="padding:var(--space-4)">
+              <div style="height:64px;border-radius:var(--radius-md);background:var(--brand-primary)"></div>
+              <div class="text-sm" style="margin-top:var(--space-3)">Brand Primary</div>
+            </div>
+            <div class="card" style="padding:var(--space-4)">
+              <div style="height:64px;border-radius:var(--radius-md);background:var(--brand-primary-light)"></div>
+              <div class="text-sm" style="margin-top:var(--space-3)">Brand Primary Light</div>
+            </div>
+            <div class="card" style="padding:var(--space-4)">
+              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-success)"></div>
+              <div class="text-sm" style="margin-top:var(--space-3)">Success</div>
+            </div>
+            <div class="card" style="padding:var(--space-4)">
+              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-warning)"></div>
+              <div class="text-sm" style="margin-top:var(--space-3)">Warning</div>
+            </div>
+            <div class="card" style="padding:var(--space-4)">
+              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-error)"></div>
+              <div class="text-sm" style="margin-top:var(--space-3)">Error</div>
+            </div>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>background: var(--brand-primary);
+color: var(--text-primary);</code></pre>
+        </div>
+
+        <div class="card" style="padding:var(--space-8)">
+          <h2 class="section-title">Typography</h2>
+          <div style="display:grid;gap:var(--space-4)">
+            <h1>Heading 1 — Display Title</h1>
+            <h2>Heading 2 — Section Title</h2>
+            <h3>Heading 3 — Subsection</h3>
+            <p>Body text uses the default font size and line height for readability across pages.</p>
+            <p class="text-muted">Muted text uses the secondary text color for helpers and captions.</p>
+            <p class="text-sm">Small text for meta content and labels.</p>
+          </div>
+          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;h1&gt;Heading 1&lt;/h1&gt;
+&lt;p class=&quot;text-muted&quot;&gt;Muted text&lt;/p&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="styleguide-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Example Modal</h3>
+          <button class="modal-close" id="close-styleguide-modal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-secondary" style="margin-bottom:var(--space-6)">Use modals for focused actions and confirmations.</p>
+        <div class="flex justify-end gap-3">
+          <button class="btn btn-ghost" id="cancel-styleguide-modal">Cancel</button>
+          <button class="btn btn-primary" id="confirm-styleguide-modal">Confirm</button>
+        </div>
+      </div>
+    </div>
+    `;
+
+    // Tabs
+    $$('#styleguide-tabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            $$('#styleguide-tabs .tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const target = tab.dataset.tabTarget;
+            $$('[data-tab-panel]').forEach(panel => {
+                panel.style.display = panel.dataset.tabPanel === target ? 'block' : 'none';
+            });
+        });
+    });
+
+    // Accordion
+    $$('#styleguide-accordion .accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            header.parentElement.classList.toggle('active');
+        });
+    });
+
+    // Toasts
+    $$('[data-toast]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.toast;
+            const label = type.charAt(0).toUpperCase() + type.slice(1);
+            showToast(`${label} toast example.`, type);
+        });
+    });
+
+    // Modal
+    const modal = $('#styleguide-modal');
+    const openModalBtn = $('#open-styleguide-modal');
+    const closeModalBtn = $('#close-styleguide-modal');
+    const cancelModalBtn = $('#cancel-styleguide-modal');
+    const confirmModalBtn = $('#confirm-styleguide-modal');
+
+    const closeModal = () => modal.classList.remove('active');
+    const openModal = () => modal.classList.add('active');
+
+    openModalBtn?.addEventListener('click', openModal);
+    closeModalBtn?.addEventListener('click', closeModal);
+    cancelModalBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    confirmModalBtn?.addEventListener('click', () => {
+        showToast('Confirmed action.', 'success');
+        closeModal();
+    });
 }
 
 function renderDocsPage(params) {
@@ -2815,11 +3385,19 @@ function renderOfflinePage() {
 // ══════════════════════════════════════════════
 
 function renderInstructorDashboard() {
-    const app = $('#app');
-    app.innerHTML = '<div id="instructor-mount"></div>';
-    import('./components/instructor-dashboard.js')
-        .then(m => new m.InstructorDashboard('#instructor-mount', coursesData))
-        .catch(err => console.error('Failed to load CMS:', err));
+  const profile = storage.getProfile ? storage.getProfile() : {};
+  const isAuthorized = !!(profile?.isAdmin || profile?.isInstructor);
+  if (!isAuthorized) {
+    showToast('Access denied. Instructor permissions required.', 'error');
+    window.location.hash = '#/';
+    return;
+  }
+
+  const app = $('#app');
+  app.innerHTML = '<div id="instructor-mount"></div>';
+  import('./components/instructor-dashboard.js')
+    .then(m => new m.InstructorDashboard('#instructor-mount', coursesData))
+    .catch(err => console.error('Failed to load CMS:', err));
 }
 
 // ══════════════════════════════════════════════
@@ -2883,6 +3461,7 @@ async function startMainApp() {
         .on('/roadmaps', () => transitionPage(renderRoadmapsPage, '#/roadmaps'))
         .on('/docs', () => transitionPage(renderDocsPage, '#/docs'))
         .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params), `#/docs/${params.docId}`))
+        .on('/styleguide', () => transitionPage(renderStyleguide, '#/styleguide'))
         .on('/portfolio', () => transitionPage(renderPortfolio, '#/portfolio'))
         .on('/profile', () => transitionPage(renderProfile, '#/profile'))
         .on('/admin', () => transitionPage(renderAdminDashboard, '#/admin'))

@@ -6,13 +6,25 @@ import { $, showToast, formatTime } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 import { getCurrentPlayer } from './video-player.js';
 
+/**
+ * Timestamped notes UI component.
+ */
 export class NotesComponent {
-    constructor(container, lessonId) {
+  /**
+   * Create a NotesComponent instance.
+   * @param {string|Element} container
+   * @param {string} lessonId
+   */
+  constructor(container, lessonId) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.lessonId = lessonId;
         this.render();
     }
 
+    /**
+     * Render notes UI.
+     * @returns {void}
+     */
     render() {
         const notes = storage.getNotes(this.lessonId);
 
@@ -43,6 +55,11 @@ export class NotesComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a note item.
+     * @param {object} note
+     * @returns {string}
+     */
     _renderNote(note) {
         return `
       <div class="note-item" data-note-id="${note.id}">
@@ -55,6 +72,10 @@ export class NotesComponent {
     `;
     }
 
+    /**
+     * Attach UI events.
+     * @returns {void}
+     */
     _attachEvents() {
         // Add note
         const addBtn = $('#add-note-btn', this.container);

@@ -2,6 +2,9 @@
 // ProCode EduPulse — Code Validation Engine
 // ============================================
 
+/**
+ * Code validation engine for challenges.
+ */
 export class ValidationEngine {
     /**
      * Validate student code against a set of rules.
@@ -53,6 +56,9 @@ export class ValidationEngine {
 
     /**
      * DOM Query validation — checks if a selector exists in the code.
+     * @param {string} code
+     * @param {object} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateDOMQuery(code, rule) {
         try {
@@ -72,6 +78,9 @@ export class ValidationEngine {
 
     /**
      * DOM Count validation — checks the count of elements matching a selector.
+     * @param {string} code
+     * @param {{selector: string, count: number, errorMessage?: string}} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateDOMCount(code, rule) {
         try {
@@ -91,6 +100,9 @@ export class ValidationEngine {
 
     /**
      * Text Contains validation — checks if code contains specific text.
+     * @param {string} code
+     * @param {{text: string, errorMessage?: string}} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateTextContains(code, rule) {
         const normalizedCode = code.toLowerCase().replace(/\s+/g, ' ');
@@ -106,6 +118,9 @@ export class ValidationEngine {
 
     /**
      * Regex validation — checks if code matches a regex pattern.
+     * @param {string} code
+     * @param {{pattern: string, flags?: string, errorMessage?: string}} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateRegex(code, rule) {
         try {
@@ -124,6 +139,9 @@ export class ValidationEngine {
 
     /**
      * CSS Property validation — checks if specific CSS property is set.
+     * @param {string} code
+     * @param {{property: string, value: string, errorMessage?: string}} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateCSSProperty(code, rule) {
         const pattern = new RegExp(
@@ -141,6 +159,9 @@ export class ValidationEngine {
 
     /**
      * Attribute validation — checks element has specific attribute.
+     * @param {string} code
+     * @param {{selector: string, attribute: string, value?: string, errorMessage?: string}} rule
+     * @returns {{pass: boolean, message: string}}
      */
     static _validateAttribute(code, rule) {
         try {
@@ -174,7 +195,9 @@ export class ValidationEngine {
     }
 
     /**
-     * Parse HTML string into a document fragment for DOM queries.
+     * Parse HTML string into a document for DOM queries.
+     * @param {string} code
+     * @returns {Document}
      */
     static _parseHTML(code) {
         const parser = new DOMParser();

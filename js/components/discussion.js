@@ -2,11 +2,15 @@ import { $, showToast } from '../utils/dom.js';
 import { discussionService } from '../services/discussion-service.js';
 import { authService } from '../services/auth-service.js';
 
+/**
+ * Discussion UI component for Q&A threads.
+ */
 export class DiscussionComponent {
     /**
-     * @param {string} containerSelector 
-     * @param {string} contextId - e.g. 'lesson-1' or 'challenge-5'
-     * @param {Object} options - e.g. title: 'Q&A'
+     * Create a DiscussionComponent instance.
+     * @param {string} containerSelector
+     * @param {string} contextId
+     * @param {{title?: string}} [options={}]
      */
     constructor(containerSelector, contextId, options = {}) {
         this.containerSelector = containerSelector;
@@ -18,6 +22,10 @@ export class DiscussionComponent {
         this.init();
     }
 
+    /**
+     * Initialize component state and load threads.
+     * @returns {Promise<void>}
+     */
     async init() {
         const container = $(this.containerSelector);
         if (!container) return;
@@ -33,11 +41,19 @@ export class DiscussionComponent {
         await this.loadThreads();
     }
 
+    /**
+     * Load discussion threads from service.
+     * @returns {Promise<void>}
+     */
     async loadThreads() {
         this.threads = await discussionService.getThreads(this.contextId);
         this.render();
     }
 
+    /**
+     * Render the discussion UI.
+     * @returns {void}
+     */
     render() {
         if (!this.container) return;
         const user = authService.getCurrentUser();
@@ -90,6 +106,11 @@ export class DiscussionComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a single thread card.
+     * @param {object} t
+     * @returns {string}
+     */
     _renderThreadCard(t) {
         const user = authService.getCurrentUser();
         
@@ -147,6 +168,10 @@ export class DiscussionComponent {
         `;
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const btnNew = this.container.querySelector('#btn-new-thread');
         const formNew = this.container.querySelector('#new-thread-form');

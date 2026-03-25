@@ -3,7 +3,15 @@ import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
 import { mediaService } from '../services/media-service.js';
 
+/**
+ * Admin dashboard UI component.
+ */
 export class AdminDashboard {
+    /**
+     * Create an AdminDashboard instance.
+     * @param {string} containerSelector
+     * @param {object} systemData
+     */
     constructor(containerSelector, systemData) {
         this.containerContainer = $(containerSelector);
         this.systemData = systemData || {};
@@ -14,6 +22,10 @@ export class AdminDashboard {
         this.render();
     }
 
+    /**
+     * Render admin dashboard.
+     * @returns {Promise<void>}
+     */
     async render() {
         if (!this.containerContainer) return;
 
@@ -130,6 +142,10 @@ export class AdminDashboard {
         this._renderActiveTab();
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const tabs = this.containerContainer.querySelectorAll('.admin-tab-btn');
         tabs.forEach(tab => {
@@ -146,6 +162,10 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render the active tab panel.
+     * @returns {void}
+     */
     _renderActiveTab() {
         const area = document.getElementById('admin-content-area');
         const title = document.getElementById('admin-workspace-title');
@@ -188,6 +208,11 @@ export class AdminDashboard {
 
     // ── Tab Renderers ──
 
+    /**
+     * Render overview tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderOverviewTab(container) {
         container.innerHTML = `
             <div class="grid grid-3" style="gap:var(--space-6); margin-bottom:var(--space-8);">
@@ -255,6 +280,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render users tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderUsersTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); margin-bottom:var(--space-6);">
@@ -334,6 +364,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render content tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderContentTab(container) {
         container.innerHTML = `
             <div class="grid grid-2" style="gap:var(--space-6);">
@@ -388,6 +423,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render courses tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderCoursesTab(container) {
         // Integrate InstructorDashboard logic here
         container.innerHTML = `
@@ -537,8 +577,15 @@ export class AdminDashboard {
                             </div>
                         </div>
                         <div class="input-group" style="margin-top:var(--space-4);">
-                            <label>Lesson Notes (Markdown/HTML)</label>
-                            <textarea id="lesson-content" class="input textarea" rows="5" placeholder="<h2>Welcome</h2><p>Here are your notes.</p>"></textarea>
+                            <label>Lesson Notes (Markdown)</label>
+                            <div class="markdown-split">
+                                <div class="markdown-editor">
+                                    <textarea id="lesson-content" class="input textarea" rows="8" placeholder="# Welcome\n\nWrite lesson notes here..."></textarea>
+                                </div>
+                                <div class="markdown-preview" id="lesson-content-preview">
+                                    <div class="text-muted text-sm">Live preview will appear here.</div>
+                                </div>
+                            </div>
                         </div>
                         <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
                             <button class="btn btn-primary" id="btn-save-lesson" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson to Cloud</button>
@@ -550,8 +597,13 @@ export class AdminDashboard {
         
         // Initialize dynamic logic for this tab
         this._initCourseBuilderLogic();
+        this._initMarkdownPreview();
     }
 
+    /**
+     * Initialize course/lesson builder logic.
+     * @returns {void}
+     */
     _initCourseBuilderLogic() {
         // This is a port of the logic from InstructorDashboard._initCustomSelect and _attachEvents
         const container = document.getElementById('course-select-container');
@@ -765,6 +817,40 @@ export class AdminDashboard {
         }
     }
 
+    /**
+     * Initialize markdown preview for lesson content.
+     * @returns {void}
+     */
+    _initMarkdownPreview() {
+        const textarea = document.getElementById('lesson-content');
+        const preview = document.getElementById('lesson-content-preview');
+        if (!textarea || !preview) return;
+
+        const render = () => {
+            const raw = textarea.value || '';
+            const html = window.marked ? window.marked.parse(raw, { breaks: true, gfm: true }) : raw;
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            preview.innerHTML = safe || '<div class="text-muted text-sm">Live preview will appear here.</div>';
+        };
+
+        let t;
+        const debounce = (fn, delay = 200) => {
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), delay);
+            };
+        };
+
+        const onInput = debounce(render, 150);
+        textarea.addEventListener('input', onInput);
+        render();
+    }
+
+    /**
+     * Filter course select options.
+     * @param {string} query
+     * @returns {void}
+     */
     _filterOptions(query) {
         const optionsContainer = document.getElementById('lesson-course-options');
         if (!optionsContainer) return;
@@ -775,6 +861,11 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render gamification tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderGamificationTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); max-width:800px; margin:0 auto;">
@@ -857,6 +948,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render submissions tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderSubmissionsTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6);">
@@ -924,6 +1020,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render access denied state.
+     * @param {string} [reason='You must be an authenticated Administrator to access this control panel.']
+     * @returns {void}
+     */
     _renderAccessDenied(reason = 'You must be an authenticated Administrator to access this control panel.') {
         this.containerContainer.innerHTML = `
             <div class="container" style="padding:var(--space-16); min-height:80vh; display:flex; align-items:center; justify-content:center;">

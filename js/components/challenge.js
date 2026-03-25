@@ -11,8 +11,18 @@ import { discussionService } from '../services/discussion-service.js';
 import { DiscussionComponent } from './discussion.js';
 import { CodeEditor, updatePreview } from './code-editor.js';
 
+/**
+ * Coding challenge UI component.
+ */
 export class ChallengeComponent {
-    constructor(container, challengeData, courseId, lessonId) {
+  /**
+   * Create a ChallengeComponent instance.
+   * @param {string|Element} container
+   * @param {object} challengeData
+   * @param {string} courseId
+   * @param {string} lessonId
+   */
+  constructor(container, challengeData, courseId, lessonId) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.challenge = challengeData;
         this.courseId = courseId;
@@ -21,6 +31,10 @@ export class ChallengeComponent {
         this.render();
     }
 
+    /**
+     * Render challenge UI.
+     * @returns {void}
+     */
     render() {
         const existingSub = storage.getSubmission(this.challenge.title);
 
@@ -111,6 +125,10 @@ export class ChallengeComponent {
         this._attachEvents();
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         // Submit
         $('#challenge-submit-btn', this.container).addEventListener('click', () => this.submit());
@@ -142,6 +160,10 @@ export class ChallengeComponent {
         });
     }
 
+    /**
+     * Submit challenge solution.
+     * @returns {Promise<void>}
+     */
     async submit() {
         if (!this.editor) return;
 
@@ -222,6 +244,10 @@ export class ChallengeComponent {
         }
     }
 
+    /**
+     * Request an AI hint.
+     * @returns {Promise<void>}
+     */
     async getHint() {
         const hintContainer = $('#hint-container', this.container);
         const hintContent = $('#hint-content', this.container);
@@ -245,6 +271,10 @@ export class ChallengeComponent {
         hintContent.textContent = hint;
     }
 
+    /**
+     * Toggle discussion panel.
+     * @returns {Promise<void>}
+     */
     async toggleDiscussions() {
         const panel = $('#challenge-discussion-panel', this.container);
         if (panel.style.display === 'none') {
@@ -257,6 +287,10 @@ export class ChallengeComponent {
         }
     }
 
+    /**
+     * Request a code review by creating a thread.
+     * @returns {Promise<void>}
+     */
     async requestCodeReview() {
         if (!this.editor) return;
         const code = this.editor.getCode();
@@ -290,6 +324,10 @@ export class ChallengeComponent {
         }
     }
 
+    /**
+     * Destroy editor instance.
+     * @returns {void}
+     */
     destroy() {
         if (this.editor) {
             this.editor.destroy();

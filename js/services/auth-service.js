@@ -16,7 +16,13 @@ import { firestoreService } from './firestore-service.js';
 
 const googleProvider = new GoogleAuthProvider();
 
+/**
+ * Authentication service wrapper.
+ */
 class AuthService {
+    /**
+     * Create an AuthService instance.
+     */
     constructor() {
         this._user = null;
         this._profile = null; // Cache for Firestore user profile
@@ -28,6 +34,10 @@ class AuthService {
     /**
      * Initialize auth state listener. Returns a promise that resolves
      * when the initial auth state is determined.
+     */
+    /**
+     * Initialize auth state listener.
+     * @returns {Promise<object|null>}
      */
     init() {
         if (this._initPromise) return this._initPromise;
@@ -73,6 +83,13 @@ class AuthService {
     /**
      * Sign up with email/password and set display name.
      */
+    /**
+     * Sign up with email/password and set display name.
+     * @param {string} email
+     * @param {string} password
+     * @param {string} displayName
+     * @returns {Promise<object>}
+     */
     async signUp(email, password, displayName) {
         if (!isFirebaseConfigured()) {
             throw new Error('Firebase is not configured. Please add your Firebase config.');
@@ -90,6 +107,12 @@ class AuthService {
     /**
      * Sign in with email/password.
      */
+    /**
+     * Sign in with email/password.
+     * @param {string} email
+     * @param {string} password
+     * @returns {Promise<object>}
+     */
     async signIn(email, password) {
         if (!isFirebaseConfigured()) {
             throw new Error('Firebase is not configured. Please add your Firebase config.');
@@ -101,6 +124,10 @@ class AuthService {
 
     /**
      * Sign in with Google popup.
+     */
+    /**
+     * Sign in with Google popup.
+     * @returns {Promise<object>}
      */
     async signInWithGoogle() {
         if (!isFirebaseConfigured()) {
@@ -114,6 +141,10 @@ class AuthService {
     /**
      * Sign out.
      */
+    /**
+     * Sign out.
+     * @returns {Promise<void>}
+     */
     async signOut() {
         if (!isFirebaseConfigured()) return;
         await fbSignOut(auth);
@@ -123,6 +154,11 @@ class AuthService {
 
     /**
      * Register an auth state change listener.
+     */
+    /**
+     * Register an auth state change listener.
+     * @param {(user: object|null) => void} callback
+     * @returns {void}
      */
     onAuthChange(callback) {
         this._listeners.push(callback);
@@ -135,12 +171,20 @@ class AuthService {
     /**
      * Get the current user (may be null).
      */
+    /**
+     * Get the current user.
+     * @returns {object|null}
+     */
     getCurrentUser() {
         return this._user;
     }
 
     /**
      * Check if user is logged in.
+     */
+    /**
+     * Check if user is logged in.
+     * @returns {boolean}
      */
     isLoggedIn() {
         return !!this._user;
@@ -149,12 +193,20 @@ class AuthService {
     /**
      * Get user display name.
      */
+    /**
+     * Get user display name.
+     * @returns {string}
+     */
     getDisplayName() {
         return this._user?.displayName || this._user?.email?.split('@')[0] || 'Student';
     }
 
     /**
      * Get user email.
+     */
+    /**
+     * Get user email.
+     * @returns {string}
      */
     getEmail() {
         return this._user?.email || '';
@@ -163,12 +215,20 @@ class AuthService {
     /**
      * Get user UID.
      */
+    /**
+     * Get user UID.
+     * @returns {string|null}
+     */
     getUid() {
         return this._user?.uid || null;
     }
 
     /**
      * Get the current user profile from Firestore.
+     */
+    /**
+     * Get the current user profile from Firestore.
+     * @returns {Promise<object|null>}
      */
     async getUserProfile() {
         if (!this._user) return null;
@@ -186,6 +246,10 @@ class AuthService {
     /**
      * Check if the current user has admin privileges.
      */
+    /**
+     * Check if the current user has admin privileges.
+     * @returns {Promise<boolean>}
+     */
     async isAdmin() {
         const profile = await this.getUserProfile();
         if (!profile) return false;
@@ -200,6 +264,11 @@ class AuthService {
     /**
      * Update user display name in Firebase Auth profile.
      */
+    /**
+     * Update user display name in Firebase Auth profile.
+     * @param {string} name
+     * @returns {Promise<void>}
+     */
     async updateDisplayName(name) {
         if (this._user && name) {
             await updateProfile(this._user, { displayName: name });
@@ -208,6 +277,10 @@ class AuthService {
 
     /**
      * Check if the current user has admin privileges (synchronous, uses cache).
+     */
+    /**
+     * Check if the current user has admin privileges (sync cache).
+     * @returns {boolean}
      */
     isAdminSync() {
         if (!this._profile) return false;
