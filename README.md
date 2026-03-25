@@ -148,9 +148,9 @@ npx serve .
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
-### Phase 1: MVP ✅
+### Phase 1: MVP 
 - [x] Landing page with course catalog
 - [x] Lesson page with video + code editor
 - [x] Quiz system with scoring
@@ -176,7 +176,7 @@ npx serve .
 
 ---
 
-## 📐 Database Schema (localStorage)
+##  Database Schema (localStorage)
 
 ```
 ┌─────────────────────┐     ┌─────────────────────┐
@@ -239,7 +239,7 @@ Contributions are welcome! Here's how:
 ## ⭐ If you like this project, consider sponsoring me
 
 ---
-## 📄 License
+##  License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
