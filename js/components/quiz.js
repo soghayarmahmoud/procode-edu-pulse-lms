@@ -17,14 +17,14 @@ export class QuizComponent {
    * @param {string} lessonId
    */
   constructor(container, quizData, courseId, lessonId) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+      this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.quiz = quizData;
         this.courseId = courseId;
         this.lessonId = lessonId;
         this.answers = {};
         this.submitted = false;
         this.realTime = quizData.realTime !== false; // Enable by default
-        this.render();
+      this.render();
     }
 
     /**
@@ -32,6 +32,7 @@ export class QuizComponent {
      * @returns {void}
      */
     render() {
+      if (!this.container) return;
         const existingScore = storage.getQuizScore(this.courseId, this.quiz.title);
 
         this.container.innerHTML = `
@@ -97,6 +98,7 @@ export class QuizComponent {
      * @returns {void}
      */
     _attachEvents() {
+      if (!this.container) return;
         // Option click
         this.container.querySelectorAll('.quiz-option').forEach(option => {
             option.addEventListener('click', () => {
@@ -123,7 +125,7 @@ export class QuizComponent {
                     
                     // Check if all answered to highlight submit
                     if (Object.keys(this.answers).length === this.quiz.questions.length) {
-                        $('#quiz-submit', this.container).classList.add('pulse-animation');
+                      $('#quiz-submit', this.container)?.classList.add('pulse-animation');
                     }
                 } else {
                     // Deselect siblings
@@ -138,10 +140,10 @@ export class QuizComponent {
         });
 
         // Submit
-        $('#quiz-submit', this.container).addEventListener('click', () => this.submit());
+        $('#quiz-submit', this.container)?.addEventListener('click', () => this.submit());
 
         // Reset
-        $('#quiz-reset', this.container).addEventListener('click', () => this.reset());
+        $('#quiz-reset', this.container)?.addEventListener('click', () => this.reset());
     }
 
     /**
