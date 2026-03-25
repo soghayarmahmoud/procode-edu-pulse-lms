@@ -464,7 +464,9 @@ class FirestoreService {
             return courses;
         } catch (e) {
             if (isPermissionDenied(e)) firestoreAccessDenied = true;
-            console.error('Error getting dynamic courses:', e);
+            if (!firestoreAccessDenied) {
+                console.error('Error getting dynamic courses:', e);
+            }
             return [];
         }
     }
@@ -504,7 +506,9 @@ class FirestoreService {
             return lessons;
         } catch (e) {
             if (isPermissionDenied(e)) firestoreAccessDenied = true;
-            console.error('Error getting dynamic lessons:', e);
+            if (!firestoreAccessDenied) {
+                console.error('Error getting dynamic lessons:', e);
+            }
             return [];
         }
     }
