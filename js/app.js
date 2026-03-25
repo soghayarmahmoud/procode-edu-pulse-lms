@@ -1029,23 +1029,29 @@ function renderCoursesPage() {
     const app = $('#app');
     const base = getBasePath();
 
-    app.innerHTML = `
-    <div class="page-wrapper bg-dots-pattern">
-      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
-        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10)">
-          <span class="section-badge"><i class="fa-solid fa-book-open"></i> All Courses</span>
-          <h1 class="section-title">Course Catalog</h1>
-          <p class="section-subtitle" style="margin:0">Choose a course and start your learning journey</p>
-        </div>
+    const filterCourses = (searchTerm, difficulty) => {
+        return coursesData.filter(course => {
+            const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesDifficulty = difficulty === 'all' || course.difficulty.toLowerCase() === difficulty;
+            return matchesSearch && matchesDifficulty;
+        });
+    };
 
-        <div class="grid grid-3 gap-6">
-          ${coursesData.map(course => {
-        const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
-        const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
-        const avgRating = storage.getCourseAverageRating(course.id);
-        const reviews = storage.getReviews(course.id);
-        const isEnrolled = storage.isEnrolled(course.id);
-        return `
+    const renderCourseCards = (list) => {
+        if (!list.length) {
+            return `
+            <div class="card" style="grid-column:1 / -1; text-align:center; padding:var(--space-8);">
+              <p class="text-muted" style="margin:0;">No courses found.</p>
+            </div>`;
+        }
+
+        return list.map(course => {
+            const lessonCount = getCourseLessonCount(course.id, course.totalLessons);
+            const percent = storage.getCourseCompletionPercent(course.id, lessonCount);
+            const avgRating = storage.getCourseAverageRating(course.id);
+            const reviews = storage.getReviews(course.id);
+            const isEnrolled = storage.isEnrolled(course.id);
+            return `
             <div class="course-card" onclick="location.hash='/course/${course.id}'" data-animate>
               ${(() => {
                   const thumbUrl = course.thumbnail ? (course.thumbnail.startsWith('http') ? course.thumbnail : `${base}${course.thumbnail}`) : null;
@@ -1078,11 +1084,72 @@ function renderCoursesPage() {
                 </div>
               </div>
             </div>`;
-    }).join('')}
+        }).join('');
+    };
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
+        <div class="section-header" style="text-align:left;margin-bottom:var(--space-10)">
+          <span class="section-badge"><i class="fa-solid fa-book-open"></i> All Courses</span>
+          <h1 class="section-title">Course Catalog</h1>
+          <p class="section-subtitle" style="margin:0">Choose a course and start your learning journey</p>
+        </div>
+
+        <div class="card" style="padding:var(--space-4); margin-bottom:var(--space-8); display:flex; flex-wrap:wrap; gap:var(--space-4); align-items:center;">
+          <div style="flex:1; min-width:220px;">
+            <input class="input" id="course-search" type="text" placeholder="Search courses..." />
+          </div>
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="all">All</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="beginner">Beginner</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="intermediate">Intermediate</button>
+            <button class="btn btn-outline btn-sm course-filter" data-difficulty="advanced">Advanced</button>
+          </div>
+        </div>
+
+        <div class="grid grid-3 gap-6" id="courses-grid">
+          ${renderCourseCards(coursesData)}
         </div>
       </div>
     </div>
   `;
+
+    const searchInput = $('#course-search');
+    const filterButtons = app.querySelectorAll('.course-filter');
+    let currentDifficulty = 'all';
+
+    const updateFilters = () => {
+        const term = searchInput ? searchInput.value.trim() : '';
+        const filtered = filterCourses(term, currentDifficulty);
+        const grid = $('#courses-grid');
+        if (grid) {
+            grid.innerHTML = renderCourseCards(filtered);
+            animateOnScroll();
+        }
+    };
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('btn-primary'));
+            btn.classList.add('btn-primary');
+            btn.classList.remove('btn-outline');
+            filterButtons.forEach(b => {
+                if (b !== btn && !b.classList.contains('btn-outline')) b.classList.add('btn-outline');
+            });
+            currentDifficulty = btn.dataset.difficulty || 'all';
+            updateFilters();
+        });
+    });
+
+    searchInput?.addEventListener('input', updateFilters);
+
+    // Default active filter
+    const defaultBtn = app.querySelector('.course-filter[data-difficulty="all"]');
+    if (defaultBtn) {
+        defaultBtn.classList.add('btn-primary');
+        defaultBtn.classList.remove('btn-outline');
+    }
 
     animateOnScroll();
 }
