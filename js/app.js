@@ -1119,7 +1119,7 @@ async function renderCourse(params) {
     app.innerHTML = `
     <div class="page-wrapper bg-dots-pattern">
       <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:800px;">
-        ${breadcrumb ? breadcrumb.render(course.id) : ''}
+        ${renderBreadcrumb({ courseId: course.id, coursesData, modulesData, lessonsData })}
         
         <!-- Course Meta Header -->
         <div style="margin-bottom:var(--space-8); text-align:center;">
