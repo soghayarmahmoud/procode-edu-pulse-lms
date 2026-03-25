@@ -161,6 +161,168 @@
                     "explanation": "<article> represents self-contained content that could be independently distributed or reused."
                 }
             ]
+        },
+        "js-intro-quiz": {
+            "title": "JavaScript Introduction Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "What is JavaScript primarily used for in web development?",
+                    "options": [
+                        "Styling pages",
+                        "Adding interactivity and logic",
+                        "Structuring content",
+                        "Hosting websites"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "JavaScript adds interactivity, logic, and dynamic behavior to web pages."
+                },
+                {
+                    "id": "q2",
+                    "question": "Which tag is used to include JavaScript in HTML?",
+                    "options": [
+                        "<js>",
+                        "<script>",
+                        "<javascript>",
+                        "<code>"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "The <script> tag is used to embed or link JavaScript."
+                },
+                {
+                    "id": "q3",
+                    "question": "Where is it best to place a script tag to avoid blocking the page?",
+                    "options": [
+                        "At the top of <head> without defer",
+                        "At the end of <body>",
+                        "Inside <title>",
+                        "Inside <meta>"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "Placing scripts near the end of <body> or using defer prevents blocking rendering."
+                },
+                {
+                    "id": "q4",
+                    "question": "Which method outputs a message to the browser console?",
+                    "options": [
+                        "print()",
+                        "console.log()",
+                        "alert.log()",
+                        "document.write()"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "console.log() writes messages to the DevTools console."
+                }
+            ]
+        },
+        "js-variables-quiz": {
+            "title": "Variables & Data Types Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "Which keyword declares a variable that can be reassigned?",
+                    "options": [
+                        "const",
+                        "let",
+                        "static",
+                        "fixed"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "let allows reassignment, while const does not."
+                },
+                {
+                    "id": "q2",
+                    "question": "Which data type represents true/false values?",
+                    "options": [
+                        "String",
+                        "Number",
+                        "Boolean",
+                        "Object"
+                    ],
+                    "correctIndex": 2,
+                    "explanation": "Boolean values are true or false."
+                },
+                {
+                    "id": "q3",
+                    "question": "What does typeof 42 return?",
+                    "options": [
+                        "'number'",
+                        "'int'",
+                        "'float'",
+                        "'numeric'"
+                    ],
+                    "correctIndex": 0,
+                    "explanation": "typeof 42 returns 'number'."
+                },
+                {
+                    "id": "q4",
+                    "question": "Which is the correct way to declare a constant string?",
+                    "options": [
+                        "const name = 'Ava';",
+                        "let const name = 'Ava';",
+                        "const = 'Ava';",
+                        "constant name = 'Ava';"
+                    ],
+                    "correctIndex": 0,
+                    "explanation": "const name = 'Ava'; is the correct syntax."
+                }
+            ]
+        },
+        "js-async-quiz": {
+            "title": "Async/Await & Fetch Quiz",
+            "passingScore": 70,
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": "Which keyword is used to pause execution until a promise resolves?",
+                    "options": [
+                        "wait",
+                        "await",
+                        "yield",
+                        "pause"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "await pauses inside an async function until the promise resolves."
+                },
+                {
+                    "id": "q2",
+                    "question": "What does fetch() return?",
+                    "options": [
+                        "A string",
+                        "A promise",
+                        "A number",
+                        "A DOM element"
+                    ],
+                    "correctIndex": 1,
+                    "explanation": "fetch() returns a Promise that resolves to a Response object."
+                },
+                {
+                    "id": "q3",
+                    "question": "Where can you use await?",
+                    "options": [
+                        "Only inside async functions",
+                        "Anywhere in global scope",
+                        "Only inside try/catch",
+                        "Only inside loops"
+                    ],
+                    "correctIndex": 0,
+                    "explanation": "await is valid only inside async functions (or top-level in modules)."
+                },
+                {
+                    "id": "q4",
+                    "question": "How do you handle errors in async/await?",
+                    "options": [
+                        "try/catch",
+                        "if/else",
+                        "switch",
+                        "for/while"
+                    ],
+                    "correctIndex": 0,
+                    "explanation": "Use try/catch to handle async errors with await."
+                }
+            ]
         }
     }
 }

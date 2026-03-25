@@ -252,6 +252,150 @@
                 }
             ]
         },
+        "js-functions-challenge": {
+            "title": "Write a Greeting Function",
+            "difficulty": "Medium",
+            "instructions": "Create a function named greet that accepts a name and returns: \"Hello, <name>!\". Then call it and display the result inside the #output element.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Functions Challenge</title>\n</head>\n<body>\n  <h2 id=\"output\"></h2>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "function\\s+greet\\s*\\(|const\\s+greet\\s*=\\s*\\(",
+                    "errorMessage": "Define a function named greet (function greet(...) or const greet = (...))."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "return\\s+[`'\"]Hello",
+                    "errorMessage": "Your greet function should return a greeting string starting with 'Hello'."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "output",
+                    "errorMessage": "Display the greeting in the #output element."
+                }
+            ]
+        },
+        "js-dom-challenge": {
+            "title": "Update the DOM",
+            "difficulty": "Medium",
+            "instructions": "Select the element with id 'title', change its text to 'DOM Updated', and add a class named 'highlight'.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>DOM Challenge</title>\n  <style>\n    .highlight { color: #6c5ce7; font-weight: bold; }\n  </style>\n</head>\n<body>\n  <h1 id=\"title\">Original Title</h1>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "querySelector",
+                    "errorMessage": "Use querySelector to select the element."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "textContent\\s*=\\s*['\"]DOM Updated['\"]",
+                    "errorMessage": "Set textContent to 'DOM Updated'."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "classList\\.add\\(['\"]highlight['\"]\\)",
+                    "errorMessage": "Add the 'highlight' class using classList.add()."
+                }
+            ]
+        },
+        "js-events-challenge": {
+            "title": "Button Click Counter",
+            "difficulty": "Medium",
+            "instructions": "Add a click event to the button. Each click should increase the number shown in #count.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Events Challenge</title>\n</head>\n<body>\n  <button id=\"btn\">Click me</button>\n  <p>Clicks: <span id=\"count\">0</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "addEventListener",
+                    "errorMessage": "Use addEventListener to handle the click."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "count\\s*(\\+\\+|\\+=\\s*1)",
+                    "errorMessage": "Increment a count variable on each click."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "textContent",
+                    "errorMessage": "Update the #count element textContent."
+                }
+            ]
+        },
+        "js-arrays-challenge": {
+            "title": "Sum an Array",
+            "difficulty": "Medium",
+            "instructions": "Create an array of numbers, loop through it, and compute the sum. Display the result inside #sum.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Arrays Challenge</title>\n</head>\n<body>\n  <p>Sum: <span id=\"sum\">0</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "\\[[^\\]]+\\]",
+                    "errorMessage": "Create an array using brackets, e.g., [1, 2, 3]."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "for\\s*\\(|forEach\\s*\\(",
+                    "errorMessage": "Use a loop (for or forEach) to iterate the array."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "sum",
+                    "errorMessage": "Store the total in a variable named sum and display it."
+                }
+            ]
+        },
+        "js-objects-challenge": {
+            "title": "Create a Student Object",
+            "difficulty": "Medium",
+            "instructions": "Create an object named student with name and score properties. Then display the name inside #student-name.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Objects Challenge</title>\n</head>\n<body>\n  <p>Student: <span id=\"student-name\">---</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "const\\s+student\\s*=\\s*{",
+                    "errorMessage": "Create an object literal named student."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "name\\s*:",
+                    "errorMessage": "Include a name property in the student object."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "student.name",
+                    "errorMessage": "Display student.name inside #student-name."
+                }
+            ]
+        },
+        "js-project-challenge": {
+            "title": "Build an Interactive Counter",
+            "difficulty": "Medium",
+            "instructions": "Create a counter with Increase, Decrease, and Reset buttons. Update the number inside #count when buttons are clicked.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Counter App</title>\n  <style>\n    button { margin-right: 8px; }\n  </style>\n</head>\n<body>\n  <h1 id=\"count\">0</h1>\n  <button id=\"inc\">Increase</button>\n  <button id=\"dec\">Decrease</button>\n  <button id=\"reset\">Reset</button>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "addEventListener",
+                    "errorMessage": "Attach click listeners to the buttons."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "count\\s*(\\+\\+|\\+=\\s*1|-=\\s*1|--)",
+                    "errorMessage": "Update a count variable for increase/decrease actions."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "textContent",
+                    "errorMessage": "Update the #count element textContent."
+                }
+            ]
+        },
         "python-calculator-challenge": {
             "title": "Build a Simple Calculator",
             "type": "backend",

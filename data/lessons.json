@@ -40,6 +40,155 @@
                     "name": "MDN HTML Elements Reference",
                     "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element"
                 }
+        },
+        {
+            "id": "js-intro",
+            "courseId": "javascript-basics",
+            "title": "What is JavaScript?",
+            "order": 1,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "18 min",
+            "content": "<h3>JavaScript Overview</h3><p>JavaScript is the programming language of the web. It adds interactivity, logic, and dynamic behavior to HTML and CSS.</p><h3>Where JS Runs</h3><ul><li>In the browser (front-end)</li><li>On servers with Node.js (back-end)</li></ul><h3>First Script</h3><pre><code>&lt;script&gt;\n  console.log('Hello JavaScript!');\n&lt;/script&gt;</code></pre><h3>External Script</h3><pre><code>&lt;script src=\"app.js\"&gt;&lt;/script&gt;</code></pre>",
+            "cheatSheet": "## JavaScript Intro Cheat Sheet\n\n### Syntax\n- Inline script: `<script> ... </script>`\n- External script: `<script src=\"app.js\"></script>`\n- Logging: `console.log()`\n\n### Examples\n```html\n<script>\n  console.log('Hello JS');\n</script>\n```\n```html\n<script src=\"main.js\"></script>\n```\n```js\n// app.js\nalert('Welcome!');\n```\n\n### Common Mistakes\n- Forgetting to include the `<script>` tag\n- Placing scripts in the `<head>` without `defer`\n- Syntax errors (missing quotes or parentheses)",
+            "resources": [
+                {
+                    "name": "MDN JavaScript Guide",
+                    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+                }
+            ],
+            "assessment": {
+                "type": "quiz",
+                "id": "js-intro-quiz"
+            }
+        },
+        {
+            "id": "js-variables",
+            "courseId": "javascript-basics",
+            "title": "Variables & Data Types",
+            "order": 2,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "22 min",
+            "content": "<h3>Variables</h3><p>Use <code>let</code> for reassignable values and <code>const</code> for values that won't be reassigned.</p><pre><code>let count = 1;\nconst siteName = 'ProCode';</code></pre><h3>Data Types</h3><ul><li>String</li><li>Number</li><li>Boolean</li><li>Undefined</li><li>Null</li><li>Object</li><li>Array</li></ul><h3>Type Checking</h3><pre><code>typeof 'hello' // "string"\ntypeof 42 // "number"</code></pre>",
+            "cheatSheet": "## Variables & Types Cheat Sheet\n\n### Syntax\n- `let` → reassignable\n- `const` → non-reassignable\n- `typeof` → type check\n\n### Examples\n```js\nlet score = 0;\nscore = score + 10;\n```\n```js\nconst appName = 'EduPulse';\n```\n```js\nconst isLoggedIn = true;\nconsole.log(typeof isLoggedIn); // boolean\n```\n\n### Common Mistakes\n- Reassigning a `const` variable\n- Using `var` unintentionally\n- Confusing `null` and `undefined`",
+            "resources": [],
+            "assessment": {
+                "type": "quiz",
+                "id": "js-variables-quiz"
+            }
+        },
+        {
+            "id": "js-functions",
+            "courseId": "javascript-basics",
+            "title": "Functions",
+            "order": 3,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "25 min",
+            "content": "<h3>Defining Functions</h3><pre><code>function greet(name) {\n  return `Hello, ${name}!`;\n}</code></pre><h3>Arrow Functions</h3><pre><code>const add = (a, b) => a + b;</code></pre><h3>Calling Functions</h3><pre><code>greet('Sara');\nadd(2, 3);</code></pre>",
+            "cheatSheet": "## Functions Cheat Sheet\n\n### Syntax\n- Declaration: `function name() {}`\n- Arrow: `const fn = () => {}`\n- Return values with `return`\n\n### Examples\n```js\nfunction square(n) {\n  return n * n;\n}\n```\n```js\nconst greet = (name) => `Hi, ${name}!`;\n```\n```js\nconst total = (a, b) => {\n  const sum = a + b;\n  return sum;\n};\n```\n\n### Common Mistakes\n- Forgetting to return a value\n- Not calling the function (missing parentheses)\n- Shadowing variables inside functions",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-functions-challenge"
+            }
+        },
+        {
+            "id": "js-dom",
+            "courseId": "javascript-basics",
+            "title": "DOM Manipulation",
+            "order": 4,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "28 min",
+            "content": "<h3>Select Elements</h3><pre><code>const title = document.querySelector('h1');</code></pre><h3>Update Text</h3><pre><code>title.textContent = 'New Title';</code></pre><h3>Create Elements</h3><pre><code>const li = document.createElement('li');\nli.textContent = 'Item';\ndocument.querySelector('ul').appendChild(li);</code></pre>",
+            "cheatSheet": "## DOM Manipulation Cheat Sheet\n\n### Syntax\n- Select: `querySelector()` / `querySelectorAll()`\n- Update: `textContent`, `innerHTML`\n- Create: `createElement()` + `appendChild()`\n\n### Examples\n```js\nconst card = document.querySelector('.card');\ncard.classList.add('active');\n```\n```js\nconst msg = document.getElementById('message');\nmsg.textContent = 'Updated!';\n```\n```js\nconst button = document.createElement('button');\nbutton.textContent = 'Click';\ndocument.body.appendChild(button);\n```\n\n### Common Mistakes\n- Forgetting to wait for the DOM to load\n- Using `innerHTML` with untrusted data\n- Selecting a node that doesn’t exist",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-dom-challenge"
+            }
+        },
+        {
+            "id": "js-events",
+            "courseId": "javascript-basics",
+            "title": "Event Handling",
+            "order": 5,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "25 min",
+            "content": "<h3>Listening for Events</h3><pre><code>button.addEventListener('click', () => {\n  console.log('Clicked');\n});</code></pre><h3>Event Object</h3><pre><code>form.addEventListener('submit', (e) => {\n  e.preventDefault();\n});</code></pre><h3>Common Events</h3><ul><li>click</li><li>input</li><li>submit</li><li>keydown</li></ul>",
+            "cheatSheet": "## Event Handling Cheat Sheet\n\n### Syntax\n- Listen: `addEventListener('event', handler)`\n- Prevent default: `event.preventDefault()`\n\n### Examples\n```js\nbutton.addEventListener('click', () => {\n  alert('Clicked');\n});\n```\n```js\ninput.addEventListener('input', (e) => {\n  console.log(e.target.value);\n});\n```\n```js\nform.addEventListener('submit', (e) => {\n  e.preventDefault();\n});\n```\n\n### Common Mistakes\n- Using `onclick` inline instead of listeners\n- Forgetting `preventDefault()` on forms\n- Attaching listeners to a null element",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-events-challenge"
+            }
+        },
+        {
+            "id": "js-arrays",
+            "courseId": "javascript-basics",
+            "title": "Arrays & Loops",
+            "order": 6,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "30 min",
+            "content": "<h3>Create Arrays</h3><pre><code>const skills = ['HTML', 'CSS', 'JS'];</code></pre><h3>Loops</h3><pre><code>for (let i = 0; i &lt; skills.length; i++) {\n  console.log(skills[i]);\n}</code></pre><h3>Array Methods</h3><pre><code>skills.forEach(skill =&gt; console.log(skill));</code></pre>",
+            "cheatSheet": "## Arrays & Loops Cheat Sheet\n\n### Syntax\n- Array literal: `[1, 2, 3]`\n- For loop: `for (...) {}`\n- forEach: `arr.forEach(...)`\n\n### Examples\n```js\nconst nums = [1, 2, 3];\nfor (const n of nums) {\n  console.log(n);\n}\n```\n```js\nconst total = nums.reduce((sum, n) => sum + n, 0);\n```\n```js\nconst upper = ['a', 'b'].map(ch => ch.toUpperCase());\n```\n\n### Common Mistakes\n- Off-by-one errors in loops\n- Mutating arrays unintentionally\n- Forgetting `return` in `map` callbacks",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-arrays-challenge"
+            }
+        },
+        {
+            "id": "js-objects",
+            "courseId": "javascript-basics",
+            "title": "Objects",
+            "order": 7,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "practice",
+            "duration": "26 min",
+            "content": "<h3>Object Literals</h3><pre><code>const user = {\n  name: 'Alex',\n  role: 'Student'\n};</code></pre><h3>Access Properties</h3><pre><code>user.name;\nuser['role'];</code></pre><h3>Update Objects</h3><pre><code>user.isActive = true;</code></pre>",
+            "cheatSheet": "## Objects Cheat Sheet\n\n### Syntax\n- Literal: `{ key: value }`\n- Dot access: `obj.key`\n- Bracket access: `obj['key']`\n\n### Examples\n```js\nconst course = {\n  id: 'js-basics',\n  title: 'JavaScript Basics'\n};\n```\n```js\ncourse.duration = 12;\n```\n```js\nconst { title } = course;\n```\n\n### Common Mistakes\n- Using dot access for keys with spaces\n- Forgetting commas between properties\n- Mutating objects that should be treated as immutable",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-objects-challenge"
+            }
+        },
+        {
+            "id": "js-async",
+            "courseId": "javascript-basics",
+            "title": "Async/Await & Fetch",
+            "order": 8,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "theory",
+            "duration": "24 min",
+            "content": "<h3>Async/Await</h3><pre><code>async function loadData() {\n  const res = await fetch('https://api.example.com');\n  const data = await res.json();\n  return data;\n}</code></pre><h3>Error Handling</h3><pre><code>try {\n  const res = await fetch(url);\n} catch (err) {\n  console.error(err);\n}</code></pre><h3>Promises</h3><pre><code>fetch(url).then(res =&gt; res.json());</code></pre>",
+            "cheatSheet": "## Async/Await Cheat Sheet\n\n### Syntax\n- Declare async: `async function name()`\n- Await promises: `const data = await fn()`\n\n### Examples\n```js\nasync function getUser() {\n  const res = await fetch('/api/user');\n  return res.json();\n}\n```\n```js\ntry {\n  const res = await fetch(url);\n} catch (e) {\n  console.error(e);\n}\n```\n```js\nfetch(url)\n  .then(r => r.json())\n  .then(data => console.log(data));\n```\n\n### Common Mistakes\n- Using `await` outside `async` functions\n- Forgetting to handle errors\n- Not returning the awaited data",
+            "resources": [],
+            "assessment": {
+                "type": "quiz",
+                "id": "js-async-quiz"
+            }
+        },
+        {
+            "id": "js-project",
+            "courseId": "javascript-basics",
+            "title": "Final Project: Interactive App",
+            "order": 9,
+            "youtubeId": "qz0aGYrrlhU",
+            "type": "project",
+            "duration": "40 min",
+            "content": "<h3>🎯 Project: Interactive Counter App</h3><p>Build a small app with buttons to increment, decrement, and reset a counter.</p><h3>Requirements</h3><ul><li>Display the current count</li><li>Three buttons: Increase, Decrease, Reset</li><li>Use event listeners</li><li>Update the DOM when the count changes</li></ul>",
+            "cheatSheet": "## Interactive App Cheat Sheet\n\n### Syntax\n- Select: `document.querySelector()`\n- Listen: `addEventListener()`\n- Update: `textContent`\n\n### Examples\n```html\n<h1 id=\"count\">0</h1>\n<button id=\"inc\">Increase</button>\n```\n```js\nconst countEl = document.querySelector('#count');\nlet count = 0;\ncountEl.textContent = count;\n```\n```js\ndocument.querySelector('#inc').addEventListener('click', () => {\n  count += 1;\n  countEl.textContent = count;\n});\n```\n\n### Common Mistakes\n- Not storing count in a variable\n- Forgetting to update the DOM\n- Attaching listeners before the DOM loads",
+            "resources": [],
+            "assessment": {
+                "type": "challenge",
+                "id": "js-project-challenge"
+            }
             ],
             "assessment": {
                 "type": "challenge",
