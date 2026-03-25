@@ -520,6 +520,59 @@
     font-size: var(--text-sm);
 }
 
+/* ── Markdown Editor Preview ── */
+.markdown-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: stretch;
+}
+
+.markdown-editor .textarea {
+    min-height: 220px;
+}
+
+.markdown-preview {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    min-height: 220px;
+    overflow: auto;
+    color: var(--text-secondary);
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4 {
+    color: var(--text-primary);
+    margin: 0 0 var(--space-3);
+}
+
+.markdown-preview p {
+    margin-bottom: var(--space-3);
+    line-height: 1.6;
+}
+
+.markdown-preview pre {
+    background: var(--bg-tertiary);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    overflow: auto;
+}
+
+.markdown-preview code {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-size: 0.9em;
+}
+
+@media (max-width: 900px) {
+    .markdown-split {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ── Skeleton Loader ── */
 .skeleton {
     background: var(--bg-tertiary);

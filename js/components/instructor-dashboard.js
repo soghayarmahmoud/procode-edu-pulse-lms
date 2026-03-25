@@ -148,8 +148,15 @@ export class InstructorDashboard {
                                     </div>
                                 </div>
                                 <div class="input-group" style="margin-top:var(--space-4);">
-                                    <label>Lesson Content / Notes (Markdown formatted HTML)</label>
-                                    <textarea id="lesson-content" class="input textarea" rows="5" placeholder="<h2>Welcome</h2><p>Here are your notes.</p>"></textarea>
+                                    <label>Lesson Content / Notes (Markdown)</label>
+                                    <div class="markdown-split">
+                                        <div class="markdown-editor">
+                                            <textarea id="lesson-content" class="input textarea" rows="8" placeholder="# Welcome\n\nWrite lesson notes here..."></textarea>
+                                        </div>
+                                        <div class="markdown-preview" id="lesson-content-preview">
+                                            <div class="text-muted text-sm">Live preview will appear here.</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
                                     <button class="btn btn-primary" id="btn-save-lesson" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson</button>
@@ -163,6 +170,7 @@ export class InstructorDashboard {
 
         this._attachEvents();
         this._initCustomSelect();
+        this._initMarkdownPreview();
     }
 
     _initCustomSelect() {
@@ -379,5 +387,30 @@ export class InstructorDashboard {
                 btnSaveLesson.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson';
             });
         }
+    }
+
+    _initMarkdownPreview() {
+        const textarea = document.getElementById('lesson-content');
+        const preview = document.getElementById('lesson-content-preview');
+        if (!textarea || !preview) return;
+
+        const render = () => {
+            const raw = textarea.value || '';
+            const html = window.marked ? window.marked.parse(raw, { breaks: true, gfm: true }) : raw;
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            preview.innerHTML = safe || '<div class="text-muted text-sm">Live preview will appear here.</div>';
+        };
+
+        let t;
+        const debounce = (fn, delay = 200) => {
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), delay);
+            };
+        };
+
+        const onInput = debounce(render, 150);
+        textarea.addEventListener('input', onInput);
+        render();
     }
 }
