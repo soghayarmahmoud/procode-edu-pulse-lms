@@ -2,9 +2,11 @@
 // ProCode EduPulse — Navbar Component
 // ============================================
 
-import { $, $$ } from '../utils/dom.js';
+import { $, $$, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 import { authService } from '../services/auth-service.js';
+import { db, isFirebaseConfigured } from '../services/firebase-config.js';
+import { collection, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 export function renderNavbar() {
     const navbar = document.createElement('nav');
@@ -47,6 +49,10 @@ export function renderNavbar() {
         </button>
         ${user ? `
           <div class="user-menu" style="display:flex; align-items:center; gap:var(--space-4);">
+            <button class="notif-bell" id="notif-bell" title="Notifications" aria-label="Notifications">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+            </button>
             <div class="nav-gems" style="background:var(--bg-tertiary); padding:4px 10px; border-radius:20px; font-weight:bold; font-size:var(--text-sm); display:flex; align-items:center; gap:6px; color:var(--text-primary); border: 1px solid var(--border-subtle)">
               <i class="fa-solid fa-gem" style="color: #00cec9; text-shadow: 0 0 5px rgba(0,206,201,0.5);"></i> <span class="nav-gems-display">${storage.getGems()}</span>
             </div>
@@ -101,6 +107,7 @@ export function renderNavbar() {
         logoutBtn.addEventListener('click', async () => {
             await authService.signOut();
             localStorage.removeItem('procode_onboarding_done');
+        if (window.__notificationsUnsub) window.__notificationsUnsub();
             window.location.hash = '/login';
             renderNavbar();
         });
@@ -120,6 +127,26 @@ export function renderNavbar() {
 
     // Update active link on hash change
     window.addEventListener('hashchange', updateActiveLink);
+
+    // Notifications
+    const bell = $('#notif-bell');
+    const badge = $('#notif-badge');
+    if (bell && badge && isFirebaseConfigured() && user) {
+      if (window.__notificationsUnsub) window.__notificationsUnsub();
+      const notifQuery = query(
+        collection(db, 'users', user.uid, 'notifications'),
+        where('read', '==', false)
+      );
+      window.__notificationsUnsub = onSnapshot(notifQuery, (snap) => {
+        const count = snap.size || 0;
+        badge.textContent = String(count);
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        bell.classList.toggle('has-unread', count > 0);
+        if (count > 0) {
+          showToast('New reply received.', 'info');
+        }
+      });
+    }
 }
 
 function updateActiveLink() {

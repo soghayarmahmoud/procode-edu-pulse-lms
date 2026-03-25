@@ -5,7 +5,7 @@
 import { db, isFirebaseConfigured } from './firebase-config.js';
 import {
     collection, doc, setDoc, getDocs, query, where, orderBy, 
-    updateDoc, arrayUnion
+    updateDoc, arrayUnion, getDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { authService } from './auth-service.js';
 
@@ -108,9 +108,30 @@ class DiscussionService {
 
         try {
             const ref = doc(db, this.collectionName, threadId);
+            const threadSnap = await getDoc(ref);
+            const threadData = threadSnap.exists() ? threadSnap.data() : null;
+
             await updateDoc(ref, {
                 replies: arrayUnion(reply)
             });
+
+            const authorId = threadData?.authorId;
+            const currentUserId = user ? user.uid : 'anon';
+            if (authorId && authorId !== currentUserId) {
+                const notifRef = doc(collection(db, 'users', authorId, 'notifications'));
+                await setDoc(notifRef, {
+                    id: notifRef.id,
+                    threadId,
+                    contextId: threadData?.contextId || null,
+                    fromUserId: currentUserId,
+                    fromUserName: userName,
+                    message: reply.content.slice(0, 140),
+                    createdAt: Date.now(),
+                    read: false,
+                    type: 'reply'
+                });
+            }
+
             return reply;
         } catch (e) {
             console.error('Error adding reply:', e);
