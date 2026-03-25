@@ -163,6 +163,28 @@ export class InstructorDashboard {
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Manage Content -->
+                        <div class="card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6);">
+                                <div>
+                                    <h3><i class="fa-solid fa-pen-to-square"></i> Manage Content</h3>
+                                    <p class="text-muted text-sm">Edit or delete existing dynamic courses and lessons.</p>
+                                </div>
+                                <button class="btn btn-outline btn-sm" id="btn-refresh-content"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                            </div>
+
+                            <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-6);">
+                                <div>
+                                    <h4 style="margin-bottom:var(--space-3);">Courses</h4>
+                                    <div id="manage-courses-list" class="card" style="padding:var(--space-4); min-height:160px;"></div>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom:var(--space-3);">Lessons</h4>
+                                    <div id="manage-lessons-list" class="card" style="padding:var(--space-4); min-height:160px;"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,6 +193,7 @@ export class InstructorDashboard {
         this._attachEvents();
         this._initCustomSelect();
         this._initMarkdownPreview();
+        this._loadManageContent();
     }
 
     _initCustomSelect() {
@@ -385,7 +408,150 @@ export class InstructorDashboard {
 
                 btnSaveLesson.disabled = false;
                 btnSaveLesson.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson';
+                this._loadManageContent();
             });
+        }
+
+        const refreshBtn = document.getElementById('btn-refresh-content');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this._loadManageContent());
+        }
+    }
+
+    async _loadManageContent() {
+        const coursesContainer = document.getElementById('manage-courses-list');
+        const lessonsContainer = document.getElementById('manage-lessons-list');
+        if (coursesContainer) coursesContainer.innerHTML = '<p class="text-muted text-sm">Loading courses...</p>';
+        if (lessonsContainer) lessonsContainer.innerHTML = '<p class="text-muted text-sm">Loading lessons...</p>';
+
+        const [courses, lessons] = await Promise.all([
+            firestoreService.getDynamicCourses(),
+            firestoreService.getDynamicLessons()
+        ]);
+
+        this.dynamicCourses = courses || [];
+        this.dynamicLessons = lessons || [];
+
+        if (coursesContainer) {
+            if (!this.dynamicCourses.length) {
+                coursesContainer.innerHTML = '<p class="text-muted text-sm">No dynamic courses found.</p>';
+            } else {
+                coursesContainer.innerHTML = this.dynamicCourses.map(course => {
+                    const lessonCount = this.dynamicLessons.filter(l => l.courseId === course.id).length;
+                    return `
+                        <div class="flex" style="justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
+                            <div>
+                                <strong>${course.title}</strong>
+                                <div class="text-xs text-muted">${course.id} • ${lessonCount} lessons</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-ghost btn-sm" data-edit-course="${course.id}"><i class="fa-solid fa-pen"></i> Edit</button>
+                                <button class="btn btn-outline btn-sm" data-delete-course="${course.id}" style="border-color:var(--color-error);color:var(--color-error)"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        if (lessonsContainer) {
+            if (!this.dynamicLessons.length) {
+                lessonsContainer.innerHTML = '<p class="text-muted text-sm">No dynamic lessons found.</p>';
+            } else {
+                lessonsContainer.innerHTML = this.dynamicLessons.map(lesson => {
+                    return `
+                        <div class="flex" style="justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
+                            <div>
+                                <strong>${lesson.title}</strong>
+                                <div class="text-xs text-muted">${lesson.id} • ${lesson.courseId}</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-ghost btn-sm" data-edit-lesson="${lesson.id}"><i class="fa-solid fa-pen"></i> Edit</button>
+                                <button class="btn btn-outline btn-sm" data-delete-lesson="${lesson.id}" style="border-color:var(--color-error);color:var(--color-error)"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        this._bindManageContentActions();
+    }
+
+    _bindManageContentActions() {
+        document.querySelectorAll('[data-edit-course]').forEach(btn => {
+            btn.addEventListener('click', () => this._editCourse(btn.dataset.editCourse));
+        });
+        document.querySelectorAll('[data-delete-course]').forEach(btn => {
+            btn.addEventListener('click', () => this._deleteCourse(btn.dataset.deleteCourse));
+        });
+        document.querySelectorAll('[data-edit-lesson]').forEach(btn => {
+            btn.addEventListener('click', () => this._editLesson(btn.dataset.editLesson));
+        });
+        document.querySelectorAll('[data-delete-lesson]').forEach(btn => {
+            btn.addEventListener('click', () => this._deleteLesson(btn.dataset.deleteLesson));
+        });
+    }
+
+    _editCourse(courseId) {
+        const course = this.dynamicCourses?.find(c => c.id === courseId);
+        if (!course) return;
+        document.getElementById('course-id').value = course.id || '';
+        document.getElementById('course-title').value = course.title || '';
+        document.getElementById('course-icon').value = course.icon || 'fa-solid fa-code';
+        document.getElementById('course-difficulty').value = course.difficulty || 'Beginner';
+        document.getElementById('course-desc').value = course.description || '';
+        document.getElementById('course-total-lessons').value = course.totalLessons || 1;
+        document.getElementById('course-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Course loaded for editing.', 'info');
+    }
+
+    async _deleteCourse(courseId) {
+        if (!confirm('Delete this course? This cannot be undone.')) return;
+        const ok = await firestoreService.deleteDynamicCourse(courseId);
+        if (ok) {
+            showToast('Course deleted.', 'success');
+            this._loadManageContent();
+        } else {
+            showToast('Failed to delete course.', 'error');
+        }
+    }
+
+    _editLesson(lessonId) {
+        const lesson = this.dynamicLessons?.find(l => l.id === lessonId);
+        if (!lesson) return;
+
+        document.getElementById('lesson-id').value = lesson.id || '';
+        document.getElementById('lesson-title').value = lesson.title || '';
+        document.getElementById('lesson-type').value = lesson.type || 'theory';
+        document.getElementById('lesson-youtube').value = lesson.youtubeId || '';
+        document.getElementById('lesson-duration').value = lesson.duration || '';
+        document.getElementById('lesson-order').value = lesson.order || 1;
+        document.getElementById('lesson-content').value = lesson.content || '';
+
+        const hiddenInput = document.getElementById('lesson-course-id');
+        const displayVal = document.getElementById('lesson-course-display')?.querySelector('.custom-select-value');
+        if (hiddenInput) hiddenInput.value = lesson.courseId || '';
+        if (displayVal) {
+            const courseTitle = this.coursesData.find(c => c.id === lesson.courseId)?.title || lesson.courseId;
+            displayVal.textContent = courseTitle;
+            displayVal.classList.remove('text-muted');
+            displayVal.style.color = 'var(--text-primary)';
+        }
+
+        if (this._renderLessonPreview) this._renderLessonPreview();
+        document.getElementById('lesson-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Lesson loaded for editing.', 'info');
+    }
+
+    async _deleteLesson(lessonId) {
+        if (!confirm('Delete this lesson? This cannot be undone.')) return;
+        const ok = await firestoreService.deleteDynamicLesson(lessonId);
+        if (ok) {
+            showToast('Lesson deleted.', 'success');
+            this._loadManageContent();
+        } else {
+            showToast('Failed to delete lesson.', 'error');
         }
     }
 
@@ -400,6 +566,8 @@ export class InstructorDashboard {
             const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
             preview.innerHTML = safe || '<div class="text-muted text-sm">Live preview will appear here.</div>';
         };
+
+        this._renderLessonPreview = render;
 
         let t;
         const debounce = (fn, delay = 200) => {

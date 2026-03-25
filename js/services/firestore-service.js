@@ -430,6 +430,30 @@ class FirestoreService {
             return [];
         }
     }
+
+    async deleteDynamicCourse(id) {
+        if (!isFirebaseConfigured() || !id) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_courses', id));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic course:', e);
+            return false;
+        }
+    }
+
+    async deleteDynamicLesson(id) {
+        if (!isFirebaseConfigured() || !id) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_lessons', id));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic lesson:', e);
+            return false;
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();
