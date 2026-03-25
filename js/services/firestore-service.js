@@ -2,7 +2,7 @@
 // ProCode EduPulse — Firestore Data Service
 // ============================================
 
-import { db, isFirebaseConfigured } from './firebase-config.js';
+import { db, storage, isFirebaseConfigured } from './firebase-config.js';
 import {
     doc, setDoc, getDoc, updateDoc, serverTimestamp, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -428,6 +428,20 @@ class FirestoreService {
         } catch (e) {
             console.error('Error getting dynamic lessons:', e);
             return [];
+        }
+    }
+
+    async uploadImage(file, courseId) {
+        if (!isFirebaseConfigured() || !file || !courseId) return '';
+        try {
+            const { ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+            const safeName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+            const storageRef = ref(storage, `thumbnails/${courseId}/${safeName}`);
+            await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
+            return await getDownloadURL(storageRef);
+        } catch (e) {
+            console.error('Error uploading thumbnail image:', e);
+            return '';
         }
     }
 

@@ -79,6 +79,11 @@ export class InstructorDashboard {
                                     <textarea id="course-desc" class="input textarea" rows="3" required></textarea>
                                 </div>
                                 <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Course Thumbnail (JPG/PNG)</label>
+                                    <input type="file" id="course-thumbnail" class="input" accept="image/png,image/jpeg">
+                                    <div id="course-thumbnail-status" class="text-xs text-muted" style="margin-top:6px;">No file selected</div>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
                                     <label>Estimated Total Lessons (number)</label>
                                     <input type="number" id="course-total-lessons" class="input" value="10" required>
                                 </div>
@@ -303,6 +308,18 @@ export class InstructorDashboard {
     }
 
     _attachEvents() {
+        const thumbnailInput = document.getElementById('course-thumbnail');
+        const thumbnailStatus = document.getElementById('course-thumbnail-status');
+        if (thumbnailInput) {
+            thumbnailInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                this.courseThumbnailFile = file || null;
+                if (thumbnailStatus) {
+                    thumbnailStatus.textContent = file ? `Selected: ${file.name}` : 'No file selected';
+                }
+            });
+        }
+
         const btnSaveCourse = document.getElementById('btn-save-course');
         if (btnSaveCourse) {
             btnSaveCourse.addEventListener('click', async (e) => {
@@ -312,13 +329,23 @@ export class InstructorDashboard {
                 btnSaveCourse.disabled = true;
                 btnSaveCourse.innerHTML = '<div class="spinner-sm"></div> Publishing...';
 
+                const courseId = document.getElementById('course-id').value.trim();
+                let thumbnailUrl = '';
+                if (this.courseThumbnailFile) {
+                    thumbnailUrl = await firestoreService.uploadImage(this.courseThumbnailFile, courseId);
+                    if (!thumbnailUrl) {
+                        showToast('Thumbnail upload failed. Please try again.', 'error');
+                    }
+                }
+
                 const courseData = {
-                    id: document.getElementById('course-id').value.trim(),
+                    id: courseId,
                     title: document.getElementById('course-title').value.trim(),
                     icon: document.getElementById('course-icon').value.trim(),
                     difficulty: document.getElementById('course-difficulty').value,
                     description: document.getElementById('course-desc').value.trim(),
                     totalLessons: parseInt(document.getElementById('course-total-lessons').value, 10),
+                    thumbnail: thumbnailUrl || '',
                     isDynamic: true // Flag to identify cloud courses
                 };
 
@@ -326,6 +353,8 @@ export class InstructorDashboard {
                 if (success) {
                     showToast('Course successfully published to the cloud!', 'success');
                     form.reset();
+                    this.courseThumbnailFile = null;
+                    if (thumbnailStatus) thumbnailStatus.textContent = 'No file selected';
                     // Add option to select dynamically
                     const optionsContainer = document.getElementById('lesson-course-options');
                     if (optionsContainer) {
