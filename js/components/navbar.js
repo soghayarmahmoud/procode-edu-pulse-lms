@@ -149,6 +149,12 @@ export function renderNavbar() {
         if (count > 0) {
           showToast('New reply received.', 'info');
         }
+      }, (error) => {
+        if (String(error?.code || '').includes('permission-denied') || String(error?.message || '').includes('permission-denied')) {
+          badge.style.display = 'none';
+          bell.classList.remove('has-unread');
+          if (window.__notificationsUnsub) window.__notificationsUnsub();
+        }
       });
     }
 }

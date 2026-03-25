@@ -18,6 +18,16 @@ class DiscussionService {
      */
     constructor() {
         this.collectionName = 'discussions';
+        this._accessDenied = false;
+    }
+
+    /**
+     * Check for permission denied errors.
+     * @param {any} error
+     * @returns {boolean}
+     */
+    _isPermissionDenied(error) {
+        return !!(error && (error.code === 'permission-denied' || String(error.message || '').includes('permission-denied')));
     }
 
     /**
@@ -26,7 +36,7 @@ class DiscussionService {
      * @returns {Promise<Array<object>>}
      */
     async getThreads(contextId) {
-        if (!isFirebaseConfigured()) return this._getMockThreads(contextId);
+        if (!isFirebaseConfigured() || this._accessDenied) return this._getMockThreads(contextId);
 
         try {
             const q = query(
@@ -41,6 +51,10 @@ class DiscussionService {
             });
             return threads;
         } catch (e) {
+            if (this._isPermissionDenied(e)) {
+                this._accessDenied = true;
+                return this._getMockThreads(contextId);
+            }
             console.warn('Firestore discussion fetch error. Ensure index exists for contextId and createdAt.', e);
             try {
                 const q2 = query(collection(db, this.collectionName), where('contextId', '==', contextId));
@@ -80,7 +94,7 @@ class DiscussionService {
             upvotedBy: []
         };
 
-        if (!isFirebaseConfigured()) {
+        if (!isFirebaseConfigured() || this._accessDenied) {
             this._saveMockThread(threadData);
             return threadData;
         }
@@ -91,6 +105,11 @@ class DiscussionService {
             await setDoc(ref, threadData);
             return threadData;
         } catch (e) {
+            if (this._isPermissionDenied(e)) {
+                this._accessDenied = true;
+                this._saveMockThread(threadData);
+                return threadData;
+            }
             console.error('Error creating thread:', e);
             return null;
         }
@@ -115,7 +134,7 @@ class DiscussionService {
             isInstructor: user && user.email && user.email.includes('instructor')
         };
 
-        if (!isFirebaseConfigured()) {
+        if (!isFirebaseConfigured() || this._accessDenied) {
             this._saveMockReply(threadId, reply);
             return reply;
         }
@@ -148,6 +167,11 @@ class DiscussionService {
 
             return reply;
         } catch (e) {
+            if (this._isPermissionDenied(e)) {
+                this._accessDenied = true;
+                this._saveMockReply(threadId, reply);
+                return reply;
+            }
             console.error('Error adding reply:', e);
             return null;
         }
@@ -212,7 +236,7 @@ class DiscussionService {
             createdAt: Date.now()
         };
 
-        if (!isFirebaseConfigured() || !user) {
+        if (!isFirebaseConfigured() || !user || this._accessDenied) {
             this._saveLocalComment(lessonId, comment);
             return true;
         }
@@ -223,6 +247,11 @@ class DiscussionService {
             await setDoc(ref, comment);
             return true;
         } catch (e) {
+            if (this._isPermissionDenied(e)) {
+                this._accessDenied = true;
+                this._saveLocalComment(lessonId, comment);
+                return true;
+            }
             console.error('Error adding lesson comment:', e);
             return false;
         }
@@ -235,7 +264,7 @@ class DiscussionService {
      * @returns {() => void}
      */
     subscribeLessonComments(lessonId, callback) {
-        if (!isFirebaseConfigured()) {
+        if (!isFirebaseConfigured() || this._accessDenied) {
             callback(this._getLocalComments(lessonId));
             return () => {};
         }
@@ -249,7 +278,10 @@ class DiscussionService {
             const comments = [];
             snap.forEach(d => comments.push(d.data()));
             callback(comments);
-        }, () => {
+        }, (error) => {
+            if (this._isPermissionDenied(error)) {
+                this._accessDenied = true;
+            }
             callback(this._getLocalComments(lessonId));
         });
     }

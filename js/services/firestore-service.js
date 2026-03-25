@@ -7,6 +7,17 @@ import {
     doc, setDoc, getDoc, updateDoc, serverTimestamp, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+let firestoreAccessDenied = false;
+
+/**
+ * Detect permission denied errors from Firestore.
+ * @param {any} error
+ * @returns {boolean}
+ */
+function isPermissionDenied(error) {
+    return !!(error && (error.code === 'permission-denied' || String(error.message || '').includes('permission-denied')));
+}
+
 /**
  * Firestore data access service.
  */
@@ -36,12 +47,13 @@ class FirestoreService {
      * @returns {Promise<object|null>}
      */
     async getUserProfile(uid) {
-        if (!isFirebaseConfigured() || !uid) return null;
+        if (!isFirebaseConfigured() || !uid || firestoreAccessDenied) return null;
         try {
             const ref = doc(db, 'users', uid);
             const snap = await getDoc(ref);
             return snap.exists() ? snap.data() : null;
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.warn('Firestore getUserProfile failed:', e);
             return null;
         }
@@ -260,7 +272,7 @@ class FirestoreService {
      * @returns {Promise<Array<object>>}
      */
     async getCourseReviews(courseId) {
-        if (!isFirebaseConfigured() || !courseId) return [];
+        if (!isFirebaseConfigured() || !courseId || firestoreAccessDenied) return [];
         try {
             // Because we don't want to import getDocs and collection from firestore here unless we need to,
             // Let's dynamically import them to avoid cluttering the top-level imports if they aren't used.
@@ -269,6 +281,7 @@ class FirestoreService {
             const snap = await getDocs(colRef);
             return snap.docs.map(doc => doc.data());
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.warn('Firestore getCourseReviews failed:', e);
             return [];
         }
@@ -442,7 +455,7 @@ class FirestoreService {
      * @returns {Promise<Array<object>>}
      */
     async getDynamicCourses() {
-        if (!isFirebaseConfigured()) return [];
+        if (!isFirebaseConfigured() || firestoreAccessDenied) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_courses'));
@@ -450,6 +463,7 @@ class FirestoreService {
             snap.forEach(docSnap => courses.push(docSnap.data()));
             return courses;
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.error('Error getting dynamic courses:', e);
             return [];
         }
@@ -481,7 +495,7 @@ class FirestoreService {
      * @returns {Promise<Array<object>>}
      */
     async getDynamicLessons() {
-        if (!isFirebaseConfigured()) return [];
+        if (!isFirebaseConfigured() || firestoreAccessDenied) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_lessons'));
@@ -489,6 +503,7 @@ class FirestoreService {
             snap.forEach(docSnap => lessons.push(docSnap.data()));
             return lessons;
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.error('Error getting dynamic lessons:', e);
             return [];
         }
