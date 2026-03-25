@@ -662,6 +662,9 @@ function showWelcomeModel() {
                 </div>
             </div>
         </div>
+        <button id="welcome-next-fixed" class="btn btn-primary" style="position:fixed;right:24px;bottom:24px;z-index:10000;padding:12px 20px;border-radius:12px;font-weight:600;box-shadow:0 8px 16px rgba(108,92,231,0.25);">
+            ${isLast ? 'Enter Platform' : 'Continue'}
+        </button>
       </div>
         `;
 
@@ -673,13 +676,14 @@ function showWelcomeModel() {
         }
 
         const next = $('#welcome-next');
+        const nextFixed = $('#welcome-next-fixed');
         const prev = $('#welcome-prev');
 
         if (prev) {
             prev.onclick = () => { slide--; renderSlide(); };
         }
 
-        next.onclick = async () => {
+        const handleNext = async () => {
             if (isLast) {
                 const name = $('#welcome-name')?.value?.trim();
                 if (name) {
@@ -702,7 +706,10 @@ function showWelcomeModel() {
                 slide++;
                 renderSlide();
             }
-        };
+            };
+
+            next.onclick = handleNext;
+            if (nextFixed) nextFixed.onclick = handleNext;
     }
 
     renderSlide();
@@ -2106,52 +2113,6 @@ function renderProfile() {
         }
     });
 }
-
-// ══════════════════════════════════════════════
-// ADMIN & UTILITY PAGES
-// ══════════════════════════════════════════════
-
-async function renderAdminDashboard() {
-    const app = $('#app');
-    app.innerHTML = `<div class="page-wrapper bg-dots-pattern" style="padding:var(--space-16);">
-        <div class="container" style="max-width:800px;">
-            <h1 class="section-title">Admin Dashboard</h1>
-            <div id="admin-stats" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-6);"></div>
-        </div>
-    </div>`;
-
-    const stats = await firestoreService.getAdminStats();
-    const container = $('#admin-stats');
-    if (!stats) {
-        container.innerHTML = '<p class="text-muted">Unable to load statistics.</p>';
-        return;
-    }
-
-    const cards = [];
-    cards.push(`<div class="card">
-        <h3>Total Users</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalUsers}</div>
-    </div>`);
-    cards.push(`<div class="card">
-        <h3>Total Courses</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalCourses || 'N/A'}</div>
-    </div>`);
-    cards.push(`<div class="card">
-        <h3>Total Enrollments</h3>
-        <div style="font-size:2rem;font-weight:800">${stats.totalEnrollments}</div>
-    </div>`);
-    if (stats.mostPopularCourses && stats.mostPopularCourses.length) {
-        cards.push(`<div class="card">
-            <h3>Top Courses</h3>
-            <ul style="padding-left:1rem; margin:0;">
-                ${stats.mostPopularCourses.slice(0,5).map(c=>`<li>${c.courseId} (${c.count})</li>`).join('')}
-            </ul>
-        </div>`);
-    }
-    container.innerHTML = cards.join('');
-}
-
-
 
 // ══════════════════════════════════════════════
 // NEW PAGES (Roadmaps, Docs, About, Careers)
