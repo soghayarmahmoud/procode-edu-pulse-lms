@@ -13,6 +13,7 @@ import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
 import { renderBreadcrumb } from './components/breadcrumb.js';
 import 'https://cdn.jsdelivr.net/npm/chart.js';
+import { discussionService } from './services/discussion-service.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -38,6 +39,74 @@ let modulesData = null;
 function getCourseLessonCount(courseId, fallback = 0) {
   const count = (lessonsData || []).filter(lesson => lesson.courseId === courseId).length;
   return count || fallback;
+}
+
+function formatCommentTime(ts) {
+  try {
+    return new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+function initLessonComments(lessonId) {
+  const list = document.getElementById('lesson-comments-list');
+  const input = document.getElementById('lesson-comment-input');
+  const postBtn = document.getElementById('lesson-comment-post');
+  const limit = document.getElementById('lesson-comment-limit');
+  const count = document.getElementById('lesson-comment-count');
+
+  if (!list || !input || !postBtn || !limit || !count) return;
+
+  const renderList = (comments) => {
+    const sorted = [...(comments || [])].sort((a, b) => b.createdAt - a.createdAt);
+    count.textContent = `${sorted.length} comment${sorted.length === 1 ? '' : 's'}`;
+    if (sorted.length === 0) {
+      list.innerHTML = '<p class="text-muted text-sm" style="padding:var(--space-4);background:var(--bg-input);border-radius:var(--radius-md);">Be the first to comment.</p>';
+      return;
+    }
+
+    list.innerHTML = sorted.map(c => {
+      const initial = (c.authorName || 'Student').charAt(0).toUpperCase();
+      return `
+        <div style="display:flex;gap:var(--space-3);padding:var(--space-4) 0;border-bottom:1px solid var(--border-subtle);">
+        <div class="user-avatar-sm">${initial}</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);">
+          <strong style="font-size:0.95rem;">${c.authorName || 'Student'}</strong>
+          <span class="text-xs text-muted">${formatCommentTime(c.createdAt)}</span>
+          </div>
+          <p style="margin:6px 0 0;color:var(--text-secondary);white-space:pre-wrap;">${c.content}</p>
+        </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  if (window.__lessonCommentsUnsub) window.__lessonCommentsUnsub();
+  window.__lessonCommentsUnsub = discussionService.subscribeLessonComments(lessonId, renderList);
+
+  const updateCounter = () => {
+    limit.textContent = `${input.value.length}/500`;
+  };
+  updateCounter();
+  input.addEventListener('input', updateCounter);
+
+  postBtn.addEventListener('click', async () => {
+    const value = input.value.trim();
+    if (!value) return showToast('Comment cannot be empty.', 'error');
+    if (value.length > 500) return showToast('Comment exceeds 500 characters.', 'error');
+
+    postBtn.disabled = true;
+    const ok = await discussionService.addLessonComment(lessonId, value);
+    if (ok) {
+      input.value = '';
+      updateCounter();
+    } else {
+      showToast('Failed to post comment.', 'error');
+    }
+    postBtn.disabled = false;
+  });
 }
 
 async function loadData() {
@@ -1519,6 +1588,22 @@ async function renderLesson(params) {
         <!-- Timestamped Notes -->
         <div id="notes-container"></div>
 
+        <!-- Lesson Comments -->
+        <div class="card" id="lesson-comments" style="margin-top:var(--space-8);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+            <h3 style="margin:0;"><i class="fa-solid fa-comment-dots"></i> Lesson Comments</h3>
+            <span class="text-xs text-muted" id="lesson-comment-count">0 comments</span>
+          </div>
+          <div class="input-group" style="margin-bottom:var(--space-4);">
+            <textarea id="lesson-comment-input" class="input textarea" rows="3" maxlength="500" placeholder="Share feedback or ask a question..."></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="text-xs text-muted" id="lesson-comment-limit">0/500</span>
+              <button class="btn btn-primary btn-sm" id="lesson-comment-post"><i class="fa-solid fa-paper-plane"></i> Post</button>
+            </div>
+          </div>
+          <div id="lesson-comments-list"></div>
+        </div>
+
         <!-- Lesson Navigation -->
         <div class="lesson-nav">
           ${prevLesson ? `
@@ -1597,6 +1682,9 @@ async function renderLesson(params) {
     // ── Init Q&A Discussion ──
     const { DiscussionComponent } = await import('./components/discussion.js');
     new DiscussionComponent('#qa-panel-container', lessonId, { title: 'Lesson Q&A' });
+
+    // ── Init Lesson Comments ──
+    initLessonComments(lessonId);
 
     // ── Content Tabs ──
     const contentTabs = app.querySelectorAll('.content-tab');

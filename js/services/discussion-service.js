@@ -5,7 +5,7 @@
 import { db, isFirebaseConfigured } from './firebase-config.js';
 import {
     collection, doc, setDoc, getDocs, query, where, orderBy, 
-    updateDoc, arrayUnion, getDoc
+    updateDoc, arrayUnion, getDoc, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { authService } from './auth-service.js';
 
@@ -137,6 +137,70 @@ class DiscussionService {
             console.error('Error adding reply:', e);
             return null;
         }
+    }
+
+    // ------------------------------------------
+    // Lesson Comments
+    // ------------------------------------------
+
+    _getLocalComments(lessonId) {
+        const all = JSON.parse(localStorage.getItem('procode_lesson_comments') || '{}');
+        return all[lessonId] || [];
+    }
+
+    _saveLocalComment(lessonId, comment) {
+        const all = JSON.parse(localStorage.getItem('procode_lesson_comments') || '{}');
+        if (!all[lessonId]) all[lessonId] = [];
+        all[lessonId].push(comment);
+        localStorage.setItem('procode_lesson_comments', JSON.stringify(all));
+    }
+
+    async addLessonComment(lessonId, content) {
+        const user = authService.getCurrentUser();
+        const userName = authService.getDisplayName() || 'Student';
+        const comment = {
+            id: 'lc_' + Date.now().toString() + Math.floor(Math.random() * 1000),
+            lessonId,
+            authorId: user ? user.uid : 'anon',
+            authorName: userName,
+            content,
+            createdAt: Date.now()
+        };
+
+        if (!isFirebaseConfigured() || !user) {
+            this._saveLocalComment(lessonId, comment);
+            return true;
+        }
+
+        try {
+            const ref = doc(collection(db, 'lesson_comments'));
+            comment.id = ref.id;
+            await setDoc(ref, comment);
+            return true;
+        } catch (e) {
+            console.error('Error adding lesson comment:', e);
+            return false;
+        }
+    }
+
+    subscribeLessonComments(lessonId, callback) {
+        if (!isFirebaseConfigured()) {
+            callback(this._getLocalComments(lessonId));
+            return () => {};
+        }
+
+        const q = query(
+            collection(db, 'lesson_comments'),
+            where('lessonId', '==', lessonId)
+        );
+
+        return onSnapshot(q, (snap) => {
+            const comments = [];
+            snap.forEach(d => comments.push(d.data()));
+            callback(comments);
+        }, () => {
+            callback(this._getLocalComments(lessonId));
+        });
     }
 
     /**
