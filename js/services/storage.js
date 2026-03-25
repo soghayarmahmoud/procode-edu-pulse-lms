@@ -139,6 +139,9 @@ class StorageService {
         if (!this._get('certifications')) {
             this._set('certifications', {});
         }
+        if (!this._get('bookmarks')) {
+            this._set('bookmarks', []);
+        }
     }
 
     // ── Time Tracking & Activity Stats ──
@@ -323,6 +326,43 @@ class StorageService {
      */
     getEnrollments() {
         return this._get('enrollments') || {};
+    }
+
+    // ── Bookmarks ──
+
+    /**
+     * Get bookmarked lesson IDs.
+     * @returns {string[]}
+     */
+    getBookmarks() {
+        return this._get('bookmarks') || [];
+    }
+
+    /**
+     * Check if a lesson is bookmarked.
+     * @param {string} lessonId
+     * @returns {boolean}
+     */
+    isBookmarked(lessonId) {
+        return this.getBookmarks().includes(lessonId);
+    }
+
+    /**
+     * Toggle bookmark for a lesson.
+     * @param {string} lessonId
+     * @returns {boolean} New bookmark state.
+     */
+    toggleBookmark(lessonId) {
+        const bookmarks = this.getBookmarks();
+        const idx = bookmarks.indexOf(lessonId);
+        if (idx >= 0) {
+            bookmarks.splice(idx, 1);
+            this._set('bookmarks', bookmarks);
+            return false;
+        }
+        bookmarks.push(lessonId);
+        this._set('bookmarks', bookmarks);
+        return true;
     }
 
     // ── Progress ──

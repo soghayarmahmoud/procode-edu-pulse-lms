@@ -1486,6 +1486,7 @@ async function renderLesson(params) {
     const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null;
     const nextLesson = currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null;
     const isCompleted = storage.isLessonCompleted(courseId, lessonId);
+    const isBookmarked = storage.isBookmarked(lessonId);
 
     const lessonTypeIcon = lesson.type === 'theory' ? '<i class="fa-solid fa-book"></i> Theory' : lesson.type === 'practice' ? '<i class="fa-solid fa-laptop-code"></i> Practice' : '<i class="fa-solid fa-bullseye"></i> Project';
 
@@ -1497,7 +1498,12 @@ async function renderLesson(params) {
       <main class="lesson-main">
         <div class="lesson-header">
           ${renderBreadcrumb({ courseId, lessonId, coursesData, modulesData, lessonsData })}
-          <h1 class="lesson-title">${lesson.title}</h1>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
+            <h1 class="lesson-title" style="margin:0;">${lesson.title}</h1>
+            <button class="btn btn-ghost btn-sm" id="bookmark-toggle" title="Toggle bookmark" aria-pressed="${isBookmarked}">
+              <i class="${isBookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+            </button>
+          </div>
           <div class="lesson-meta">
             <span class="lesson-meta-item">${lessonTypeIcon}</span>
             <span class="lesson-meta-item"><i class="fa-regular fa-clock"></i> ${lesson.duration || 'N/A'}</span>
@@ -1733,6 +1739,25 @@ async function renderLesson(params) {
         if (badge) badge.innerHTML = '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>';
     });
 
+    // ── Bookmark Toggle ──
+    const bookmarkBtn = $('#bookmark-toggle');
+    const updateBookmarkIcon = (active) => {
+      if (!bookmarkBtn) return;
+      const icon = bookmarkBtn.querySelector('i');
+      bookmarkBtn.setAttribute('aria-pressed', String(active));
+      if (icon) {
+        icon.className = `${active ? 'fa-solid' : 'fa-regular'} fa-bookmark`;
+      }
+    };
+
+    if (bookmarkBtn) {
+      bookmarkBtn.addEventListener('click', () => {
+        const active = storage.toggleBookmark(lessonId);
+        updateBookmarkIcon(active);
+        showToast(active ? 'Lesson bookmarked!' : 'Bookmark removed.', active ? 'success' : 'info');
+      });
+    }
+
     // ── Sidebar Toggle (Mobile) ──
     $('#sidebar-toggle')?.addEventListener('click', () => {
         $('#course-sidebar').classList.toggle('open');
@@ -1901,6 +1926,34 @@ function renderProfile() {
                           <div style="display:flex; gap:2px;">${Array(5).fill(0).map((_, i) => `<i class="${i < review.rating ? 'fa-solid' : 'fa-regular'} fa-star\" style=\"color:#f1c40f; font-size:0.85rem;\"></i>`).join('')}</div>
                         </div>
                         <p style="font-size:0.95rem; color:var(--text-secondary); line-height:1.5; margin:0;">"${review.text}"</p>
+                      </div>
+                    `;
+                }).join('');
+            })()}
+          </div>
+
+          <!-- Bookmarked Lessons -->
+          <div class="card">
+            <h3 style="margin-bottom:var(--space-6)"><i class="fa-solid fa-bookmark"></i> Bookmarked</h3>
+            ${(() => {
+                const bookmarked = storage.getBookmarks()
+                  .map(id => lessonsData.find(l => l.id === id))
+                  .filter(Boolean);
+                if (bookmarked.length === 0) {
+                    return '<p class="text-muted text-sm" style="padding:var(--space-4); text-align:center; background:var(--bg-input); border-radius:var(--radius-md);">No bookmarked lessons yet. Save lessons to access them quickly here.</p>';
+                }
+                return bookmarked.map(lesson => {
+                    const course = coursesData.find(c => c.id === lesson.courseId);
+                    const courseName = course ? course.title : 'Unknown Course';
+                    return `
+                      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); display:flex; justify-content:space-between; align-items:center; gap:var(--space-4);">
+                        <div>
+                          <div style="font-weight:600; color:var(--text-primary); margin-bottom:4px; font-size:1rem;">${lesson.title}</div>
+                          <div style="font-size:0.85rem; color:var(--text-muted);">${courseName}</div>
+                        </div>
+                        <a href="#/lesson/${lesson.courseId}/${lesson.id}" class="btn btn-outline btn-sm">
+                          <i class="fa-solid fa-arrow-right"></i> Open
+                        </a>
                       </div>
                     `;
                 }).join('');
