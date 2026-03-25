@@ -37,7 +37,7 @@ export class CodeEditor {
             const viewVer = '6.16.0';
             const deps = `?deps=@codemirror/state@${stateVer},@codemirror/view@${viewVer}`;
 
-            const { EditorView, ViewPlugin } = await import(`https://esm.sh/@codemirror/view@${viewVer}`);
+            const { EditorView, ViewPlugin } = await import(`https://esm.sh/@codemirror/view@${viewVer}?deps=@codemirror/state@${stateVer}`);
             const { EditorState } = await import(`https://esm.sh/@codemirror/state@${stateVer}`);
             const { basicSetup } = await import(`https://esm.sh/@codemirror/basic-setup${deps}`);
             const { html } = await import(`https://esm.sh/@codemirror/lang-html@6.4.5${deps}`);
