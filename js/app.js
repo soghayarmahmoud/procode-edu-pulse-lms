@@ -2036,6 +2036,18 @@ function renderProfile() {
                   <button class="btn btn-secondary btn-sm" id="save-api-key" style="width:100%"><i class="fa-solid fa-robot"></i> Save AI Configuration</button>
                 </div>
               </div>
+
+              <div>
+                <h4 style="margin-bottom:var(--space-4); font-size:var(--text-sm); color:var(--text-muted);">Data Management</h4>
+                <div style="padding:var(--space-4); background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <p class="text-xs text-muted" style="margin-bottom:var(--space-4);">Export your ProCode data to move it between devices. Import will replace current local data.</p>
+                  <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+                    <button class="btn btn-outline btn-sm" id="export-data-btn"><i class="fa-solid fa-file-export"></i> Export Data</button>
+                    <button class="btn btn-secondary btn-sm" id="import-data-btn"><i class="fa-solid fa-file-import"></i> Import Data</button>
+                    <input type="file" id="import-data-file" accept="application/json" style="display:none" />
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div class="divider" style="margin:var(--space-8) 0 var(--space-6);"></div>
@@ -2205,6 +2217,114 @@ function renderProfile() {
             });
             showToast('API key saved successfully!', 'success');
         }
+    });
+
+    // Export / Import Data
+    const exportDataBtn = $('#export-data-btn');
+    const importDataBtn = $('#import-data-btn');
+    const importDataFile = $('#import-data-file');
+
+    const buildProcodeExport = () => {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('procode_')) continue;
+        const raw = localStorage.getItem(key);
+        try {
+          data[key] = raw ? JSON.parse(raw) : null;
+        } catch {
+          data[key] = raw;
+        }
+      }
+
+      return {
+        meta: {
+          app: 'procode-edu-pulse',
+          version: 1,
+          exportedAt: new Date().toISOString()
+        },
+        data
+      };
+    };
+
+    const isValidImportPayload = (payload) => {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return { ok: false, message: 'Invalid JSON structure.' };
+      }
+      if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+        return { ok: false, message: 'Missing data object.' };
+      }
+      if (payload.meta?.app && payload.meta.app !== 'procode-edu-pulse') {
+        return { ok: false, message: 'This file is not a ProCode export.' };
+      }
+
+      const entries = Object.entries(payload.data);
+      if (entries.length === 0) {
+        return { ok: false, message: 'No ProCode data found.' };
+      }
+
+      for (const [key] of entries) {
+        if (typeof key !== 'string' || !key.startsWith('procode_')) {
+          return { ok: false, message: 'Invalid key format in data.' };
+        }
+      }
+
+      return { ok: true };
+    };
+
+    exportDataBtn?.addEventListener('click', () => {
+      const payload = buildProcodeExport();
+      const fileName = `procode_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('Export ready. Check your downloads.', 'success');
+    });
+
+    importDataBtn?.addEventListener('click', () => {
+      if (importDataFile) importDataFile.value = '';
+      importDataFile?.click();
+    });
+
+    importDataFile?.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const validation = isValidImportPayload(payload);
+        if (!validation.ok) {
+          showToast(validation.message, 'error');
+          return;
+        }
+
+        if (!confirm('Importing will replace all current local ProCode data. Continue?')) {
+          return;
+        }
+
+        for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('procode_')) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        Object.entries(payload.data).forEach(([key, value]) => {
+          localStorage.setItem(key, JSON.stringify(value));
+        });
+
+        showToast('Data imported successfully.', 'success');
+        renderProfile();
+      } catch (e) {
+        showToast('Import failed. Invalid JSON file.', 'error');
+      }
     });
 
     // Reset data
