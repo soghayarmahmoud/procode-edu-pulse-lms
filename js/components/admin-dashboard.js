@@ -3,7 +3,15 @@ import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
 import { mediaService } from '../services/media-service.js';
 
+/**
+ * Admin dashboard UI component.
+ */
 export class AdminDashboard {
+    /**
+     * Create an AdminDashboard instance.
+     * @param {string} containerSelector
+     * @param {object} systemData
+     */
     constructor(containerSelector, systemData) {
         this.containerContainer = $(containerSelector);
         this.systemData = systemData || {};
@@ -14,6 +22,10 @@ export class AdminDashboard {
         this.render();
     }
 
+    /**
+     * Render admin dashboard.
+     * @returns {Promise<void>}
+     */
     async render() {
         if (!this.containerContainer) return;
 
@@ -145,6 +157,10 @@ export class AdminDashboard {
         this._renderActiveTab();
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const tabs = this.containerContainer.querySelectorAll('.admin-tab-btn');
         tabs.forEach(tab => {
@@ -161,6 +177,10 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render the active tab panel.
+     * @returns {void}
+     */
     _renderActiveTab() {
         const area = document.getElementById('admin-content-area');
         const title = document.getElementById('admin-workspace-title');
@@ -207,6 +227,11 @@ export class AdminDashboard {
 
     // ── Tab Renderers ──
 
+    /**
+     * Render overview tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderOverviewTab(container) {
         const staticCourses = (this.systemData.coursesData || []).length;
         container.innerHTML = `
@@ -291,6 +316,11 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render users tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderUsersTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); margin-bottom:var(--space-6);">
@@ -410,6 +440,11 @@ export class AdminDashboard {
         });
     }
 
+    /**
+     * Render content tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderContentTab(container) {
         const cloudConfig = mediaService.getConfig ? mediaService.getConfig() : { cloudName: '', uploadPreset: '' };
         const cfgCloudName = cloudConfig.cloudName || localStorage.getItem('cloudinary_cloud_name') || '';
@@ -468,6 +503,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render courses tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderCoursesTab(container) {
         // Integrate InstructorDashboard logic here
         container.innerHTML = `
@@ -617,8 +657,15 @@ export class AdminDashboard {
                             </div>
                         </div>
                         <div class="input-group" style="margin-top:var(--space-4);">
-                            <label>Lesson Notes (Markdown/HTML)</label>
-                            <textarea id="lesson-content" class="input textarea" rows="5" placeholder="<h2>Welcome</h2><p>Here are your notes.</p>"></textarea>
+                            <label>Lesson Notes (Markdown)</label>
+                            <div class="markdown-split">
+                                <div class="markdown-editor">
+                                    <textarea id="lesson-content" class="input textarea" rows="8" placeholder="# Welcome\n\nWrite lesson notes here..."></textarea>
+                                </div>
+                                <div class="markdown-preview" id="lesson-content-preview">
+                                    <div class="text-muted text-sm">Live preview will appear here.</div>
+                                </div>
+                            </div>
                         </div>
                         <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
                             <button class="btn btn-primary" id="btn-save-lesson" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson to Cloud</button>
@@ -630,8 +677,13 @@ export class AdminDashboard {
         
         // Initialize dynamic logic for this tab
         this._initCourseBuilderLogic();
+        this._initMarkdownPreview();
     }
 
+    /**
+     * Initialize course/lesson builder logic.
+     * @returns {void}
+     */
     _initCourseBuilderLogic() {
         // This is a port of the logic from InstructorDashboard._initCustomSelect and _attachEvents
         const container = document.getElementById('course-select-container');
@@ -845,8 +897,42 @@ export class AdminDashboard {
         }
     }
 
-    _filterOptions(query, containerId = 'lesson-course-options') {
-        const optionsContainer = document.getElementById(containerId);
+    /**
+     * Initialize markdown preview for lesson content.
+     * @returns {void}
+     */
+    _initMarkdownPreview() {
+        const textarea = document.getElementById('lesson-content');
+        const preview = document.getElementById('lesson-content-preview');
+        if (!textarea || !preview) return;
+
+        const render = () => {
+            const raw = textarea.value || '';
+            const html = window.marked ? window.marked.parse(raw, { breaks: true, gfm: true }) : raw;
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            preview.innerHTML = safe || '<div class="text-muted text-sm">Live preview will appear here.</div>';
+        };
+
+        let t;
+        const debounce = (fn, delay = 200) => {
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), delay);
+            };
+        };
+
+        const onInput = debounce(render, 150);
+        textarea.addEventListener('input', onInput);
+        render();
+    }
+
+    /**
+     * Filter course select options.
+     * @param {string} query
+     * @returns {void}
+     */
+    _filterOptions(query) {
+        const optionsContainer = document.getElementById('lesson-course-options');
         if (!optionsContainer) return;
         const options = optionsContainer.querySelectorAll('.custom-select-option');
         options.forEach(opt => {
@@ -855,229 +941,11 @@ export class AdminDashboard {
         });
     }
 
-    // ── Challenge Builder Tab ──
-
-    _renderChallengesTab(container) {
-        container.innerHTML = `
-            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
-
-                <!-- Create Challenge -->
-                <div class="card" style="padding:var(--space-8);">
-                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
-                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(231, 76, 60, 0.1); color:var(--color-error); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
-                            <i class="fa-solid fa-code"></i>
-                        </div>
-                        <div>
-                            <h3 style="margin:0;">Create Coding Challenge</h3>
-                            <p class="text-muted" style="font-size:0.9rem;">Build interactive coding exercises for students.</p>
-                        </div>
-                    </div>
-
-                    <form id="challenge-builder-form" onsubmit="event.preventDefault();">
-                        <div class="grid grid-2" style="gap:var(--space-4);">
-                            <div class="input-group">
-                                <label>Challenge ID (unique-slug)</label>
-                                <input type="text" id="challenge-id" class="input" placeholder="e.g. css-flexbox-layout" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Challenge Title</label>
-                                <input type="text" id="challenge-title" class="input" placeholder="e.g. Build a Flexbox Layout" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Difficulty</label>
-                                <select id="challenge-difficulty" class="input">
-                                    <option value="Easy">Easy</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="Hard">Hard</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Language</label>
-                                <select id="challenge-language" class="input">
-                                    <option value="html">HTML / CSS / JS</option>
-                                    <option value="python">Python</option>
-                                    <option value="javascript">JavaScript (Node)</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Challenge Type</label>
-                                <select id="challenge-type" class="input">
-                                    <option value="frontend">Frontend (DOM/Regex Validation)</option>
-                                    <option value="backend">Backend (Assertions/Test Code)</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Attached Course ID (optional)</label>
-                                <input type="text" id="challenge-course-id" class="input" placeholder="e.g. html-fundamentals">
-                            </div>
-                        </div>
-
-                        <div class="input-group" style="margin-top:var(--space-4);">
-                            <label>Instructions (Markdown)</label>
-                            <textarea id="challenge-instructions" class="input textarea" rows="4" placeholder="Describe what the student needs to build..." required></textarea>
-                        </div>
-
-                        <div class="input-group" style="margin-top:var(--space-4);">
-                            <label>Starter Code</label>
-                            <textarea id="challenge-starter-code" class="input textarea" rows="6" style="font-family:monospace; font-size:0.9rem;" placeholder="<!-- Write starter code here -->" required></textarea>
-                        </div>
-
-                        <div class="input-group" style="margin-top:var(--space-4);">
-                            <label>Validation / Test Code</label>
-                            <p class="text-muted" style="font-size:0.85rem; margin-bottom:var(--space-2);">
-                                For <strong>Frontend</strong>: Enter JSON validation rules array. For <strong>Backend</strong>: Enter assertion test code.
-                            </p>
-                            <textarea id="challenge-test-code" class="input textarea" rows="6" style="font-family:monospace; font-size:0.9rem;" placeholder='[{"type":"dom-query","selector":"h1","errorMessage":"Missing h1"}]' required></textarea>
-                        </div>
-
-                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
-                            <button class="btn btn-primary" id="btn-save-challenge" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Manage Existing Challenges -->
-                <div class="card" style="padding:var(--space-8);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
-                        <div>
-                            <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Manage Existing Challenges</h3>
-                            <p class="text-muted" style="font-size:0.9rem; margin-top:4px;">Cloud-published challenges from Firestore.</p>
-                        </div>
-                        <button class="btn btn-outline btn-sm" id="btn-refresh-challenges"><i class="fa-solid fa-rotate"></i> Refresh</button>
-                    </div>
-                    <div id="challenges-list-container">
-                        <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
-                            <div class="spinner-sm" style="margin:0 auto var(--space-4);"></div>
-                            Loading challenges...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this._initChallengeBuilderLogic();
-        this._loadExistingChallenges();
-    }
-
-    _initChallengeBuilderLogic() {
-        const btnSave = document.getElementById('btn-save-challenge');
-        if (!btnSave) return;
-
-        btnSave.onclick = async () => {
-            const form = document.getElementById('challenge-builder-form');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-
-            btnSave.disabled = true;
-            btnSave.innerHTML = '<div class="spinner-sm"></div> Publishing...';
-
-            const challengeType = document.getElementById('challenge-type').value;
-            const testCodeRaw = document.getElementById('challenge-test-code').value.trim();
-
-            let validationRules = null;
-            let testCode = null;
-
-            if (challengeType === 'frontend') {
-                try {
-                    validationRules = JSON.parse(testCodeRaw);
-                } catch (e) {
-                    showToast('Invalid JSON in validation rules. Please check syntax.', 'error');
-                    btnSave.disabled = false;
-                    btnSave.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
-                    return;
-                }
-            } else {
-                testCode = testCodeRaw;
-            }
-
-            const challengeData = {
-                id: document.getElementById('challenge-id').value.trim(),
-                title: document.getElementById('challenge-title').value.trim(),
-                difficulty: document.getElementById('challenge-difficulty').value,
-                language: document.getElementById('challenge-language').value,
-                type: challengeType,
-                courseId: document.getElementById('challenge-course-id').value.trim() || null,
-                instructions: document.getElementById('challenge-instructions').value.trim(),
-                starterCode: document.getElementById('challenge-starter-code').value,
-                validationRules: validationRules,
-                testCode: testCode,
-                isDynamic: true
-            };
-
-            const success = await firestoreService.saveDynamicChallenge(challengeData);
-            if (success) {
-                showToast('Challenge successfully published to the cloud!', 'success');
-                form.reset();
-                this._loadExistingChallenges();
-            } else {
-                showToast('Failed to publish challenge.', 'error');
-            }
-
-            btnSave.disabled = false;
-            btnSave.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
-        };
-
-        const btnRefresh = document.getElementById('btn-refresh-challenges');
-        if (btnRefresh) {
-            btnRefresh.onclick = () => this._loadExistingChallenges();
-        }
-    }
-
-    async _loadExistingChallenges() {
-        const listContainer = document.getElementById('challenges-list-container');
-        if (!listContainer) return;
-
-        listContainer.innerHTML = '<div style="text-align:center; padding:var(--space-6); color:var(--text-muted);"><div class="spinner-sm" style="margin:0 auto var(--space-4);"></div> Loading...</div>';
-
-        const challenges = await firestoreService.getDynamicChallenges();
-
-        if (challenges.length === 0) {
-            listContainer.innerHTML = `
-                <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
-                    <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:var(--space-4); display:block;"></i>
-                    No dynamic challenges published yet. Create one above!
-                </div>
-            `;
-            return;
-        }
-
-        listContainer.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:var(--space-3);">
-                ${challenges.map(ch => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-                        <div style="display:flex; align-items:center; gap:var(--space-3);">
-                            <div style="width:36px; height:36px; border-radius:8px; background:rgba(231,76,60,0.1); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
-                                <i class="fa-solid fa-code"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight:600;">${ch.title || ch.id}</div>
-                                <div class="text-muted" style="font-size:0.8rem;">${ch.language || 'html'} • ${ch.difficulty || 'Medium'} • ${ch.type || 'frontend'}</div>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:var(--space-2);">
-                            <button class="btn btn-ghost btn-sm btn-delete-challenge" data-id="${ch.id}" title="Delete" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Wire delete buttons
-        listContainer.querySelectorAll('.btn-delete-challenge').forEach(btn => {
-            btn.onclick = async () => {
-                if (!confirm('Delete this challenge permanently?')) return;
-                btn.disabled = true;
-                const ok = await firestoreService.deleteDynamicChallenge(btn.dataset.id);
-                if (ok) {
-                    showToast('Challenge deleted.', 'success');
-                    this._loadExistingChallenges();
-                } else {
-                    showToast('Failed to delete challenge.', 'error');
-                    btn.disabled = false;
-                }
-            };
-        });
-    }
-
+    /**
+     * Render gamification tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderGamificationTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); max-width:800px; margin:0 auto;">
@@ -1160,6 +1028,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render submissions tab.
+     * @param {Element} container
+     * @returns {void}
+     */
     _renderSubmissionsTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6);">
@@ -1227,6 +1100,11 @@ export class AdminDashboard {
         `;
     }
 
+    /**
+     * Render access denied state.
+     * @param {string} [reason='You must be an authenticated Administrator to access this control panel.']
+     * @returns {void}
+     */
     _renderAccessDenied(reason = 'You must be an authenticated Administrator to access this control panel.') {
         this.containerContainer.innerHTML = `
             <div class="container" style="padding:var(--space-16); min-height:80vh; display:flex; align-items:center; justify-content:center;">

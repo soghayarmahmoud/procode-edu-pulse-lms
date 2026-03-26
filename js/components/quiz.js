@@ -5,19 +5,34 @@
 import { $, createElement, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 
+/**
+ * Quiz UI component.
+ */
 export class QuizComponent {
-    constructor(container, quizData, courseId, lessonId) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+  /**
+   * Create a QuizComponent instance.
+   * @param {string|Element} container
+   * @param {object} quizData
+   * @param {string} courseId
+   * @param {string} lessonId
+   */
+  constructor(container, quizData, courseId, lessonId) {
+      this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.quiz = quizData;
         this.courseId = courseId;
         this.lessonId = lessonId;
         this.answers = {};
         this.submitted = false;
         this.realTime = quizData.realTime !== false; // Enable by default
-        this.render();
+      this.render();
     }
 
+    /**
+     * Render quiz UI.
+     * @returns {void}
+     */
     render() {
+      if (!this.container) return;
         const existingScore = storage.getQuizScore(this.courseId, this.quiz.title);
 
         this.container.innerHTML = `
@@ -50,6 +65,12 @@ export class QuizComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a quiz question.
+     * @param {object} question
+     * @param {number} index
+     * @returns {string}
+     */
     _renderQuestion(question, index) {
         return `
       <div class="quiz-question" data-question-id="${question.id}">
@@ -72,7 +93,12 @@ export class QuizComponent {
     `;
     }
 
+    /**
+     * Attach UI events.
+     * @returns {void}
+     */
     _attachEvents() {
+      if (!this.container) return;
         // Option click
         this.container.querySelectorAll('.quiz-option').forEach(option => {
             option.addEventListener('click', () => {
@@ -99,7 +125,7 @@ export class QuizComponent {
                     
                     // Check if all answered to highlight submit
                     if (Object.keys(this.answers).length === this.quiz.questions.length) {
-                        $('#quiz-submit', this.container).classList.add('pulse-animation');
+                      $('#quiz-submit', this.container)?.classList.add('pulse-animation');
                     }
                 } else {
                     // Deselect siblings
@@ -114,12 +140,16 @@ export class QuizComponent {
         });
 
         // Submit
-        $('#quiz-submit', this.container).addEventListener('click', () => this.submit());
+        $('#quiz-submit', this.container)?.addEventListener('click', () => this.submit());
 
         // Reset
-        $('#quiz-reset', this.container).addEventListener('click', () => this.reset());
+        $('#quiz-reset', this.container)?.addEventListener('click', () => this.reset());
     }
 
+    /**
+     * Submit quiz answers.
+     * @returns {void}
+     */
     submit() {
         if (this.submitted) return;
 
@@ -202,6 +232,10 @@ export class QuizComponent {
         }
     }
 
+    /**
+     * Reset quiz state.
+     * @returns {void}
+     */
     reset() {
         this.answers = {};
         this.submitted = false;

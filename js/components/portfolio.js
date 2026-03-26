@@ -5,12 +5,23 @@
 import { $, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 
+/**
+ * Portfolio UI component.
+ */
 export class PortfolioComponent {
-    constructor(container) {
+  /**
+   * Create a PortfolioComponent instance.
+   * @param {string|Element} container
+   */
+  constructor(container) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.render();
     }
 
+    /**
+     * Render portfolio UI.
+     * @returns {void}
+     */
     render() {
         const submissions = storage.getPassedSubmissions();
 
@@ -52,6 +63,12 @@ export class PortfolioComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a project card.
+     * @param {object} submission
+     * @param {number} index
+     * @returns {string}
+     */
     _renderProject(submission, index) {
         return `
       <div class="card" style="overflow:hidden" data-animate data-index="${index}">
@@ -79,12 +96,21 @@ export class PortfolioComponent {
     `;
     }
 
+    /**
+     * Escape HTML for safe rendering.
+     * @param {string} str
+     * @returns {string}
+     */
     _escapeHTML(str) {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const submissions = storage.getPassedSubmissions();
 
@@ -115,6 +141,11 @@ export class PortfolioComponent {
         });
     }
 
+    /**
+     * Download a single submission as HTML.
+     * @param {object} submission
+     * @returns {void}
+     */
     _downloadFile(submission) {
         const filename = `${submission.challengeId.replace(/\s+/g, '-').toLowerCase()}.html`;
         const blob = new Blob([submission.code], { type: 'text/html' });
@@ -127,6 +158,11 @@ export class PortfolioComponent {
         showToast('File downloaded!', 'success');
     }
 
+    /**
+     * Download all submissions as a ZIP.
+     * @param {Array<object>} submissions
+     * @returns {Promise<void>}
+     */
     async _downloadAllAsZip(submissions) {
         try {
             // Dynamically load JSZip
@@ -183,6 +219,11 @@ export class PortfolioComponent {
         }
     }
 
+    /**
+     * Preview a submission in a modal.
+     * @param {object} submission
+     * @returns {void}
+     */
     _previewCode(submission) {
         // Create modal with preview
         const overlay = document.createElement('div');

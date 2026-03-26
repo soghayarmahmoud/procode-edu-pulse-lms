@@ -7,6 +7,10 @@ let apiReady = false;
 let onReadyCallbacks = [];
 
 // Load YouTube IFrame API
+/**
+ * Inject the YouTube IFrame API script.
+ * @returns {void}
+ */
 function loadYTAPI() {
     if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
 
@@ -16,13 +20,26 @@ function loadYTAPI() {
 }
 
 // YouTube API callback
+/**
+ * YouTube IFrame API ready handler.
+ * @returns {void}
+ */
 window.onYouTubeIframeAPIReady = function () {
     apiReady = true;
     onReadyCallbacks.forEach(cb => cb());
     onReadyCallbacks = [];
 };
 
+/**
+ * Video player wrapper for YouTube or native video.
+ */
 export class VideoPlayer {
+    /**
+     * Create a VideoPlayer instance.
+     * @param {string} containerId
+     * @param {string} videoId
+     * @param {{onReady?: Function, onStateChange?: Function, onTimeUpdate?: Function}} [options={}]
+     */
     constructor(containerId, videoId, options = {}) {
         this.containerId = containerId;
         this.videoId = videoId;
@@ -46,6 +63,10 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Create a native video element player.
+     * @returns {void}
+     */
     _createNativePlayer() {
         const container = document.getElementById(this.containerId);
         if (!container) return;
@@ -72,6 +93,10 @@ export class VideoPlayer {
         playerInstance = this;
     }
 
+    /**
+     * Create a YouTube player instance.
+     * @returns {void}
+     */
     _createPlayer() {
         this.player = new YT.Player(this.containerId, {
             videoId: this.videoId,
@@ -95,12 +120,22 @@ export class VideoPlayer {
         playerInstance = this;
     }
 
+    /**
+     * Handle player ready event.
+     * @param {object} event
+     * @returns {void}
+     */
     _onReady(event) {
         if (this.options.onReady) {
             this.options.onReady(event);
         }
     }
 
+    /**
+     * Handle player state change.
+     * @param {object} event
+     * @returns {void}
+     */
     _onStateChange(event) {
         if (event.data === YT.PlayerState.PLAYING) {
             this._startTimeTracking();
@@ -113,6 +148,10 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Start time tracking callback.
+     * @returns {void}
+     */
     _startTimeTracking() {
         this._stopTimeTracking();
         this._timeInterval = setInterval(() => {
@@ -123,6 +162,10 @@ export class VideoPlayer {
         }, 1000);
     }
 
+    /**
+     * Stop time tracking callback.
+     * @returns {void}
+     */
     _stopTimeTracking() {
         if (this._timeInterval) {
             clearInterval(this._timeInterval);
@@ -130,11 +173,20 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Get current playback time in seconds.
+     * @returns {number}
+     */
     getCurrentTime() {
         if (this.videoElement) return this.videoElement.currentTime;
         return this.player ? (this.player.getCurrentTime ? this.player.getCurrentTime() : 0) : 0;
     }
 
+    /**
+     * Seek to time in seconds.
+     * @param {number} seconds
+     * @returns {void}
+     */
     seekTo(seconds) {
         if (this.videoElement) {
             this.videoElement.currentTime = seconds;
@@ -143,16 +195,28 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Play the video.
+     * @returns {void}
+     */
     play() {
         if (this.videoElement) this.videoElement.play();
         else if (this.player && this.player.playVideo) this.player.playVideo();
     }
 
+    /**
+     * Pause the video.
+     * @returns {void}
+     */
     pause() {
         if (this.videoElement) this.videoElement.pause();
         else if (this.player && this.player.pauseVideo) this.player.pauseVideo();
     }
 
+    /**
+     * Destroy the player instance.
+     * @returns {void}
+     */
     destroy() {
         this._stopTimeTracking();
         if (this.videoElement) {
@@ -172,6 +236,10 @@ export class VideoPlayer {
     }
 }
 
+/**
+ * Get current player instance.
+ * @returns {VideoPlayer|null}
+ */
 export function getCurrentPlayer() {
     return playerInstance;
 }

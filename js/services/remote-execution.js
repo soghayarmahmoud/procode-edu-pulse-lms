@@ -4,6 +4,9 @@
 
 const PISTON_API_URL = 'https://emkc.org/api/v2/piston/execute';
 
+/**
+ * Service for remote code execution.
+ */
 export class RemoteExecutionService {
     /**
      * Executes code remotely using the Piston API.
@@ -81,6 +84,11 @@ export class RemoteExecutionService {
         }
     }
 
+    /**
+     * Map language to Piston runtime details.
+     * @param {string} lang
+     * @returns {{language: string, version: string, extension: string}}
+     */
     static _mapLanguage(lang) {
         const map = {
             'python': { language: 'python', version: '3.10.0', extension: 'py' },
@@ -93,6 +101,13 @@ export class RemoteExecutionService {
         return map[lang.toLowerCase()] || map['python'];
     }
 
+    /**
+     * Combine user code and test code for execution.
+     * @param {string} lang
+     * @param {string} userCode
+     * @param {string} testCode
+     * @returns {string}
+     */
     static _combineCode(lang, userCode, testCode) {
         lang = lang.toLowerCase();
         if (lang === 'python') {

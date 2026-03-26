@@ -7,17 +7,33 @@ import { firestoreService } from './firestore-service.js';
 
 const STORAGE_PREFIX = 'procode_';
 
+/**
+ * localStorage persistence and sync service.
+ */
 class StorageService {
+    /**
+     * Create a StorageService instance.
+     */
     constructor() {
         this._initDefaults();
     }
 
     // ── Core Operations ──
 
+    /**
+     * Build a namespaced storage key.
+     * @param {string} name
+     * @returns {string}
+     */
     _key(name) {
         return `${STORAGE_PREFIX}${name}`;
     }
 
+    /**
+     * Read and parse a value from localStorage.
+     * @param {string} key
+     * @returns {any}
+     */
     _get(key) {
         try {
             const raw = localStorage.getItem(this._key(key));
@@ -27,6 +43,12 @@ class StorageService {
         }
     }
 
+    /**
+     * Serialize and store a value, then sync to cloud.
+     * @param {string} key
+     * @param {any} value
+     * @returns {void}
+     */
     _set(key, value) {
         try {
             localStorage.setItem(this._key(key), JSON.stringify(value));
@@ -36,6 +58,12 @@ class StorageService {
         }
     }
 
+    /**
+     * Sync a local key to Firestore.
+     * @param {string} key
+     * @param {any} value
+     * @returns {void}
+     */
     _syncToCloud(key, value) {
         const uid = authService.getUid();
         if (!uid) return;
@@ -68,6 +96,10 @@ class StorageService {
         }, 0);
     }
 
+    /**
+     * Initialize default localStorage values.
+     * @returns {void}
+     */
     _initDefaults() {
         if (!this._get('profile')) {
             this._set('profile', {
@@ -107,21 +139,38 @@ class StorageService {
         if (!this._get('certifications')) {
             this._set('certifications', {});
         }
+        if (!this._get('bookmarks')) {
+            this._set('bookmarks', []);
+        }
     }
 
     // ── Time Tracking & Activity Stats ──
 
+    /**
+     * Add active time in seconds.
+     * @param {number} seconds
+     * @returns {void}
+     */
     addActiveTime(seconds) {
         const current = this._get('active_time') || 0;
         this._set('active_time', current + seconds);
     }
 
+    /**
+     * Get total learning hours.
+     * @returns {number}
+     */
     getTotalLearningHours() {
         // Return actual recorded time in hours
         const seconds = this._get('active_time') || 0;
         return Math.round((seconds / 3600) * 10) / 10;
     }
 
+    /**
+     * Record activity for a day.
+     * @param {'lesson'|'challenge'} type
+     * @returns {void}
+     */
     recordActivity(type) { // type can be 'lesson' or 'challenge'
         const act = this._get('daily_activity') || {};
         
@@ -150,6 +199,10 @@ class StorageService {
         this._set('daily_activity', act);
     }
 
+    /**
+     * Get aggregated activity for the last 7 days.
+     * @returns {{labels: string[], datasets: {lessons: number[], challenges: number[]}}}
+     */
     getActivityLast7Days() {
         const act = this._get('daily_activity') || {};
         const labels = [];
@@ -180,10 +233,19 @@ class StorageService {
 
     // ── Profile ──
 
+    /**
+     * Get user profile.
+     * @returns {object}
+     */
     getProfile() {
         return this._get('profile') || {};
     }
 
+    /**
+     * Update user profile.
+     * @param {object} updates
+     * @returns {object}
+     */
     updateProfile(updates) {
         const profile = this.getProfile();
         this._set('profile', { ...profile, ...updates });
@@ -192,10 +254,19 @@ class StorageService {
 
     // ── Gems ──
 
+    /**
+     * Get current gems.
+     * @returns {number}
+     */
     getGems() {
         return this.getProfile().gems || 0;
     }
 
+    /**
+     * Add gems.
+     * @param {number} amount
+     * @returns {number}
+     */
     addGems(amount) {
         const current = this.getGems();
         this.updateProfile({ gems: current + amount });
@@ -204,10 +275,19 @@ class StorageService {
 
     // ── Theme ──
 
+    /**
+     * Get theme.
+     * @returns {string}
+     */
     getTheme() {
         return this.getProfile().theme || 'dark';
     }
 
+    /**
+     * Set theme.
+     * @param {string} theme
+     * @returns {void}
+     */
     setTheme(theme) {
         this.updateProfile({ theme });
         document.documentElement.setAttribute('data-theme', theme);
@@ -215,6 +295,11 @@ class StorageService {
 
     // ── Enrollments ──
 
+    /**
+     * Enroll in a course.
+     * @param {string} courseId
+     * @returns {void}
+     */
     enrollCourse(courseId) {
         const enrollments = this._get('enrollments') || {};
         if (!enrollments[courseId]) {
@@ -225,21 +310,76 @@ class StorageService {
         }
     }
 
+    /**
+     * Check enrollment.
+     * @param {string} courseId
+     * @returns {boolean}
+     */
     isEnrolled(courseId) {
         const enrollments = this._get('enrollments') || {};
         return !!enrollments[courseId];
     }
 
+    /**
+     * Get enrollments map.
+     * @returns {object}
+     */
     getEnrollments() {
         return this._get('enrollments') || {};
     }
 
+    // ── Bookmarks ──
+
+    /**
+     * Get bookmarked lesson IDs.
+     * @returns {string[]}
+     */
+    getBookmarks() {
+        return this._get('bookmarks') || [];
+    }
+
+    /**
+     * Check if a lesson is bookmarked.
+     * @param {string} lessonId
+     * @returns {boolean}
+     */
+    isBookmarked(lessonId) {
+        return this.getBookmarks().includes(lessonId);
+    }
+
+    /**
+     * Toggle bookmark for a lesson.
+     * @param {string} lessonId
+     * @returns {boolean} New bookmark state.
+     */
+    toggleBookmark(lessonId) {
+        const bookmarks = this.getBookmarks();
+        const idx = bookmarks.indexOf(lessonId);
+        if (idx >= 0) {
+            bookmarks.splice(idx, 1);
+            this._set('bookmarks', bookmarks);
+            return false;
+        }
+        bookmarks.push(lessonId);
+        this._set('bookmarks', bookmarks);
+        return true;
+    }
+
     // ── Progress ──
 
+    /**
+     * Get progress map.
+     * @returns {object}
+     */
     getProgress() {
         return this._get('progress') || {};
     }
 
+    /**
+     * Get progress object for a course.
+     * @param {string} courseId
+     * @returns {object}
+     */
     getCourseProgress(courseId) {
         const progress = this.getProgress();
         return progress[courseId] || {
@@ -250,6 +390,12 @@ class StorageService {
         };
     }
 
+    /**
+     * Mark a lesson as complete.
+     * @param {string} courseId
+     * @param {string} lessonId
+     * @returns {void}
+     */
     completeLesson(courseId, lessonId) {
         const progress = this.getProgress();
         if (!progress[courseId]) {
@@ -264,12 +410,24 @@ class StorageService {
         this._set('progress', progress);
     }
 
+    /**
+     * Check if a lesson is completed.
+     * @param {string} courseId
+     * @param {string} lessonId
+     * @returns {boolean}
+     */
     isLessonCompleted(courseId, lessonId) {
         const cp = this.getCourseProgress(courseId);
         return cp.completedLessons.includes(lessonId);
     }
 
     // Module helpers
+    /**
+     * Mark a module as complete.
+     * @param {string} courseId
+     * @param {string} moduleId
+     * @returns {void}
+     */
     completeModule(courseId, moduleId) {
         const progress = this.getProgress();
         if (!progress[courseId]) {
@@ -284,19 +442,39 @@ class StorageService {
         this._set('progress', progress);
     }
 
+    /**
+     * Check if a module is completed.
+     * @param {string} courseId
+     * @param {string} moduleId
+     * @returns {boolean}
+     */
     isModuleCompleted(courseId, moduleId) {
         const cp = this.getCourseProgress(courseId);
         return cp.completedModules && cp.completedModules.includes(moduleId);
     }
 
+    /**
+     * Compute course completion percent.
+     * @param {string} courseId
+     * @param {number} totalLessons
+     * @returns {number}
+     */
     getCourseCompletionPercent(courseId, totalLessons) {
         const cp = this.getCourseProgress(courseId);
         if (totalLessons === 0) return 0;
-        return Math.round((cp.completedLessons.length / totalLessons) * 100);
+        const rawPercent = Math.round((cp.completedLessons.length / totalLessons) * 100);
+        return Math.min(100, rawPercent);
     }
 
     // ── Quiz Scores ──
 
+    /**
+     * Save quiz score.
+     * @param {string} courseId
+     * @param {string} quizId
+     * @param {number} score
+     * @returns {void}
+     */
     saveQuizScore(courseId, quizId, score) {
         const progress = this.getProgress();
         if (!progress[courseId]) {
@@ -317,6 +495,12 @@ class StorageService {
         }
     }
 
+    /**
+     * Get quiz score.
+     * @param {string} courseId
+     * @param {string} quizId
+     * @returns {object|null}
+     */
     getQuizScore(courseId, quizId) {
         const cp = this.getCourseProgress(courseId);
         return cp.quizScores[quizId] || null;
@@ -324,11 +508,23 @@ class StorageService {
 
     // ── Notes ──
 
+    /**
+     * Get notes for a lesson.
+     * @param {string} lessonId
+     * @returns {Array<object>}
+     */
     getNotes(lessonId) {
         const notes = this._get('notes') || {};
         return notes[lessonId] || [];
     }
 
+    /**
+     * Add a note to a lesson.
+     * @param {string} lessonId
+     * @param {number} timestamp
+     * @param {string} text
+     * @returns {Array<object>}
+     */
     addNote(lessonId, timestamp, text) {
         const notes = this._get('notes') || {};
         if (!notes[lessonId]) notes[lessonId] = [];
@@ -344,6 +540,12 @@ class StorageService {
         return notes[lessonId];
     }
 
+    /**
+     * Delete a note by ID.
+     * @param {string} lessonId
+     * @param {string} noteId
+     * @returns {Array<object>}
+     */
     deleteNote(lessonId, noteId) {
         const notes = this._get('notes') || {};
         if (notes[lessonId]) {
@@ -355,15 +557,31 @@ class StorageService {
 
     // ── Challenge Submissions ──
 
+    /**
+     * Get challenge submissions.
+     * @returns {object}
+     */
     getSubmissions() {
         return this._get('submissions') || {};
     }
 
+    /**
+     * Get a submission by challenge ID.
+     * @param {string} challengeId
+     * @returns {object|null}
+     */
     getSubmission(challengeId) {
         const subs = this.getSubmissions();
         return subs[challengeId] || null;
     }
 
+    /**
+     * Save a challenge submission.
+     * @param {string} challengeId
+     * @param {string} code
+     * @param {boolean} passed
+     * @returns {void}
+     */
     saveSubmission(challengeId, code, passed) {
         const subs = this.getSubmissions();
         const wasAlreadyPassed = subs[challengeId]?.passed;
@@ -381,6 +599,10 @@ class StorageService {
         }
     }
 
+    /**
+     * Get passed submissions list.
+     * @returns {Array<object>}
+     */
     getPassedSubmissions() {
         const subs = this.getSubmissions();
         return Object.entries(subs)
@@ -390,6 +612,10 @@ class StorageService {
 
     // ── Editor Preferences ──
 
+    /**
+     * Get editor preferences.
+     * @returns {object}
+     */
     getEditorPrefs() {
         return this._get('editor_prefs') || {
             fontSize: 14,
@@ -399,12 +625,25 @@ class StorageService {
         };
     }
 
+    /**
+     * Set editor preferences.
+     * @param {object} prefs
+     * @returns {void}
+     */
     setEditorPrefs(prefs) {
         this._set('editor_prefs', { ...this.getEditorPrefs(), ...prefs });
     }
 
     // ── Review Replies ──
 
+    /**
+     * Add a reply to a course review.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {string} userName
+     * @param {string} text
+     * @returns {object|null}
+     */
     addReply(courseId, reviewId, userName, text) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) return null;
@@ -427,6 +666,15 @@ class StorageService {
         return reply;
     }
 
+    /**
+     * Add reaction to a review reply.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {string} replyId
+     * @param {string} reactionType
+     * @param {string} userName
+     * @returns {object|null}
+     */
     addReplyReaction(courseId, reviewId, replyId, reactionType, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) return null;
@@ -447,6 +695,10 @@ class StorageService {
 
     // ── Stats ──
 
+    /**
+     * Get total completed lessons.
+     * @returns {number}
+     */
     getTotalCompletedLessons() {
         const progress = this.getProgress();
         let total = 0;
@@ -456,10 +708,19 @@ class StorageService {
         return total;
     }
 
+    /**
+     * Get total challenges passed.
+     * @returns {number}
+     */
     getTotalChallengesPassed() {
         return this.getPassedSubmissions().length;
     }
 
+    /**
+     * Get reviews written by a user.
+     * @param {string} userName
+     * @returns {Array<object>}
+     */
     getUserReviews(userName) {
         const reviews = this._get('reviews') || {};
         const userReviews = [];
@@ -478,12 +739,21 @@ class StorageService {
         return userReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
+    /**
+     * Get total reviews count for a user.
+     * @param {string} userName
+     * @returns {number}
+     */
     getTotalReviewsCount(userName) {
         return this.getUserReviews(userName).length;
     }
 
     // New dashboard stats methods
 
+    /**
+     * Get challenge pass rate percentage.
+     * @returns {number}
+     */
     getChallengePassRate() {
         const subs = this.getSubmissions();
         const total = Object.keys(subs).length;
@@ -492,6 +762,10 @@ class StorageService {
         return Math.round((passedCount / total) * 100);
     }
 
+    /**
+     * Get current activity streak in days.
+     * @returns {number}
+     */
     getCurrentStreak() {
         const act = this._get('daily_activity') || {};
         let streak = 0;
@@ -523,6 +797,11 @@ class StorageService {
         return streak;
     }
 
+    /**
+     * Get most active course title.
+     * @param {Array<object>} coursesData
+     * @returns {string}
+     */
     getMostActiveCourse(coursesData) {
         const progress = this.getProgress();
         let maxLessons = -1;
@@ -546,11 +825,21 @@ class StorageService {
 
     // ── Reviews ──
 
+    /**
+     * Get reviews for a course.
+     * @param {string} courseId
+     * @returns {Array<object>}
+     */
     getReviews(courseId) {
         const reviews = this._get('reviews') || {};
         return reviews[courseId] || [];
     }
 
+    /**
+     * Get average rating for a course.
+     * @param {string} courseId
+     * @returns {number|string}
+     */
     getCourseAverageRating(courseId) {
         const reviews = this.getReviews(courseId);
         if (reviews.length === 0) return 0;
@@ -558,6 +847,14 @@ class StorageService {
         return (sum / reviews.length).toFixed(1);
     }
 
+    /**
+     * Save or update a review.
+     * @param {string} courseId
+     * @param {number} rating
+     * @param {string} text
+     * @param {string} userName
+     * @returns {Array<object>}
+     */
     saveReview(courseId, rating, text, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) reviews[courseId] = [];
@@ -594,6 +891,14 @@ class StorageService {
 
     // ── Review Reactions ──
 
+    /**
+     * Add a reaction to a review.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {string} reactionType
+     * @param {string} userName
+     * @returns {void}
+     */
     addReaction(courseId, reviewId, reactionType, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) return;
@@ -622,6 +927,14 @@ class StorageService {
         return review;
     }
 
+    /**
+     * Remove a reaction from a review.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {string} reactionType
+     * @param {string} userName
+     * @returns {object|undefined}
+     */
     removeReaction(courseId, reviewId, reactionType, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) return;
@@ -637,6 +950,13 @@ class StorageService {
         return review;
     }
 
+    /**
+     * Get a user's reaction type for a review.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {string} userName
+     * @returns {string|null}
+     */
     getUserReaction(courseId, reviewId, userName) {
         const reviews = this._get('reviews') || {};
         if (!reviews[courseId]) return null;
@@ -654,6 +974,12 @@ class StorageService {
 
     // ── Certifications ──
 
+    /**
+     * Record a certificate download.
+     * @param {string} courseId
+     * @param {string} courseName
+     * @returns {object}
+     */
     downloadCertificate(courseId, courseName) {
         const certifications = this._get('certifications') || {};
         const certificate = {
@@ -674,10 +1000,18 @@ class StorageService {
         return certificate;
     }
 
+    /**
+     * Get certifications map.
+     * @returns {object}
+     */
     getCertifications() {
         return this._get('certifications') || {};
     }
 
+    /**
+     * Get total certificate count.
+     * @returns {number}
+     */
     getCertificateCount() {
         const certs = this.getCertifications();
         let count = 0;
@@ -689,12 +1023,20 @@ class StorageService {
 
     // ── First Access Tracking ──
 
+    /**
+     * Get first access date.
+     * @returns {string}
+     */
     getFirstAccessDate() {
         return this._get('first_access') || new Date().toISOString();
     }
 
     // Reset ──
 
+    /**
+     * Reset all local storage data.
+     * @returns {void}
+     */
     resetAll() {
         const keys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));
         keys.forEach(k => localStorage.removeItem(k));

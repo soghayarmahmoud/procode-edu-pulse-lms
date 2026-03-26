@@ -255,9 +255,9 @@ const firebaseConfig = {
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
-### Phase 1: MVP ✅
+### Phase 1: MVP 
 - [x] Landing page with course catalog
 - [x] Lesson page with video + code editor
 - [x] Quiz system with scoring
@@ -293,7 +293,7 @@ const firebaseConfig = {
 
 ---
 
-## 🧪 Code Validation Engine
+##  Database Schema (localStorage)
 
 The platform supports two validation modes:
 
@@ -365,7 +365,10 @@ git push origin feature/amazing-feature
 
 ---
 
-## 📄 License
+## ⭐ If you like this project, consider sponsoring me
+
+---
+##  License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 

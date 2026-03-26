@@ -2,14 +2,31 @@
 // ProCode EduPulse — Firestore Data Service
 // ============================================
 
-import { db, isFirebaseConfigured } from './firebase-config.js';
+import { db, storage, isFirebaseConfigured } from './firebase-config.js';
 import {
     doc, setDoc, getDoc, updateDoc, serverTimestamp, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+let firestoreAccessDenied = false;
+
+/**
+ * Detect permission denied errors from Firestore.
+ * @param {any} error
+ * @returns {boolean}
+ */
+function isPermissionDenied(error) {
+    return !!(error && (error.code === 'permission-denied' || String(error.message || '').includes('permission-denied')));
+}
+
+/**
+ * Firestore data access service.
+ */
 class FirestoreService {
     /**
      * Save or update user profile in Firestore.
+     * @param {string} uid
+     * @param {object} data
+     * @returns {Promise<void>}
      */
     async saveUserProfile(uid, data) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -26,14 +43,17 @@ class FirestoreService {
 
     /**
      * Get user profile from Firestore.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async getUserProfile(uid) {
-        if (!isFirebaseConfigured() || !uid) return null;
+        if (!isFirebaseConfigured() || !uid || firestoreAccessDenied) return null;
         try {
             const ref = doc(db, 'users', uid);
             const snap = await getDoc(ref);
             return snap.exists() ? snap.data() : null;
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.warn('Firestore getUserProfile failed:', e);
             return null;
         }
@@ -41,6 +61,9 @@ class FirestoreService {
 
     /**
      * Save user progress to Firestore.
+     * @param {string} uid
+     * @param {object} progress
+     * @returns {Promise<void>}
      */
     async saveProgress(uid, progress) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -57,6 +80,9 @@ class FirestoreService {
 
     /**
      * Save user submissions to Firestore.
+     * @param {string} uid
+     * @param {object} submissions
+     * @returns {Promise<void>}
      */
     async saveSubmissions(uid, submissions) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -73,6 +99,9 @@ class FirestoreService {
 
     /**
      * Save notes to Firestore.
+     * @param {string} uid
+     * @param {object} notes
+     * @returns {Promise<void>}
      */
     async saveNotes(uid, notes) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -89,6 +118,9 @@ class FirestoreService {
 
     /**
      * Save enrollments to Firestore.
+     * @param {string} uid
+     * @param {object} enrollments
+     * @returns {Promise<void>}
      */
     async saveEnrollments(uid, enrollments) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -105,6 +137,9 @@ class FirestoreService {
 
     /**
      * Sync all localStorage data to Firestore (one-time migration).
+     * @param {string} uid
+     * @param {object} localData
+     * @returns {Promise<void>}
      */
     async syncLocalToCloud(uid, localData) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -134,6 +169,8 @@ class FirestoreService {
 
     /**
      * Load all user data from Firestore to populate localStorage.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async loadCloudData(uid) {
         if (!isFirebaseConfigured() || !uid) return null;
@@ -149,6 +186,9 @@ class FirestoreService {
 
     /**
      * Save a review for a course.
+     * @param {string} courseId
+     * @param {object} reviewData
+     * @returns {Promise<void>}
      */
     async saveReview(courseId, reviewData) {
         if (!isFirebaseConfigured() || !courseId) return;
@@ -165,7 +205,11 @@ class FirestoreService {
     }
 
     /**
-     * Add a reply to a review document
+     * Add a reply to a review document.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {object} replyData
+     * @returns {Promise<void>}
      */
     async addReply(courseId, reviewId, replyData) {
         if (!isFirebaseConfigured() || !courseId || !reviewId) return;
@@ -186,6 +230,9 @@ class FirestoreService {
 
     /**
      * Save certifications to Firestore.
+     * @param {string} uid
+     * @param {object} certifications
+     * @returns {Promise<void>}
      */
     async saveCertifications(uid, certifications) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -202,6 +249,9 @@ class FirestoreService {
 
     /**
      * Save activity time to Firestore.
+     * @param {string} uid
+     * @param {number} activeTime
+     * @returns {Promise<void>}
      */
     async saveActivityTime(uid, activeTime) {
         if (!isFirebaseConfigured() || !uid) return;
@@ -218,9 +268,11 @@ class FirestoreService {
 
     /**
      * Get all reviews for a course.
+     * @param {string} courseId
+     * @returns {Promise<Array<object>>}
      */
     async getCourseReviews(courseId) {
-        if (!isFirebaseConfigured() || !courseId) return [];
+        if (!isFirebaseConfigured() || !courseId || firestoreAccessDenied) return [];
         try {
             // Because we don't want to import getDocs and collection from firestore here unless we need to,
             // Let's dynamically import them to avoid cluttering the top-level imports if they aren't used.
@@ -229,13 +281,16 @@ class FirestoreService {
             const snap = await getDocs(colRef);
             return snap.docs.map(doc => doc.data());
         } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
             console.warn('Firestore getCourseReviews failed:', e);
             return [];
         }
     }
 
     /**
-     * Get aggregated statistics for a specific course
+     * Get aggregated statistics for a specific course.
+     * @param {string} courseId
+     * @returns {Promise<object|null>}
      */
     async getCourseStats(courseId) {
         if (!isFirebaseConfigured() || !courseId) return null;
@@ -290,7 +345,9 @@ class FirestoreService {
     }
 
     /**
-     * Get aggregated statistics for a user
+     * Get aggregated statistics for a user.
+     * @param {string} uid
+     * @returns {Promise<object|null>}
      */
     async getUserStats(uid) {
         if (!isFirebaseConfigured() || !uid) return null;
@@ -328,7 +385,8 @@ class FirestoreService {
     }
 
     /**
-     * Admin dashboard statistics
+     * Admin dashboard statistics.
+     * @returns {Promise<object|null>}
      */
     async getAdminStats() {
         if (!isFirebaseConfigured()) return null;
@@ -370,7 +428,12 @@ class FirestoreService {
     // ==========================================
     // INSTRUCTOR CMS DATA METHODS
     // ==========================================
-    
+
+    /**
+     * Save or update a dynamic course.
+     * @param {object} courseData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicCourse(courseData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -387,20 +450,32 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Get all dynamic courses.
+     * @returns {Promise<Array<object>>}
+     */
     async getDynamicCourses() {
-        if (!isFirebaseConfigured()) return [];
+        if (!isFirebaseConfigured() || firestoreAccessDenied) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_courses'));
             const courses = [];
-            snap.forEach(doc => courses.push(doc.data()));
+            snap.forEach(docSnap => courses.push(docSnap.data()));
             return courses;
         } catch (e) {
-            console.error('Error getting dynamic courses:', e);
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
+            if (!firestoreAccessDenied) {
+                console.error('Error getting dynamic courses:', e);
+            }
             return [];
         }
     }
 
+    /**
+     * Save or update a dynamic lesson.
+     * @param {object} lessonData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicLesson(lessonData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -417,24 +492,32 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Get all dynamic lessons.
+     * @returns {Promise<Array<object>>}
+     */
     async getDynamicLessons() {
-        if (!isFirebaseConfigured()) return [];
+        if (!isFirebaseConfigured() || firestoreAccessDenied) return [];
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
             const snap = await getDocs(collection(db, 'dynamic_lessons'));
             const lessons = [];
-            snap.forEach(doc => lessons.push(doc.data()));
+            snap.forEach(docSnap => lessons.push(docSnap.data()));
             return lessons;
         } catch (e) {
-            console.error('Error getting dynamic lessons:', e);
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
+            if (!firestoreAccessDenied) {
+                console.error('Error getting dynamic lessons:', e);
+            }
             return [];
         }
     }
 
-    // ==========================================
-    // CHALLENGE CRUD METHODS
-    // ==========================================
-
+    /**
+     * Save or update a dynamic challenge.
+     * @param {object} challengeData
+     * @returns {Promise<boolean>}
+     */
     async saveDynamicChallenge(challengeData) {
         if (!isFirebaseConfigured()) return false;
         try {
@@ -451,29 +534,36 @@ class FirestoreService {
         }
     }
 
-    async getDynamicChallenges() {
-        if (!isFirebaseConfigured()) return [];
+    /**
+     * Upload an image to storage and return a download URL.
+     * @param {File} file
+     * @param {string} courseId
+     * @returns {Promise<string>}
+     */
+    async uploadImage(file, courseId) {
+        if (!isFirebaseConfigured() || !file || !courseId) return '';
         try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            const snap = await getDocs(collection(db, 'dynamic_challenges'));
-            const challenges = [];
-            snap.forEach(doc => challenges.push({ ...doc.data(), id: doc.id }));
-            return challenges;
+            const { ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+            const safeName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+            const storageRef = ref(storage, `thumbnails/${courseId}/${safeName}`);
+            await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
+            return await getDownloadURL(storageRef);
         } catch (e) {
-            console.error('Error getting dynamic challenges:', e);
-            return [];
+            console.error('Error uploading thumbnail image:', e);
+            return '';
         }
     }
 
-    // ==========================================
-    // DELETE METHODS
-    // ==========================================
-
-    async deleteDynamicCourse(courseId) {
-        if (!isFirebaseConfigured() || !courseId) return false;
+    /**
+     * Delete a dynamic course.
+     * @param {string} id
+     * @returns {Promise<boolean>}
+     */
+    async deleteDynamicCourse(id) {
+        if (!isFirebaseConfigured() || !id) return false;
         try {
             const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            await deleteDoc(doc(db, 'dynamic_courses', courseId));
+            await deleteDoc(doc(db, 'dynamic_courses', id));
             return true;
         } catch (e) {
             console.error('Error deleting dynamic course:', e);
@@ -481,84 +571,20 @@ class FirestoreService {
         }
     }
 
-    async deleteDynamicLesson(lessonId) {
-        if (!isFirebaseConfigured() || !lessonId) return false;
+    /**
+     * Delete a dynamic lesson.
+     * @param {string} id
+     * @returns {Promise<boolean>}
+     */
+    async deleteDynamicLesson(id) {
+        if (!isFirebaseConfigured() || !id) return false;
         try {
             const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            await deleteDoc(doc(db, 'dynamic_lessons', lessonId));
+            await deleteDoc(doc(db, 'dynamic_lessons', id));
             return true;
         } catch (e) {
             console.error('Error deleting dynamic lesson:', e);
             return false;
-        }
-    }
-
-    async deleteDynamicChallenge(challengeId) {
-        if (!isFirebaseConfigured() || !challengeId) return false;
-        try {
-            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            await deleteDoc(doc(db, 'dynamic_challenges', challengeId));
-            return true;
-        } catch (e) {
-            console.error('Error deleting dynamic challenge:', e);
-            return false;
-        }
-    }
-
-    // ==========================================
-    // ADMIN USER MANAGEMENT
-    // ==========================================
-
-    async getAllUsers() {
-        if (!isFirebaseConfigured()) return [];
-        try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            const snap = await getDocs(collection(db, 'users'));
-            const users = [];
-            snap.forEach(d => users.push({ uid: d.id, ...d.data() }));
-            return users;
-        } catch (e) {
-            console.error('Error fetching all users:', e);
-            return [];
-        }
-    }
-
-    async updateUserRole(uid, updates) {
-        if (!isFirebaseConfigured() || !uid) return false;
-        try {
-            const ref = doc(db, 'users', uid);
-            await updateDoc(ref, {
-                ...updates,
-                updatedAt: serverTimestamp()
-            });
-            return true;
-        } catch (e) {
-            console.error('Error updating user role:', e);
-            return false;
-        }
-    }
-
-    async getAdminDashboardStats() {
-        if (!isFirebaseConfigured()) return null;
-        try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-            
-            const [usersSnap, coursesSnap, lessonsSnap, challengesSnap] = await Promise.all([
-                getDocs(collection(db, 'users')),
-                getDocs(collection(db, 'dynamic_courses')),
-                getDocs(collection(db, 'dynamic_lessons')),
-                getDocs(collection(db, 'dynamic_challenges'))
-            ]);
-
-            return {
-                totalUsers: usersSnap.size,
-                totalDynamicCourses: coursesSnap.size,
-                totalDynamicLessons: lessonsSnap.size,
-                totalDynamicChallenges: challengesSnap.size
-            };
-        } catch (e) {
-            console.error('Error fetching admin stats:', e);
-            return null;
         }
     }
 }
