@@ -84,6 +84,10 @@ export class AdminDashboard {
                             </div>
                         </button>
 
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'challenges' ? 'active' : ''}" data-tab="challenges" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-code" style="width:24px; text-align:center;"></i> Challenge Builder
+                        </button>
+
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'gamification' ? 'active' : ''}" data-tab="gamification" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
                             <i class="fa-solid fa-gem" style="width:24px; text-align:center;"></i> Gamification Modifiers
                         </button>
@@ -123,6 +127,17 @@ export class AdminDashboard {
                 .admin-stats-card { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); transition: transform 0.2s; }
                 .admin-stats-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
                 .admin-stats-value { font-size: 2.5rem; font-weight: 800; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+                @media (max-width: 900px) {
+                    .admin-layout { flex-direction: column !important; }
+                    .admin-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border-subtle); }
+                    .admin-nav { flex-direction: row !important; flex-wrap: wrap; gap: var(--space-1) !important; padding: var(--space-3) var(--space-4) !important; }
+                    .admin-nav > span { display: none; }
+                    .admin-tab-btn { font-size: 0.85rem !important; padding: var(--space-2) var(--space-3) !important; }
+                    .admin-workspace { height: auto !important; min-height: calc(100vh - 200px); }
+                    .grid-3 { grid-template-columns: 1fr !important; }
+                    .grid-2 { grid-template-columns: 1fr !important; }
+                }
             </style>
         `;
 
@@ -171,6 +186,10 @@ export class AdminDashboard {
                     title.innerHTML = 'Master Course Studio';
                     this._renderCoursesTab(area);
                     break;
+                case 'challenges':
+                    title.innerHTML = 'Challenge Builder Studio';
+                    this._renderChallengesTab(area);
+                    break;
                 case 'submissions':
                     title.innerHTML = 'Review Submissions';
                     this._renderSubmissionsTab(area);
@@ -189,6 +208,7 @@ export class AdminDashboard {
     // ── Tab Renderers ──
 
     _renderOverviewTab(container) {
+        const staticCourses = (this.systemData.coursesData || []).length;
         container.innerHTML = `
             <div class="grid grid-3" style="gap:var(--space-6); margin-bottom:var(--space-8);">
                 <div class="admin-stats-card">
@@ -196,8 +216,8 @@ export class AdminDashboard {
                         <span>Total Registered Users</span>
                         <i class="fa-solid fa-users"></i>
                     </div>
-                    <div class="admin-stats-value">1,492</div>
-                    <div style="font-size:0.85rem; color:var(--color-success);"><i class="fa-solid fa-arrow-trend-up"></i> +12% this week</div>
+                    <div class="admin-stats-value" id="stat-total-users"><div class="spinner-sm"></div></div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);" id="stat-users-sub">Loading from Firestore...</div>
                 </div>
                 
                 <div class="admin-stats-card">
@@ -205,17 +225,17 @@ export class AdminDashboard {
                         <span>Course Catalog Size</span>
                         <i class="fa-solid fa-book-open"></i>
                     </div>
-                    <div class="admin-stats-value">${(this.systemData.coursesData || []).length}</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Live courses actively served</div>
+                    <div class="admin-stats-value" id="stat-total-courses">${staticCourses}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);" id="stat-courses-sub">${staticCourses} static + <span id="stat-dynamic-courses">...</span> cloud</div>
                 </div>
                 
                 <div class="admin-stats-card">
                     <div style="display:flex; justify-content:space-between; color:var(--text-muted);">
-                        <span>Pending Submissions</span>
-                        <i class="fa-solid fa-inbox"></i>
+                        <span>Dynamic Challenges</span>
+                        <i class="fa-solid fa-code"></i>
                     </div>
-                    <div class="admin-stats-value" style="background:var(--color-error); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">3</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Requires manual grading</div>
+                    <div class="admin-stats-value" id="stat-total-challenges"><div class="spinner-sm"></div></div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Cloud-published challenges</div>
                 </div>
             </div>
 
@@ -227,7 +247,7 @@ export class AdminDashboard {
                             <div style="width:12px; height:12px; border-radius:50%; background:var(--color-success);"></div>
                             <span style="font-weight:600;">Firestore Database</span>
                         </div>
-                        <span class="text-muted" style="font-size:0.9rem;">Connected (0ms)</span>
+                        <span class="text-muted" style="font-size:0.9rem;">Connected</span>
                     </div>
                     <div style="padding:var(--space-4); border:1px solid var(--border-subtle); border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; align-items:center; gap:var(--space-3);">
@@ -253,6 +273,22 @@ export class AdminDashboard {
                 </div>
             </div>
         `;
+
+        // Fetch live stats from Firestore
+        firestoreService.getAdminDashboardStats().then(stats => {
+            if (!stats) return;
+            const usersEl = document.getElementById('stat-total-users');
+            const usersSubEl = document.getElementById('stat-users-sub');
+            const dynCoursesEl = document.getElementById('stat-dynamic-courses');
+            const totalCoursesEl = document.getElementById('stat-total-courses');
+            const challengesEl = document.getElementById('stat-total-challenges');
+
+            if (usersEl) usersEl.textContent = stats.totalUsers.toLocaleString();
+            if (usersSubEl) usersSubEl.innerHTML = `<i class="fa-solid fa-database" style="margin-right:4px;"></i> Live from Firestore`;
+            if (dynCoursesEl) dynCoursesEl.textContent = stats.totalDynamicCourses;
+            if (totalCoursesEl) totalCoursesEl.textContent = staticCourses + stats.totalDynamicCourses;
+            if (challengesEl) challengesEl.textContent = stats.totalDynamicChallenges;
+        });
     }
 
     _renderUsersTab(container) {
@@ -262,79 +298,123 @@ export class AdminDashboard {
                     <div class="input-group" style="margin:0; width:300px;">
                         <div style="position:relative;">
                             <i class="fa-solid fa-search text-muted" style="position:absolute; left:12px; top:50%; transform:translateY(-50%);"></i>
-                            <input type="text" class="input" placeholder="Search by email, UID, or name..." style="padding-left:36px; padding-top:8px; padding-bottom:8px;">
+                            <input type="text" class="input" placeholder="Search by email, UID, or name..." style="padding-left:36px; padding-top:8px; padding-bottom:8px;" id="admin-user-search">
                         </div>
                     </div>
-                    <button class="btn btn-outline"><i class="fa-solid fa-filter"></i> Filters</button>
+                    <button class="btn btn-outline" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
 
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; text-align:left;">
-                        <thead>
-                            <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">
-                                <th style="padding:var(--space-3) var(--space-2);">User</th>
-                                <th style="padding:var(--space-3) var(--space-2);">Role</th>
-                                <th style="padding:var(--space-3) var(--space-2);">Last Active</th>
-                                <th style="padding:var(--space-3) var(--space-2);">Level</th>
-                                <th style="padding:var(--space-3) var(--space-2); text-align:right;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody style="font-size:0.95rem;">
-                            <!-- Mock Data Row -->
-                            <tr style="border-bottom:1px solid var(--border-subtle);">
-                                <td style="padding:var(--space-4) var(--space-2);">
-                                    <div style="display:flex; align-items:center; gap:var(--space-3);">
-                                        <div class="avatar-sm" style="background:var(--bg-tertiary); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">JD</div>
-                                        <div>
-                                            <div style="font-weight:600;">John Doe</div>
-                                            <div class="text-muted" style="font-size:0.8rem;">johndoe@example.com</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style="padding:var(--space-4) var(--space-2);"><span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Student</span></td>
-                                <td style="padding:var(--space-4) var(--space-2);">2 hours ago</td>
-                                <td style="padding:var(--space-4) var(--space-2);"><span style="color:var(--color-warning); font-weight:bold;">14</span></td>
-                                <td style="padding:var(--space-4) var(--space-2); text-align:right;">
-                                    <button class="btn btn-ghost btn-sm" title="View Profile"><i class="fa-solid fa-eye"></i></button>
-                                    <button class="btn btn-ghost btn-sm" title="Edit Roles"><i class="fa-solid fa-shield-halved"></i></button>
-                                    <button class="btn btn-ghost btn-sm" style="color:var(--color-error);" title="Block User"><i class="fa-solid fa-ban"></i></button>
-                                </td>
-                            </tr>
-                            
-                            <tr style="border-bottom:1px solid var(--border-subtle);">
-                                <td style="padding:var(--space-4) var(--space-2);">
-                                    <div style="display:flex; align-items:center; gap:var(--space-3);">
-                                        <div class="avatar-sm" style="background:var(--brand-primary); color:white; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">S</div>
-                                        <div>
-                                            <div style="font-weight:600;">Sarah Admin</div>
-                                            <div class="text-muted" style="font-size:0.8rem;">admin@procode.com</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style="padding:var(--space-4) var(--space-2);"><span class="badge" style="background:rgba(231, 76, 60, 0.1); color:var(--color-error);">Admin</span></td>
-                                <td style="padding:var(--space-4) var(--space-2);">Online</td>
-                                <td style="padding:var(--space-4) var(--space-2);"><span style="color:var(--color-warning); font-weight:bold;">99</span></td>
-                                <td style="padding:var(--space-4) var(--space-2); text-align:right;">
-                                    <button class="btn btn-ghost btn-sm" title="View Profile"><i class="fa-solid fa-eye"></i></button>
-                                    <button class="btn btn-ghost btn-sm" title="Edit Roles"><i class="fa-solid fa-shield-halved"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:var(--space-6); color:var(--text-muted); font-size:0.9rem;">
-                    <span>Showing 2 of 1,492 users</span>
-                    <div style="display:flex; gap:var(--space-2);">
-                        <button class="btn btn-outline btn-sm" disabled>Previous</button>
-                        <button class="btn btn-outline btn-sm">Next</button>
+                <div id="admin-users-table-container" style="overflow-x:auto;">
+                    <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
+                        <div class="spinner-sm" style="margin:0 auto var(--space-4);"></div>
+                        Loading users from Firestore...
                     </div>
                 </div>
             </div>
         `;
+
+        this._loadUsersData();
+
+        const searchInput = document.getElementById('admin-user-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#admin-users-table-container tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            });
+        }
+
+        const btnRefresh = document.getElementById('btn-refresh-users');
+        if (btnRefresh) btnRefresh.onclick = () => this._loadUsersData();
+    }
+
+    async _loadUsersData() {
+        const tableContainer = document.getElementById('admin-users-table-container');
+        if (!tableContainer) return;
+
+        const users = await firestoreService.getAllUsers();
+
+        if (users.length === 0) {
+            tableContainer.innerHTML = '<div style="text-align:center; padding:var(--space-8); color:var(--text-muted);"><i class="fa-solid fa-users" style="font-size:2rem; display:block; margin-bottom:var(--space-4);"></i>No users found in Firestore.</div>';
+            return;
+        }
+
+        const rowsHtml = users.map(u => {
+            const profile = u.profile || {};
+            const name = profile.name || u.displayName || u.email || u.uid.slice(0,8);
+            const email = profile.email || u.email || u.uid;
+            const initials = name.slice(0,2).toUpperCase();
+            const isAdmin = u.isAdmin || profile.isAdmin;
+            const roleBadge = isAdmin
+                ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin</span>'
+                : '<span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Student</span>';
+            const lastActive = u.updatedAt?.seconds
+                ? new Date(u.updatedAt.seconds * 1000).toLocaleDateString()
+                : 'N/A';
+
+            return `
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                    <td style="padding:var(--space-4) var(--space-2);">
+                        <div style="display:flex; align-items:center; gap:var(--space-3);">
+                            <div class="avatar-sm" style="background:${isAdmin ? 'var(--brand-primary)' : 'var(--bg-tertiary)'}; color:${isAdmin ? 'white' : 'var(--text-primary)'}; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600;">${initials}</div>
+                            <div>
+                                <div style="font-weight:600;">${name}</div>
+                                <div class="text-muted" style="font-size:0.8rem;">${email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding:var(--space-4) var(--space-2);">${roleBadge}</td>
+                    <td style="padding:var(--space-4) var(--space-2);">${lastActive}</td>
+                    <td style="padding:var(--space-4) var(--space-2); text-align:right;">
+                        <button class="btn btn-ghost btn-sm btn-toggle-admin" data-uid="${u.uid}" data-admin="${isAdmin ? 'true' : 'false'}" title="${isAdmin ? 'Revoke Admin' : 'Make Admin'}"><i class="fa-solid fa-shield-halved"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tableContainer.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">
+                        <th style="padding:var(--space-3) var(--space-2);">User</th>
+                        <th style="padding:var(--space-3) var(--space-2);">Role</th>
+                        <th style="padding:var(--space-3) var(--space-2);">Last Active</th>
+                        <th style="padding:var(--space-3) var(--space-2); text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+            <div style="margin-top:var(--space-4); color:var(--text-muted); font-size:0.9rem;">Showing ${users.length} users</div>
+        `;
+
+        // Wire toggle admin buttons
+        tableContainer.querySelectorAll('.btn-toggle-admin').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const isCurrentlyAdmin = btn.dataset.admin === 'true';
+                const action = isCurrentlyAdmin ? 'revoke admin from' : 'grant admin to';
+                if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+                btn.disabled = true;
+                const ok = await firestoreService.updateUserRole(uid, { isAdmin: !isCurrentlyAdmin });
+                if (ok) {
+                    showToast(`User role updated successfully.`, 'success');
+                    this._loadUsersData();
+                } else {
+                    showToast('Failed to update user role.', 'error');
+                    btn.disabled = false;
+                }
+            };
+        });
     }
 
     _renderContentTab(container) {
+        const cloudConfig = mediaService.getConfig ? mediaService.getConfig() : { cloudName: '', uploadPreset: '' };
+        const cfgCloudName = cloudConfig.cloudName || localStorage.getItem('cloudinary_cloud_name') || '';
+        const cfgUploadPreset = cloudConfig.uploadPreset || localStorage.getItem('cloudinary_upload_preset') || '';
+
         container.innerHTML = `
             <div class="grid grid-2" style="gap:var(--space-6);">
                 <div class="card">
@@ -365,11 +445,11 @@ export class AdminDashboard {
                     <form id="cloudinary-config-form" style="display:flex; flex-direction:column; gap:var(--space-4); flex:1;">
                         <div class="input-group">
                             <label>Cloud Name</label>
-                            <input type="text" id="cloud-name" class="input" placeholder="e.g. dpqjxyz12" value="${config.cloudName || ''}">
+                            <input type="text" id="cloud-name" class="input" placeholder="e.g. dpqjxyz12" value="${cfgCloudName}">
                         </div>
                         <div class="input-group">
                             <label>Upload Preset (Unsigned)</label>
-                            <input type="text" id="upload-preset" class="input" placeholder="e.g. procode_uploads" value="${config.uploadPreset || ''}">
+                            <input type="text" id="upload-preset" class="input" placeholder="e.g. procode_uploads" value="${cfgUploadPreset}">
                         </div>
                         <div style="margin-top:auto; display:flex; justify-content:flex-end;">
                             <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Save Config</button>
@@ -765,13 +845,236 @@ export class AdminDashboard {
         }
     }
 
-    _filterOptions(query) {
-        const optionsContainer = document.getElementById('lesson-course-options');
+    _filterOptions(query, containerId = 'lesson-course-options') {
+        const optionsContainer = document.getElementById(containerId);
         if (!optionsContainer) return;
         const options = optionsContainer.querySelectorAll('.custom-select-option');
         options.forEach(opt => {
             const searchData = opt.dataset.search || '';
             opt.style.display = searchData.includes(query) ? 'flex' : 'none';
+        });
+    }
+
+    // ── Challenge Builder Tab ──
+
+    _renderChallengesTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+
+                <!-- Create Challenge -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
+                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(231, 76, 60, 0.1); color:var(--color-error); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;">Create Coding Challenge</h3>
+                            <p class="text-muted" style="font-size:0.9rem;">Build interactive coding exercises for students.</p>
+                        </div>
+                    </div>
+
+                    <form id="challenge-builder-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Challenge ID (unique-slug)</label>
+                                <input type="text" id="challenge-id" class="input" placeholder="e.g. css-flexbox-layout" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Challenge Title</label>
+                                <input type="text" id="challenge-title" class="input" placeholder="e.g. Build a Flexbox Layout" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Difficulty</label>
+                                <select id="challenge-difficulty" class="input">
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Language</label>
+                                <select id="challenge-language" class="input">
+                                    <option value="html">HTML / CSS / JS</option>
+                                    <option value="python">Python</option>
+                                    <option value="javascript">JavaScript (Node)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Challenge Type</label>
+                                <select id="challenge-type" class="input">
+                                    <option value="frontend">Frontend (DOM/Regex Validation)</option>
+                                    <option value="backend">Backend (Assertions/Test Code)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Attached Course ID (optional)</label>
+                                <input type="text" id="challenge-course-id" class="input" placeholder="e.g. html-fundamentals">
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Instructions (Markdown)</label>
+                            <textarea id="challenge-instructions" class="input textarea" rows="4" placeholder="Describe what the student needs to build..." required></textarea>
+                        </div>
+
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Starter Code</label>
+                            <textarea id="challenge-starter-code" class="input textarea" rows="6" style="font-family:monospace; font-size:0.9rem;" placeholder="<!-- Write starter code here -->" required></textarea>
+                        </div>
+
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Validation / Test Code</label>
+                            <p class="text-muted" style="font-size:0.85rem; margin-bottom:var(--space-2);">
+                                For <strong>Frontend</strong>: Enter JSON validation rules array. For <strong>Backend</strong>: Enter assertion test code.
+                            </p>
+                            <textarea id="challenge-test-code" class="input textarea" rows="6" style="font-family:monospace; font-size:0.9rem;" placeholder='[{"type":"dom-query","selector":"h1","errorMessage":"Missing h1"}]' required></textarea>
+                        </div>
+
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" id="btn-save-challenge" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Manage Existing Challenges -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list-check"></i> Manage Existing Challenges</h3>
+                            <p class="text-muted" style="font-size:0.9rem; margin-top:4px;">Cloud-published challenges from Firestore.</p>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-challenges"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="challenges-list-container">
+                        <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
+                            <div class="spinner-sm" style="margin:0 auto var(--space-4);"></div>
+                            Loading challenges...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this._initChallengeBuilderLogic();
+        this._loadExistingChallenges();
+    }
+
+    _initChallengeBuilderLogic() {
+        const btnSave = document.getElementById('btn-save-challenge');
+        if (!btnSave) return;
+
+        btnSave.onclick = async () => {
+            const form = document.getElementById('challenge-builder-form');
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<div class="spinner-sm"></div> Publishing...';
+
+            const challengeType = document.getElementById('challenge-type').value;
+            const testCodeRaw = document.getElementById('challenge-test-code').value.trim();
+
+            let validationRules = null;
+            let testCode = null;
+
+            if (challengeType === 'frontend') {
+                try {
+                    validationRules = JSON.parse(testCodeRaw);
+                } catch (e) {
+                    showToast('Invalid JSON in validation rules. Please check syntax.', 'error');
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
+                    return;
+                }
+            } else {
+                testCode = testCodeRaw;
+            }
+
+            const challengeData = {
+                id: document.getElementById('challenge-id').value.trim(),
+                title: document.getElementById('challenge-title').value.trim(),
+                difficulty: document.getElementById('challenge-difficulty').value,
+                language: document.getElementById('challenge-language').value,
+                type: challengeType,
+                courseId: document.getElementById('challenge-course-id').value.trim() || null,
+                instructions: document.getElementById('challenge-instructions').value.trim(),
+                starterCode: document.getElementById('challenge-starter-code').value,
+                validationRules: validationRules,
+                testCode: testCode,
+                isDynamic: true
+            };
+
+            const success = await firestoreService.saveDynamicChallenge(challengeData);
+            if (success) {
+                showToast('Challenge successfully published to the cloud!', 'success');
+                form.reset();
+                this._loadExistingChallenges();
+            } else {
+                showToast('Failed to publish challenge.', 'error');
+            }
+
+            btnSave.disabled = false;
+            btnSave.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
+        };
+
+        const btnRefresh = document.getElementById('btn-refresh-challenges');
+        if (btnRefresh) {
+            btnRefresh.onclick = () => this._loadExistingChallenges();
+        }
+    }
+
+    async _loadExistingChallenges() {
+        const listContainer = document.getElementById('challenges-list-container');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '<div style="text-align:center; padding:var(--space-6); color:var(--text-muted);"><div class="spinner-sm" style="margin:0 auto var(--space-4);"></div> Loading...</div>';
+
+        const challenges = await firestoreService.getDynamicChallenges();
+
+        if (challenges.length === 0) {
+            listContainer.innerHTML = `
+                <div style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
+                    <i class="fa-solid fa-inbox" style="font-size:2.5rem; margin-bottom:var(--space-4); display:block;"></i>
+                    No dynamic challenges published yet. Create one above!
+                </div>
+            `;
+            return;
+        }
+
+        listContainer.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                ${challenges.map(ch => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                        <div style="display:flex; align-items:center; gap:var(--space-3);">
+                            <div style="width:36px; height:36px; border-radius:8px; background:rgba(231,76,60,0.1); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:600;">${ch.title || ch.id}</div>
+                                <div class="text-muted" style="font-size:0.8rem;">${ch.language || 'html'} • ${ch.difficulty || 'Medium'} • ${ch.type || 'frontend'}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:var(--space-2);">
+                            <button class="btn btn-ghost btn-sm btn-delete-challenge" data-id="${ch.id}" title="Delete" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Wire delete buttons
+        listContainer.querySelectorAll('.btn-delete-challenge').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this challenge permanently?')) return;
+                btn.disabled = true;
+                const ok = await firestoreService.deleteDynamicChallenge(btn.dataset.id);
+                if (ok) {
+                    showToast('Challenge deleted.', 'success');
+                    this._loadExistingChallenges();
+                } else {
+                    showToast('Failed to delete challenge.', 'error');
+                    btn.disabled = false;
+                }
+            };
         });
     }
 

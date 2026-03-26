@@ -156,6 +156,65 @@ export class InstructorDashboard {
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Challenge Builder -->
+                        <div class="card">
+                            <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-code"></i> Create Coding Challenge</h3>
+                            <form id="challenge-builder-form" onsubmit="event.preventDefault();">
+                                <div class="grid grid-2" style="gap:var(--space-4);">
+                                    <div class="input-group">
+                                        <label>Challenge ID (e.g. css-grid-challenge)</label>
+                                        <input type="text" id="challenge-id" class="input" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Challenge Title</label>
+                                        <input type="text" id="challenge-title" class="input" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Language</label>
+                                        <select id="challenge-language" class="input">
+                                            <option value="html">HTML / CSS / JS</option>
+                                            <option value="python">Python</option>
+                                            <option value="javascript">JavaScript (Node)</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Difficulty</label>
+                                        <select id="challenge-difficulty" class="input">
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Challenge Type</label>
+                                        <select id="challenge-type" class="input">
+                                            <option value="frontend">Frontend (DOM/Regex)</option>
+                                            <option value="backend">Backend (Assertions)</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Attached Course ID (optional)</label>
+                                        <input type="text" id="challenge-course-id" class="input" placeholder="e.g. html-fundamentals">
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Instructions (Markdown)</label>
+                                    <textarea id="challenge-instructions" class="input textarea" rows="3" required></textarea>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Starter Code</label>
+                                    <textarea id="challenge-starter-code" class="input textarea" rows="4" style="font-family:monospace;" required></textarea>
+                                </div>
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Validation / Test Code</label>
+                                    <textarea id="challenge-test-code" class="input textarea" rows="4" style="font-family:monospace;" placeholder='Frontend: JSON array; Backend: assertion code' required></textarea>
+                                </div>
+                                <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                                    <button class="btn btn-primary" id="btn-save-challenge" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -377,6 +436,62 @@ export class InstructorDashboard {
 
                 btnSaveLesson.disabled = false;
                 btnSaveLesson.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson';
+            });
+        }
+
+        // Challenge Builder Submit
+        const btnSaveChallenge = document.getElementById('btn-save-challenge');
+        if (btnSaveChallenge) {
+            btnSaveChallenge.addEventListener('click', async () => {
+                const form = document.getElementById('challenge-builder-form');
+                if (!form.checkValidity()) return;
+
+                btnSaveChallenge.disabled = true;
+                btnSaveChallenge.innerHTML = '<div class="spinner-sm"></div> Publishing...';
+
+                const challengeType = document.getElementById('challenge-type').value;
+                const testCodeRaw = document.getElementById('challenge-test-code').value.trim();
+
+                let validationRules = null;
+                let testCode = null;
+
+                if (challengeType === 'frontend') {
+                    try {
+                        validationRules = JSON.parse(testCodeRaw);
+                    } catch (e) {
+                        showToast('Invalid JSON in validation rules.', 'error');
+                        btnSaveChallenge.disabled = false;
+                        btnSaveChallenge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
+                        return;
+                    }
+                } else {
+                    testCode = testCodeRaw;
+                }
+
+                const challengeData = {
+                    id: document.getElementById('challenge-id').value.trim(),
+                    title: document.getElementById('challenge-title').value.trim(),
+                    difficulty: document.getElementById('challenge-difficulty').value,
+                    language: document.getElementById('challenge-language').value,
+                    type: challengeType,
+                    courseId: document.getElementById('challenge-course-id').value.trim() || null,
+                    instructions: document.getElementById('challenge-instructions').value.trim(),
+                    starterCode: document.getElementById('challenge-starter-code').value,
+                    validationRules: validationRules,
+                    testCode: testCode,
+                    isDynamic: true
+                };
+
+                const success = await firestoreService.saveDynamicChallenge(challengeData);
+                if (success) {
+                    showToast('Challenge successfully published to the cloud!', 'success');
+                    form.reset();
+                } else {
+                    showToast('Failed to publish challenge.', 'error');
+                }
+
+                btnSaveChallenge.disabled = false;
+                btnSaveChallenge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Challenge';
             });
         }
     }
