@@ -587,6 +587,91 @@ class FirestoreService {
             return false;
         }
     }
+
+    // ==========================================
+    // CHALLENGE READ & DELETE
+    // ==========================================
+
+    async getDynamicChallenges() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_challenges'));
+            const challenges = [];
+            snap.forEach(d => challenges.push({ ...d.data(), id: d.id }));
+            return challenges;
+        } catch (e) {
+            console.error('Error getting dynamic challenges:', e);
+            return [];
+        }
+    }
+
+    async deleteDynamicChallenge(challengeId) {
+        if (!isFirebaseConfigured() || !challengeId) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_challenges', challengeId));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic challenge:', e);
+            return false;
+        }
+    }
+
+    // ==========================================
+    // ADMIN USER MANAGEMENT
+    // ==========================================
+
+    async getAllUsers() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'users'));
+            const users = [];
+            snap.forEach(d => users.push({ uid: d.id, ...d.data() }));
+            return users;
+        } catch (e) {
+            console.error('Error fetching all users:', e);
+            return [];
+        }
+    }
+
+    async updateUserRole(uid, updates) {
+        if (!isFirebaseConfigured() || !uid) return false;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                ...updates,
+                updatedAt: serverTimestamp()
+            });
+            return true;
+        } catch (e) {
+            console.error('Error updating user role:', e);
+            return false;
+        }
+    }
+
+    async getAdminDashboardStats() {
+        if (!isFirebaseConfigured()) return null;
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const [usersSnap, coursesSnap, lessonsSnap, challengesSnap] = await Promise.all([
+                getDocs(collection(db, 'users')),
+                getDocs(collection(db, 'dynamic_courses')),
+                getDocs(collection(db, 'dynamic_lessons')),
+                getDocs(collection(db, 'dynamic_challenges'))
+            ]);
+            return {
+                totalUsers: usersSnap.size,
+                totalDynamicCourses: coursesSnap.size,
+                totalDynamicLessons: lessonsSnap.size,
+                totalDynamicChallenges: challengesSnap.size
+            };
+        } catch (e) {
+            console.error('Error fetching admin stats:', e);
+            return null;
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();
