@@ -3413,6 +3413,634 @@ function renderAdminDashboard() {
 }
 
 // ══════════════════════════════════════════════
+// STYLE GUIDE / COMPONENT LIBRARY
+// ══════════════════════════════════════════════
+
+function renderStyleguide() {
+    const app = $('#app');
+    renderBreadcrumb([
+        { label: 'Home', href: '#/' },
+        { label: 'Style Guide' }
+    ]);
+
+    const sections = [
+        { id: 'colors', label: 'Colors', icon: 'fa-palette' },
+        { id: 'typography', label: 'Typography', icon: 'fa-font' },
+        { id: 'buttons', label: 'Buttons', icon: 'fa-hand-pointer' },
+        { id: 'cards', label: 'Cards', icon: 'fa-clone' },
+        { id: 'badges', label: 'Badges & Tags', icon: 'fa-tags' },
+        { id: 'progress', label: 'Progress Bars', icon: 'fa-bars-progress' },
+        { id: 'inputs', label: 'Form Inputs', icon: 'fa-keyboard' },
+        { id: 'tabs', label: 'Tabs', icon: 'fa-table-columns' },
+        { id: 'accordions', label: 'Accordions', icon: 'fa-bars-staggered' },
+        { id: 'toasts', label: 'Toasts', icon: 'fa-bell' },
+        { id: 'modals', label: 'Modals', icon: 'fa-window-restore' },
+        { id: 'tooltips', label: 'Tooltips & Avatars', icon: 'fa-circle-info' },
+    ];
+
+    const sidebarLinks = sections.map(s =>
+        `<a href="#sg-${s.id}" class="sg-nav-link" data-section="${s.id}">
+            <i class="fa-solid ${s.icon}"></i> ${s.label}
+        </a>`
+    ).join('');
+
+    function codeBlock(code) {
+        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `
+        <div class="sg-code-block" style="display:none;">
+            <div class="sg-code-header">
+                <span class="text-xs text-muted"><i class="fa-solid fa-code"></i> HTML</span>
+                <button class="btn btn-ghost btn-sm sg-copy-btn" title="Copy code"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <pre class="sg-pre"><code>${escaped}</code></pre>
+        </div>`;
+    }
+
+    app.innerHTML = `
+    <div class="page-wrapper">
+      <div class="sg-layout">
+        <!-- Sidebar -->
+        <aside class="sg-sidebar">
+            <div class="sg-sidebar-header">
+                <i class="fa-solid fa-swatchbook" style="font-size:1.3rem;color:var(--brand-primary);"></i>
+                <span style="font-weight:700;font-size:var(--text-lg);">Component Library</span>
+            </div>
+            <nav class="sg-sidebar-nav">${sidebarLinks}</nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="sg-main">
+            <div class="sg-hero">
+                <span class="badge badge-primary"><i class="fa-solid fa-swatchbook"></i> Style Guide</span>
+                <h1 style="font-size:var(--text-4xl);font-weight:800;margin:var(--space-4) 0 var(--space-2);">
+                    <span class="text-gradient">ProCode</span> Component Library
+                </h1>
+                <p style="color:var(--text-secondary);font-size:var(--text-lg);max-width:600px;">
+                    Browse all available UI components. Each section includes a live demo and code snippet showing how to use it.
+                </p>
+            </div>
+
+            <!-- ═══ COLORS ═══ -->
+            <section class="sg-section" id="sg-colors">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-palette"></i> Colors</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Brand, semantic, and surface color tokens from <code>variables.css</code>.</p>
+
+                <h3 style="font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:var(--space-3);">Brand</h3>
+                <div class="sg-color-grid">
+                    <div class="sg-color-swatch" style="background:var(--brand-primary);"><span>--brand-primary</span></div>
+                    <div class="sg-color-swatch" style="background:var(--brand-primary-light);"><span>--brand-primary-light</span></div>
+                    <div class="sg-color-swatch" style="background:var(--brand-primary-dark);"><span>--brand-primary-dark</span></div>
+                    <div class="sg-color-swatch" style="background:var(--brand-secondary);"><span>--brand-secondary</span></div>
+                    <div class="sg-color-swatch" style="background:var(--brand-accent-light);"><span>--brand-accent-light</span></div>
+                    <div class="sg-color-swatch sg-swatch-gradient" style="background:var(--brand-gradient);"><span>--brand-gradient</span></div>
+                </div>
+
+                <h3 style="font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:var(--space-6) 0 var(--space-3);">Semantic</h3>
+                <div class="sg-color-grid">
+                    <div class="sg-color-swatch" style="background:var(--color-success);"><span>--color-success</span></div>
+                    <div class="sg-color-swatch" style="background:var(--color-warning);"><span>--color-warning</span></div>
+                    <div class="sg-color-swatch" style="background:var(--color-error);"><span>--color-error</span></div>
+                    <div class="sg-color-swatch" style="background:var(--color-info);"><span>--color-info</span></div>
+                </div>
+
+                <h3 style="font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:var(--space-6) 0 var(--space-3);">Surfaces</h3>
+                <div class="sg-color-grid">
+                    <div class="sg-color-swatch sg-swatch-surface" style="background:var(--bg-primary);"><span>--bg-primary</span></div>
+                    <div class="sg-color-swatch sg-swatch-surface" style="background:var(--bg-secondary);"><span>--bg-secondary</span></div>
+                    <div class="sg-color-swatch sg-swatch-surface" style="background:var(--bg-tertiary);"><span>--bg-tertiary</span></div>
+                    <div class="sg-color-swatch sg-swatch-surface" style="background:var(--bg-elevated);"><span>--bg-elevated</span></div>
+                </div>
+
+                ${codeBlock(`<!-- Brand Colors -->
+<div style="background: var(--brand-primary);">Primary</div>
+<div style="background: var(--brand-gradient);">Gradient</div>
+
+<!-- Semantic Colors -->
+<div style="background: var(--color-success);">Success</div>
+<div style="background: var(--color-error);">Error</div>`)}
+            </section>
+
+            <!-- ═══ TYPOGRAPHY ═══ -->
+            <section class="sg-section" id="sg-typography">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-font"></i> Typography</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Type scale using <code>Inter</code> and monospace with <code>JetBrains Mono</code>.</p>
+
+                <div class="sg-type-samples">
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-5xl (48px)</span><span style="font-size:var(--text-5xl);font-weight:800;">Heading 5XL</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-4xl (36px)</span><span style="font-size:var(--text-4xl);font-weight:700;">Heading 4XL</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-3xl (30px)</span><span style="font-size:var(--text-3xl);font-weight:700;">Heading 3XL</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-2xl (24px)</span><span style="font-size:var(--text-2xl);font-weight:600;">Heading 2XL</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-xl (20px)</span><span style="font-size:var(--text-xl);font-weight:600;">Heading XL</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-lg (18px)</span><span style="font-size:var(--text-lg);font-weight:500;">Body Large</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-base (16px)</span><span style="font-size:var(--text-base);">Body Base</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-sm (14px)</span><span style="font-size:var(--text-sm);">Body Small</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">--text-xs (12px)</span><span style="font-size:var(--text-xs);">Caption XS</span></div>
+                    <div class="sg-type-row"><span class="text-muted text-xs">Monospace</span><span style="font-family:var(--font-mono);font-size:var(--text-sm);">const code = "JetBrains Mono";</span></div>
+                </div>
+
+                <h3 style="margin-top:var(--space-6);margin-bottom:var(--space-3);font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);">Font Weights</h3>
+                <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);">
+                    <span style="font-weight:400;">Regular (400)</span>
+                    <span style="font-weight:500;">Medium (500)</span>
+                    <span style="font-weight:600;">Semibold (600)</span>
+                    <span style="font-weight:700;">Bold (700)</span>
+                    <span style="font-weight:800;">ExtraBold (800)</span>
+                </div>
+
+                ${codeBlock(`<h1 style="font-size: var(--text-4xl); font-weight: 700;">Heading</h1>
+<p style="font-size: var(--text-base);">Body text</p>
+<code style="font-family: var(--font-mono);">Mono code</code>`)}
+            </section>
+
+            <!-- ═══ BUTTONS ═══ -->
+            <section class="sg-section" id="sg-buttons">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-hand-pointer"></i> Buttons</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">All button variants and sizes.</p>
+
+                <h3 class="sg-subsection-title">Variants</h3>
+                <div class="sg-demo-row">
+                    <button class="btn btn-primary"><i class="fa-solid fa-star"></i> Primary</button>
+                    <button class="btn btn-secondary">Secondary</button>
+                    <button class="btn btn-success"><i class="fa-solid fa-check"></i> Success</button>
+                    <button class="btn btn-ghost">Ghost</button>
+                    <button class="btn btn-outline">Outline</button>
+                </div>
+
+                <h3 class="sg-subsection-title">Sizes</h3>
+                <div class="sg-demo-row" style="align-items:center;">
+                    <button class="btn btn-primary btn-sm">Small</button>
+                    <button class="btn btn-primary">Default</button>
+                    <button class="btn btn-primary btn-lg">Large</button>
+                    <button class="btn btn-icon btn-secondary"><i class="fa-solid fa-gear"></i></button>
+                </div>
+
+                <h3 class="sg-subsection-title">States</h3>
+                <div class="sg-demo-row" style="align-items:center;">
+                    <button class="btn btn-primary" disabled>Disabled</button>
+                    <button class="btn btn-primary"><div class="btn-spinner"></div> Loading</button>
+                </div>
+
+                ${codeBlock(`<button class="btn btn-primary">Primary</button>
+<button class="btn btn-secondary">Secondary</button>
+<button class="btn btn-success">Success</button>
+<button class="btn btn-ghost">Ghost</button>
+<button class="btn btn-outline">Outline</button>
+
+<!-- Sizes -->
+<button class="btn btn-primary btn-sm">Small</button>
+<button class="btn btn-primary">Default</button>
+<button class="btn btn-primary btn-lg">Large</button>
+<button class="btn btn-icon btn-secondary"><i class="fa-solid fa-gear"></i></button>
+
+<!-- Loading -->
+<button class="btn btn-primary"><div class="btn-spinner"></div> Loading</button>`)}
+            </section>
+
+            <!-- ═══ CARDS ═══ -->
+            <section class="sg-section" id="sg-cards">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-clone"></i> Cards</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Card variants with glassmorphism and gradient borders.</p>
+
+                <div class="sg-cards-grid">
+                    <div class="card">
+                        <h4 style="margin-bottom:var(--space-2);">Default Card</h4>
+                        <p class="text-sm text-muted">Uses <code>.card</code> class. Blurred backdrop with hover lift.</p>
+                    </div>
+                    <div class="card-flat">
+                        <h4 style="margin-bottom:var(--space-2);">Flat Card</h4>
+                        <p class="text-sm text-muted">Uses <code>.card-flat</code> class. Solid background, no backdrop-filter.</p>
+                    </div>
+                    <div class="card-glass">
+                        <h4 style="margin-bottom:var(--space-2);">Glass Card</h4>
+                        <p class="text-sm text-muted">Uses <code>.card-glass</code> class. Frosted glass effect with 20px blur.</p>
+                    </div>
+                    <div class="card card-hover-lift">
+                        <h4 style="margin-bottom:var(--space-2);">Hover Lift</h4>
+                        <p class="text-sm text-muted">Add <code>.card-hover-lift</code> for springy 8px lift on hover.</p>
+                    </div>
+                </div>
+
+                ${codeBlock(`<div class="card">Default Card</div>
+<div class="card-flat">Flat Card</div>
+<div class="card-glass">Glass Card</div>
+<div class="card card-hover-lift">Lift Card</div>`)}
+            </section>
+
+            <!-- ═══ BADGES & TAGS ═══ -->
+            <section class="sg-section" id="sg-badges">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-tags"></i> Badges &amp; Tags</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Status badges and metadata tags.</p>
+
+                <h3 class="sg-subsection-title">Badges</h3>
+                <div class="sg-demo-row">
+                    <span class="badge badge-primary"><i class="fa-solid fa-circle-info"></i> Primary</span>
+                    <span class="badge badge-success"><i class="fa-solid fa-check"></i> Success</span>
+                    <span class="badge badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> Warning</span>
+                    <span class="badge badge-error"><i class="fa-solid fa-xmark"></i> Error</span>
+                </div>
+
+                <h3 class="sg-subsection-title">Tags</h3>
+                <div class="sg-demo-row">
+                    <span class="tag"><i class="fa-solid fa-code"></i> JavaScript</span>
+                    <span class="tag"><i class="fa-brands fa-css3-alt"></i> CSS</span>
+                    <span class="tag"><i class="fa-brands fa-html5"></i> HTML</span>
+                    <span class="tag"><i class="fa-brands fa-react"></i> React</span>
+                </div>
+
+                ${codeBlock(`<!-- Badges -->
+<span class="badge badge-primary">Primary</span>
+<span class="badge badge-success">Success</span>
+<span class="badge badge-warning">Warning</span>
+<span class="badge badge-error">Error</span>
+
+<!-- Tags -->
+<span class="tag"><i class="fa-solid fa-code"></i> JavaScript</span>`)}
+            </section>
+
+            <!-- ═══ PROGRESS BARS ═══ -->
+            <section class="sg-section" id="sg-progress">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-bars-progress"></i> Progress Bars</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Animated progress indicators with shimmer effect.</p>
+
+                <div style="display:flex;flex-direction:column;gap:var(--space-5);max-width:500px;">
+                    <div>
+                        <div class="progress-label">0% — Not Started</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="progress-label">25% — Getting Started</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:25%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="progress-label">50% — Halfway</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:50%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="progress-label">75% — Almost There</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:75%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="progress-label">100% — Complete 🎉</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
+                    </div>
+                </div>
+
+                ${codeBlock(`<div class="progress-label">75% — Almost There</div>
+<div class="progress-track">
+  <div class="progress-fill" style="width: 75%;"></div>
+</div>`)}
+            </section>
+
+            <!-- ═══ FORM INPUTS ═══ -->
+            <section class="sg-section" id="sg-inputs">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-keyboard"></i> Form Inputs</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Text inputs, textareas, and selects.</p>
+
+                <div class="sg-form-grid">
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-user"></i> Name</label>
+                        <input type="text" class="input" placeholder="Your full name">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-envelope"></i> Email</label>
+                        <input type="email" class="input" placeholder="you@example.com">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-lock"></i> Password</label>
+                        <input type="password" class="input" placeholder="Min. 6 characters">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-list"></i> Select</label>
+                        <select class="input">
+                            <option value="">Choose an option…</option>
+                            <option>JavaScript</option>
+                            <option>Python</option>
+                            <option>Go</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top:var(--space-4);">
+                    <label><i class="fa-solid fa-message"></i> Message</label>
+                    <textarea class="input textarea" placeholder="Type your message here…"></textarea>
+                </div>
+
+                ${codeBlock(`<div class="input-group">
+  <label><i class="fa-solid fa-user"></i> Name</label>
+  <input type="text" class="input" placeholder="Your name">
+</div>
+
+<div class="input-group">
+  <label>Message</label>
+  <textarea class="input textarea" placeholder="..."></textarea>
+</div>`)}
+            </section>
+
+            <!-- ═══ TABS ═══ -->
+            <section class="sg-section" id="sg-tabs">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-table-columns"></i> Tabs</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Pill-style tab group. Click to switch active state.</p>
+
+                <div class="tabs" id="sg-tabs-demo">
+                    <div class="tab active" data-tab="overview">Overview</div>
+                    <div class="tab" data-tab="features">Features</div>
+                    <div class="tab" data-tab="reviews">Reviews</div>
+                    <div class="tab" data-tab="faq">FAQ</div>
+                </div>
+                <div class="card-flat" style="margin-top:var(--space-4);padding:var(--space-6);" id="sg-tab-content">
+                    <p style="color:var(--text-secondary);">Active tab: <strong id="sg-tab-active-label">Overview</strong></p>
+                </div>
+
+                ${codeBlock(`<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="features">Features</div>
+  <div class="tab" data-tab="reviews">Reviews</div>
+</div>`)}
+            </section>
+
+            <!-- ═══ ACCORDIONS ═══ -->
+            <section class="sg-section" id="sg-accordions">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-bars-staggered"></i> Accordions</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Expandable content panels.</p>
+
+                <div class="card-flat" id="sg-accordion-demo">
+                    <div class="accordion-item active">
+                        <div class="accordion-header">
+                            <span>What is ProCode EduPulse?</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-body"><div class="accordion-content">ProCode EduPulse is an immersive, browser-based coding education platform with integrated IDE, quizzes, and portfolio building.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>Do I need to install anything?</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-body"><div class="accordion-content">No! Everything runs in the browser. Just open the platform and start coding immediately.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>How does progress tracking work?</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-body"><div class="accordion-content">Your progress is automatically saved. Completed lessons, quizzes, and challenges are tracked and synced to your profile.</div></div>
+                    </div>
+                </div>
+
+                ${codeBlock(`<div class="accordion-item active">
+  <div class="accordion-header">
+    <span>Question?</span>
+    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+  </div>
+  <div class="accordion-body">
+    <div class="accordion-content">Answer here.</div>
+  </div>
+</div>`)}
+            </section>
+
+            <!-- ═══ TOASTS ═══ -->
+            <section class="sg-section" id="sg-toasts">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-bell"></i> Toast Notifications</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Click buttons to trigger live toast notifications.</p>
+
+                <div class="sg-demo-row">
+                    <button class="btn btn-success btn-sm" id="sg-toast-success"><i class="fa-solid fa-check"></i> Success</button>
+                    <button class="btn btn-secondary btn-sm" id="sg-toast-error" style="border-left:3px solid var(--color-error);"><i class="fa-solid fa-xmark"></i> Error</button>
+                    <button class="btn btn-secondary btn-sm" id="sg-toast-warning" style="border-left:3px solid var(--color-warning);"><i class="fa-solid fa-triangle-exclamation"></i> Warning</button>
+                    <button class="btn btn-secondary btn-sm" id="sg-toast-info" style="border-left:3px solid var(--color-info);"><i class="fa-solid fa-circle-info"></i> Info</button>
+                </div>
+
+                ${codeBlock(`import { showToast } from './utils/dom.js';
+
+showToast('Operation completed!', 'success');
+showToast('Something went wrong.', 'error');
+showToast('Please check your input.', 'warning');
+showToast('New update available.', 'info');`)}
+            </section>
+
+            <!-- ═══ MODALS ═══ -->
+            <section class="sg-section" id="sg-modals">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-window-restore"></i> Modals</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Centered modal with backdrop blur and spring animation.</p>
+
+                <button class="btn btn-primary" id="sg-modal-trigger"><i class="fa-solid fa-window-restore"></i> Open Modal</button>
+
+                ${codeBlock(`<div class="modal-overlay active">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Modal Title</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <p>Modal body content.</p>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-6);">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-primary">Confirm</button>
+    </div>
+  </div>
+</div>`)}
+            </section>
+
+            <!-- ═══ TOOLTIPS & AVATARS ═══ -->
+            <section class="sg-section" id="sg-tooltips">
+                <div class="sg-section-header">
+                    <h2><i class="fa-solid fa-circle-info"></i> Tooltips &amp; Avatars</h2>
+                    <button class="btn btn-ghost btn-sm sg-toggle-code"><i class="fa-solid fa-code"></i> Code</button>
+                </div>
+                <p class="text-muted" style="margin-bottom:var(--space-6);">Hover tooltips and avatar sizes.</p>
+
+                <h3 class="sg-subsection-title">Tooltips</h3>
+                <div class="sg-demo-row">
+                    <div class="tooltip-wrapper">
+                        <button class="btn btn-secondary">Hover me</button>
+                        <div class="tooltip">I'm a tooltip!</div>
+                    </div>
+                    <div class="tooltip-wrapper">
+                        <button class="btn btn-outline">Another one</button>
+                        <div class="tooltip">More info here</div>
+                    </div>
+                </div>
+
+                <h3 class="sg-subsection-title">Avatars</h3>
+                <div class="sg-demo-row" style="align-items:center;">
+                    <div class="avatar avatar-sm">S</div>
+                    <div class="avatar">M</div>
+                    <div class="avatar avatar-lg">L</div>
+                </div>
+
+                <h3 class="sg-subsection-title">Dividers</h3>
+                <div style="max-width:400px;">
+                    <div class="divider"></div>
+                    <p class="text-xs text-muted" style="margin-bottom:var(--space-2);">Standard divider (above) · Gradient divider (below)</p>
+                    <div class="divider-gradient"></div>
+                </div>
+
+                ${codeBlock(`<!-- Tooltip -->
+<div class="tooltip-wrapper">
+  <button class="btn btn-secondary">Hover me</button>
+  <div class="tooltip">Tooltip text</div>
+</div>
+
+<!-- Avatars -->
+<div class="avatar avatar-sm">S</div>
+<div class="avatar">M</div>
+<div class="avatar avatar-lg">L</div>
+
+<!-- Dividers -->
+<div class="divider"></div>
+<div class="divider-gradient"></div>`)}
+            </section>
+
+        </main>
+      </div>
+    </div>`;
+
+    // ── Interactive: Tabs ──
+    const tabContainer = document.getElementById('sg-tabs-demo');
+    const tabLabel = document.getElementById('sg-tab-active-label');
+    if (tabContainer) {
+        tabContainer.addEventListener('click', (e) => {
+            const tab = e.target.closest('.tab');
+            if (!tab) return;
+            tabContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            if (tabLabel) tabLabel.textContent = tab.textContent;
+        });
+    }
+
+    // ── Interactive: Accordions ──
+    const accordionDemo = document.getElementById('sg-accordion-demo');
+    if (accordionDemo) {
+        accordionDemo.addEventListener('click', (e) => {
+            const header = e.target.closest('.accordion-header');
+            if (!header) return;
+            const item = header.parentElement;
+            item.classList.toggle('active');
+        });
+    }
+
+    // ── Interactive: Toasts ──
+    document.getElementById('sg-toast-success')?.addEventListener('click', () => showToast('Operation completed successfully!', 'success'));
+    document.getElementById('sg-toast-error')?.addEventListener('click', () => showToast('Something went wrong. Please try again.', 'error'));
+    document.getElementById('sg-toast-warning')?.addEventListener('click', () => showToast('Please check your input before proceeding.', 'warning'));
+    document.getElementById('sg-toast-info')?.addEventListener('click', () => showToast('A new platform update is available.', 'info'));
+
+    // ── Interactive: Modal ──
+    document.getElementById('sg-modal-trigger')?.addEventListener('click', () => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Example Modal</h3>
+                    <button class="modal-close" id="sg-modal-close">&times;</button>
+                </div>
+                <p style="color:var(--text-secondary);margin-bottom:var(--space-4);">This is a demo modal dialog. It uses backdrop blur and a spring scale animation when opening.</p>
+                <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+                    <button class="btn btn-ghost" id="sg-modal-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="sg-modal-confirm">Confirm</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('active'));
+
+        const closeModal = () => {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 300);
+        };
+        overlay.querySelector('#sg-modal-close').addEventListener('click', closeModal);
+        overlay.querySelector('#sg-modal-cancel').addEventListener('click', closeModal);
+        overlay.querySelector('#sg-modal-confirm').addEventListener('click', () => {
+            closeModal();
+            showToast('Modal confirmed!', 'success');
+        });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+    });
+
+    // ── Interactive: Toggle Code Blocks ──
+    document.querySelectorAll('.sg-toggle-code').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.sg-section');
+            const codeBlock = section?.querySelector('.sg-code-block');
+            if (codeBlock) {
+                const isVisible = codeBlock.style.display !== 'none';
+                codeBlock.style.display = isVisible ? 'none' : 'block';
+                btn.innerHTML = isVisible
+                    ? '<i class="fa-solid fa-code"></i> Code'
+                    : '<i class="fa-solid fa-eye-slash"></i> Hide';
+            }
+        });
+    });
+
+    // ── Interactive: Copy Code ──
+    document.querySelectorAll('.sg-copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const pre = btn.closest('.sg-code-block')?.querySelector('code');
+            if (pre) {
+                navigator.clipboard.writeText(pre.textContent).then(() => {
+                    showToast('Code copied to clipboard!', 'success');
+                });
+            }
+        });
+    });
+
+    // ── Interactive: Sidebar Active Tracking ──
+    const navLinks = document.querySelectorAll('.sg-nav-link');
+    const sectionEls = document.querySelectorAll('.sg-section');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id.replace('sg-', '');
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.section === id);
+                });
+            }
+        });
+    }, { rootMargin: '-20% 0px -60% 0px' });
+    sectionEls.forEach(el => observer.observe(el));
+
+    // ── Sidebar link smooth scrolling ──
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.getElementById(`sg-${link.dataset.section}`);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+}
+
+// ══════════════════════════════════════════════
 // APP INITIALIZATION
 // ══════════════════════════════════════════════
 
