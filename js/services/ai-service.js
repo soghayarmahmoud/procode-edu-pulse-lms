@@ -11,19 +11,34 @@ When a student asks for a hint:
 - Keep responses concise (2-4 sentences max)
 - Use code snippets only to illustrate concepts, never the full solution`;
 
+/**
+ * AI hint generation service.
+ */
 class AIService {
+    /**
+     * Create an AIService instance.
+     */
     constructor() {
         this.apiKey = '';
         this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
         this.systemPrompt = DEFAULT_SYSTEM_PROMPT;
     }
 
+    /**
+     * Configure AI service settings.
+     * @param {{apiKey?: string, apiUrl?: string, systemPrompt?: string}} options
+     * @returns {void}
+     */
     configure({ apiKey, apiUrl, systemPrompt }) {
         if (apiKey) this.apiKey = apiKey;
         if (apiUrl) this.apiUrl = apiUrl;
         if (systemPrompt) this.systemPrompt = systemPrompt;
     }
 
+    /**
+     * Check if API key is configured.
+     * @returns {boolean}
+     */
     isConfigured() {
         return !!this.apiKey;
     }
@@ -86,6 +101,12 @@ Please provide a helpful hint to guide them.`;
 
     /**
      * Provides a basic fallback hint when AI is not available.
+     */
+    /**
+     * Provides a basic fallback hint when AI is not available.
+     * @param {string} instructions
+     * @param {string} studentCode
+     * @returns {string}
      */
     _getFallbackHint(instructions, studentCode) {
         const hints = [

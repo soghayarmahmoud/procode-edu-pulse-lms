@@ -2,41 +2,89 @@
 // ProCode EduPulse — Client-Side Hash Router
 // ============================================
 
+/**
+ * Simple hash-based router.
+ */
 export class Router {
+    /**
+     * Create a new Router instance.
+     */
     constructor() {
         this.routes = {};
         this.currentRoute = null;
         this.beforeHooks = [];
         this.afterHooks = [];
 
+        // Listen for future hash changes
         window.addEventListener('hashchange', () => this._handleRoute());
-        window.addEventListener('load', () => this._handleRoute());
     }
 
+    /**
+     * Manually trigger initial route resolution.
+     * Should be called after all routes and hooks are defined.
+     */
+    /**
+     * Resolve the current route.
+     * @returns {Promise<void>}
+     */
+    async resolve() {
+        await this._handleRoute();
+    }
+
+    /**
+     * Register a route handler.
+     * @param {string} path
+     * @param {Function} handler
+     * @returns {Router}
+     */
     on(path, handler) {
         this.routes[path] = handler;
         return this;
     }
 
+    /**
+     * Register a before hook.
+     * @param {Function} hook
+     * @returns {Router}
+     */
     before(hook) {
         this.beforeHooks.push(hook);
         return this;
     }
 
+    /**
+     * Register an after hook.
+     * @param {Function} hook
+     * @returns {Router}
+     */
     after(hook) {
         this.afterHooks.push(hook);
         return this;
     }
 
+    /**
+     * Navigate to a path.
+     * @param {string} path
+     * @returns {void}
+     */
     navigate(path) {
         window.location.hash = path;
     }
 
+    /**
+     * Parse current hash path.
+     * @returns {string}
+     */
     _parseHash() {
         const hash = window.location.hash.slice(1) || '/';
         return hash;
     }
 
+    /**
+     * Match a path to a route.
+     * @param {string} path
+     * @returns {{handler: Function, params: object}|null}
+     */
     _matchRoute(path) {
         // Try exact match first
         if (this.routes[path]) {
@@ -66,6 +114,10 @@ export class Router {
         return null;
     }
 
+    /**
+     * Resolve and render matched route.
+     * @returns {Promise<void>}
+     */
     async _handleRoute() {
         const path = this._parseHash();
 
@@ -91,6 +143,10 @@ export class Router {
         }
     }
 
+    /**
+     * Get params for current route.
+     * @returns {object}
+     */
     getCurrentParams() {
         const path = this._parseHash();
         const match = this._matchRoute(path);

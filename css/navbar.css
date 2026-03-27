@@ -71,7 +71,7 @@
 
 .nav-link.active {
     color: var(--brand-primary-light);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
 }
 
 .nav-actions {

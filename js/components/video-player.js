@@ -7,6 +7,10 @@ let apiReady = false;
 let onReadyCallbacks = [];
 
 // Load YouTube IFrame API
+/**
+ * Inject the YouTube IFrame API script.
+ * @returns {void}
+ */
 function loadYTAPI() {
     if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
 
@@ -16,30 +20,83 @@ function loadYTAPI() {
 }
 
 // YouTube API callback
+/**
+ * YouTube IFrame API ready handler.
+ * @returns {void}
+ */
 window.onYouTubeIframeAPIReady = function () {
     apiReady = true;
     onReadyCallbacks.forEach(cb => cb());
     onReadyCallbacks = [];
 };
 
+/**
+ * Video player wrapper for YouTube or native video.
+ */
 export class VideoPlayer {
+    /**
+     * Create a VideoPlayer instance.
+     * @param {string} containerId
+     * @param {string} videoId
+     * @param {{onReady?: Function, onStateChange?: Function, onTimeUpdate?: Function}} [options={}]
+     */
     constructor(containerId, videoId, options = {}) {
         this.containerId = containerId;
         this.videoId = videoId;
         this.options = options;
         this.player = null;
+        this.videoElement = null; // for native video
         this.onTimeUpdate = options.onTimeUpdate || null;
         this._timeInterval = null;
 
-        loadYTAPI();
-
-        if (apiReady) {
-            this._createPlayer();
+        const isUrl = videoId && (videoId.startsWith('http') || videoId.includes('/'));
+        
+        if (isUrl) {
+            this._createNativePlayer();
         } else {
-            onReadyCallbacks.push(() => this._createPlayer());
+            loadYTAPI();
+            if (apiReady) {
+                this._createPlayer();
+            } else {
+                onReadyCallbacks.push(() => this._createPlayer());
+            }
         }
     }
 
+    /**
+     * Create a native video element player.
+     * @returns {void}
+     */
+    _createNativePlayer() {
+        const container = document.getElementById(this.containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <video id="${this.containerId}-native" class="video-native" controls style="width:100%; height:100%; border-radius:var(--radius-lg); overflow:hidden;">
+                <source src="${this.videoId}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+
+        this.videoElement = document.getElementById(`${this.containerId}-native`);
+        this.videoElement.onplay = () => this._startTimeTracking();
+        this.videoElement.onpause = () => this._stopTimeTracking();
+        this.videoElement.onended = () => {
+            this._stopTimeTracking();
+            if (this.options.onStateChange) this.options.onStateChange({ data: 0 }); // simulate YT.PlayerState.ENDED
+        };
+
+        if (this.options.onReady) {
+            setTimeout(() => this.options.onReady({ target: this.videoElement }), 100);
+        }
+
+        playerInstance = this;
+    }
+
+    /**
+     * Create a YouTube player instance.
+     * @returns {void}
+     */
     _createPlayer() {
         this.player = new YT.Player(this.containerId, {
             videoId: this.videoId,
@@ -63,12 +120,22 @@ export class VideoPlayer {
         playerInstance = this;
     }
 
+    /**
+     * Handle player ready event.
+     * @param {object} event
+     * @returns {void}
+     */
     _onReady(event) {
         if (this.options.onReady) {
             this.options.onReady(event);
         }
     }
 
+    /**
+     * Handle player state change.
+     * @param {object} event
+     * @returns {void}
+     */
     _onStateChange(event) {
         if (event.data === YT.PlayerState.PLAYING) {
             this._startTimeTracking();
@@ -81,16 +148,24 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Start time tracking callback.
+     * @returns {void}
+     */
     _startTimeTracking() {
         this._stopTimeTracking();
         this._timeInterval = setInterval(() => {
-            if (this.onTimeUpdate && this.player) {
-                const time = this.player.getCurrentTime();
+            if (this.onTimeUpdate) {
+                const time = this.getCurrentTime();
                 this.onTimeUpdate(time);
             }
         }, 1000);
     }
 
+    /**
+     * Stop time tracking callback.
+     * @returns {void}
+     */
     _stopTimeTracking() {
         if (this._timeInterval) {
             clearInterval(this._timeInterval);
@@ -98,27 +173,62 @@ export class VideoPlayer {
         }
     }
 
+    /**
+     * Get current playback time in seconds.
+     * @returns {number}
+     */
     getCurrentTime() {
-        return this.player ? this.player.getCurrentTime() : 0;
+        if (this.videoElement) return this.videoElement.currentTime;
+        return this.player ? (this.player.getCurrentTime ? this.player.getCurrentTime() : 0) : 0;
     }
 
+    /**
+     * Seek to time in seconds.
+     * @param {number} seconds
+     * @returns {void}
+     */
     seekTo(seconds) {
-        if (this.player) {
+        if (this.videoElement) {
+            this.videoElement.currentTime = seconds;
+        } else if (this.player && this.player.seekTo) {
             this.player.seekTo(seconds, true);
         }
     }
 
+    /**
+     * Play the video.
+     * @returns {void}
+     */
     play() {
-        if (this.player) this.player.playVideo();
+        if (this.videoElement) this.videoElement.play();
+        else if (this.player && this.player.playVideo) this.player.playVideo();
     }
 
+    /**
+     * Pause the video.
+     * @returns {void}
+     */
     pause() {
-        if (this.player) this.player.pauseVideo();
+        if (this.videoElement) this.videoElement.pause();
+        else if (this.player && this.player.pauseVideo) this.player.pauseVideo();
     }
 
+    /**
+     * Destroy the player instance.
+     * @returns {void}
+     */
     destroy() {
         this._stopTimeTracking();
-        if (this.player) {
+        if (this.videoElement) {
+            this.videoElement.onplay = null;
+            this.videoElement.onpause = null;
+            this.videoElement.onended = null;
+            this.videoElement.src = "";
+            this.videoElement.load();
+            this.videoElement.remove();
+            this.videoElement = null;
+        }
+        if (this.player && this.player.destroy) {
             this.player.destroy();
             this.player = null;
         }
@@ -126,6 +236,10 @@ export class VideoPlayer {
     }
 }
 
+/**
+ * Get current player instance.
+ * @returns {VideoPlayer|null}
+ */
 export function getCurrentPlayer() {
     return playerInstance;
 }

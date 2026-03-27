@@ -4,8 +4,8 @@
       "id": "html-fundamentals",
       "title": "HTML Fundamentals",
       "description": "Master the building blocks of the web. Learn HTML from the ground up with hands-on coding challenges.",
-      "thumbnail": "assets/images/html.png",
-      "icon": "📄",
+      "thumbnail": "html.png",
+      "icon": "fa-brands fa-html5",
       "difficulty": "Beginner",
       "estimatedHours": 8,
       "lessons": ["html-intro", "html-elements", "html-lists-links", "html-forms", "html-semantic", "html-project"],
@@ -17,7 +17,7 @@
       "title": "CSS Essentials",
       "description": "Transform plain HTML into stunning web pages. Learn selectors, layouts, animations, and responsive design.",
       "thumbnail": "",
-      "icon": "🎨",
+      "icon": "fa-brands fa-css3-alt",
       "difficulty": "Beginner",
       "estimatedHours": 12,
       "lessons": ["css-intro", "css-selectors", "css-box-model", "css-flexbox", "css-grid", "css-animations", "css-responsive", "css-project"],
@@ -29,12 +29,36 @@
       "title": "JavaScript Basics",
       "description": "Bring your web pages to life with JavaScript. Learn variables, functions, DOM manipulation, and events.",
       "thumbnail": "",
-      "icon": "⚡",
+      "icon": "fa-brands fa-js",
       "difficulty": "Beginner",
       "estimatedHours": 16,
       "lessons": ["js-intro", "js-variables", "js-functions", "js-dom", "js-events", "js-arrays", "js-objects", "js-async", "js-project"],
       "totalLessons": 9,
       "tags": ["JavaScript", "Programming", "DOM"]
+    },
+    {
+      "id": "linux-fundamentals",
+      "title": "Linux Fundamentals",
+      "description": "Learn the Linux command line from scratch. Navigate the filesystem, manage files, and write shell scripts.",
+      "thumbnail": "linux.png",
+      "icon": "fa-brands fa-linux",
+      "difficulty": "Beginner",
+      "estimatedHours": 10,
+      "lessons": ["linux-intro", "linux-filesystem", "linux-commands"],
+      "totalLessons": 3,
+      "tags": ["Linux", "Command Line", "DevOps"]
+    },
+    {
+      "id": "cpp-basics",
+      "title": "C++ Basics",
+      "description": "Dive into systems programming with C++. Learn variables, control flow, functions, and object-oriented programming fundamentals.",
+      "thumbnail": "cpp.png",
+      "icon": "fa-solid fa-code",
+      "difficulty": "Intermediate",
+      "estimatedHours": 14,
+      "lessons": ["cpp-intro", "cpp-variables", "cpp-functions"],
+      "totalLessons": 3,
+      "tags": ["C++", "Programming", "Systems"]
     }
   ]
 }

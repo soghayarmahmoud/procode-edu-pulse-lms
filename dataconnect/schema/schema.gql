@@ -1,0 +1,49 @@
+type User @table {
+  displayName: String!
+  email: String!
+  role: String! # Can be "Student" or "Instructor"
+  createdAt: Timestamp!
+  photoUrl: String
+}
+
+type Course @table {
+  title: String!
+  description: String!
+  startDate: Date!
+  endDate: Date!
+  createdAt: Timestamp!
+  courseCode: String
+  instructor: User
+}
+
+type Enrollment @table(key: ["student", "course"]) {
+  student: User!
+  course: Course!
+  enrollmentDate: Timestamp!
+}
+
+type Assignment @table {
+  title: String!
+  description: String!
+  dueDate: Timestamp!
+  maxPoints: Int!
+  createdAt: Timestamp!
+  course: Course
+}
+
+type Task @table {
+  description: String!
+  dueDate: Timestamp!
+  createdAt: Timestamp!
+  course: Course
+}
+
+type Resource @table {
+  title: String!
+  type: String! # Can be "Document", "Link", "Video", "Other"
+  url: String
+  createdAt: Timestamp!
+  description: String
+  fileSize: Int
+  course: Course
+}

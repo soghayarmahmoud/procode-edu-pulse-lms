@@ -114,6 +114,296 @@
                     "errorMessage": "Add a <footer> element at the bottom of your page."
                 }
             ]
+        },
+        "html-table-structure-challenge": {
+            "title": "Create a Structured HTML Table",
+            "difficulty": "Easy",
+            "instructions": "Build an HTML table with a header row and 3 data rows. Include columns: Name, Age, City.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Table Challenge</title>\n</head>\n<body>\n  <!-- Add your table here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "table",
+                    "errorMessage": "Add a <table> element."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "table thead",
+                    "errorMessage": "Add a <thead> with a header row."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "table tbody tr",
+                    "count": 3,
+                    "errorMessage": "Your table should include exactly 3 data rows inside <tbody>."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "table th:nth-child(1)",
+                    "attribute": "textContent",
+                    "value": "Name",
+                    "errorMessage": "First header cell should be 'Name'."
+                }
+            ]
+        },
+        "html-responsive-nav-challenge": {
+            "title": "Build a Responsive Navigation Bar",
+            "difficulty": "Medium",
+            "instructions": "Create a responsive nav bar with at least 4 links. Use a <nav> element and CSS classes, and make sure link color changes on hover.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Responsive Nav</title>\n  <style>\n    /* Add your CSS here */\n  </style>\n</head>\n<body>\n  <!-- Add your navigation bar here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "nav",
+                    "errorMessage": "Add a <nav> element for the navigation bar."
+                },
+                {
+                    "type": "dom-count",
+                    "selector": "nav a",
+                    "count": 4,
+                    "errorMessage": "Add at least 4 <a> links inside <nav>."
+                },
+                {
+                    "type": "css-property",
+                    "selector": "nav",
+                    "property": "display",
+                    "value": "flex",
+                    "errorMessage": "Set nav display to flex for responsiveness."
+                },
+                {
+                    "type": "css-property",
+                    "selector": "nav a:hover",
+                    "property": "color",
+                    "value": "rgb(0, 0, 255)",
+                    "errorMessage": "Add hover color styling to links (e.g., blue)."
+                }
+            ]
+        },
+        "html-css-card-challenge": {
+            "title": "Build a CSS Card Component",
+            "difficulty": "Medium",
+            "instructions": "Create a stylized card with a title, image placeholder, and description. Apply background, border-radius, and box-shadow.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>CSS Card</title>\n  <style>\n    /* Card styles */\n  </style>\n</head>\n<body>\n  <!-- Card markup -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": ".card",
+                    "errorMessage": "Create an element with class 'card'."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": ".card h2",
+                    "errorMessage": "Add a <h2> title inside the card."
+                },
+                {
+                    "type": "css-property",
+                    "selector": ".card",
+                    "property": "border-radius",
+                    "value": "10px",
+                    "errorMessage": "Set card border-radius (e.g. 10px)."
+                },
+                {
+                    "type": "css-property",
+                    "selector": ".card",
+                    "property": "box-shadow",
+                    "value": "",
+                    "errorMessage": "Add a box-shadow on card (non-empty value)."
+                }
+            ]
+        },
+        "html-form-validation-challenge": {
+            "title": "Create a Form with Validation",
+            "difficulty": "Hard",
+            "instructions": "Build a contact form with name, email, and message fields. Use required attributes and proper input types.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Form Validation</title>\n</head>\n<body>\n  <!-- Add your form here -->\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "dom-query",
+                    "selector": "form",
+                    "errorMessage": "Add a <form> element."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "input[type='text'][name='name']",
+                    "errorMessage": "Add a 'name' text input."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "input[type='email']",
+                    "attribute": "required",
+                    "value": "",
+                    "errorMessage": "Add a required email input."
+                },
+                {
+                    "type": "dom-query",
+                    "selector": "textarea[name='message']",
+                    "errorMessage": "Add a message textarea."
+                },
+                {
+                    "type": "attribute",
+                    "selector": "textarea[name='message']",
+                    "attribute": "required",
+                    "value": "",
+                    "errorMessage": "Make message textarea required."
+                }
+            ]
+        },
+        "js-functions-challenge": {
+            "title": "Write a Greeting Function",
+            "difficulty": "Medium",
+            "instructions": "Create a function named greet that accepts a name and returns: \"Hello, <name>!\". Then call it and display the result inside the #output element.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Functions Challenge</title>\n</head>\n<body>\n  <h2 id=\"output\"></h2>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "function\\s+greet\\s*\\(|const\\s+greet\\s*=\\s*\\(",
+                    "errorMessage": "Define a function named greet (function greet(...) or const greet = (...))."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "return\\s+[`'\"]Hello",
+                    "errorMessage": "Your greet function should return a greeting string starting with 'Hello'."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "output",
+                    "errorMessage": "Display the greeting in the #output element."
+                }
+            ]
+        },
+        "js-dom-challenge": {
+            "title": "Update the DOM",
+            "difficulty": "Medium",
+            "instructions": "Select the element with id 'title', change its text to 'DOM Updated', and add a class named 'highlight'.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>DOM Challenge</title>\n  <style>\n    .highlight { color: #6c5ce7; font-weight: bold; }\n  </style>\n</head>\n<body>\n  <h1 id=\"title\">Original Title</h1>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "querySelector",
+                    "errorMessage": "Use querySelector to select the element."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "textContent\\s*=\\s*['\"]DOM Updated['\"]",
+                    "errorMessage": "Set textContent to 'DOM Updated'."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "classList\\.add\\(['\"]highlight['\"]\\)",
+                    "errorMessage": "Add the 'highlight' class using classList.add()."
+                }
+            ]
+        },
+        "js-events-challenge": {
+            "title": "Button Click Counter",
+            "difficulty": "Medium",
+            "instructions": "Add a click event to the button. Each click should increase the number shown in #count.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Events Challenge</title>\n</head>\n<body>\n  <button id=\"btn\">Click me</button>\n  <p>Clicks: <span id=\"count\">0</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "addEventListener",
+                    "errorMessage": "Use addEventListener to handle the click."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "count\\s*(\\+\\+|\\+=\\s*1)",
+                    "errorMessage": "Increment a count variable on each click."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "textContent",
+                    "errorMessage": "Update the #count element textContent."
+                }
+            ]
+        },
+        "js-arrays-challenge": {
+            "title": "Sum an Array",
+            "difficulty": "Medium",
+            "instructions": "Create an array of numbers, loop through it, and compute the sum. Display the result inside #sum.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Arrays Challenge</title>\n</head>\n<body>\n  <p>Sum: <span id=\"sum\">0</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "\\[[^\\]]+\\]",
+                    "errorMessage": "Create an array using brackets, e.g., [1, 2, 3]."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "for\\s*\\(|forEach\\s*\\(",
+                    "errorMessage": "Use a loop (for or forEach) to iterate the array."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "sum",
+                    "errorMessage": "Store the total in a variable named sum and display it."
+                }
+            ]
+        },
+        "js-objects-challenge": {
+            "title": "Create a Student Object",
+            "difficulty": "Medium",
+            "instructions": "Create an object named student with name and score properties. Then display the name inside #student-name.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Objects Challenge</title>\n</head>\n<body>\n  <p>Student: <span id=\"student-name\">---</span></p>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "regex",
+                    "pattern": "const\\s+student\\s*=\\s*{",
+                    "errorMessage": "Create an object literal named student."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "name\\s*:",
+                    "errorMessage": "Include a name property in the student object."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "student.name",
+                    "errorMessage": "Display student.name inside #student-name."
+                }
+            ]
+        },
+        "js-project-challenge": {
+            "title": "Build an Interactive Counter",
+            "difficulty": "Medium",
+            "instructions": "Create a counter with Increase, Decrease, and Reset buttons. Update the number inside #count when buttons are clicked.",
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Counter App</title>\n  <style>\n    button { margin-right: 8px; }\n  </style>\n</head>\n<body>\n  <h1 id=\"count\">0</h1>\n  <button id=\"inc\">Increase</button>\n  <button id=\"dec\">Decrease</button>\n  <button id=\"reset\">Reset</button>\n  <script>\n    // Write your code here\n  </script>\n</body>\n</html>",
+            "language": "html",
+            "validationRules": [
+                {
+                    "type": "text-contains",
+                    "text": "addEventListener",
+                    "errorMessage": "Attach click listeners to the buttons."
+                },
+                {
+                    "type": "regex",
+                    "pattern": "count\\s*(\\+\\+|\\+=\\s*1|-=\\s*1|--)",
+                    "errorMessage": "Update a count variable for increase/decrease actions."
+                },
+                {
+                    "type": "text-contains",
+                    "text": "textContent",
+                    "errorMessage": "Update the #count element textContent."
+                }
+            ]
+        },
+        "python-calculator-challenge": {
+            "title": "Build a Simple Calculator",
+            "type": "backend",
+            "difficulty": "Medium",
+            "instructions": "Write a Python function called `calculate(a, b, op)` that takes two numbers and an operator ('+', '-', '*', '/') and returns the result.\n\nNote: If division by zero occurs, return 'Error'.\n\nRun this fully in the browser via our secure code execution sandbox!",
+            "starterCode": "def calculate(a, b, op):\n    # Write your code here\n    pass\n",
+            "language": "python",
+            "testCode": "import sys\n\ntry:\n    assert calculate(5, 3, '+') == 8, '5 + 3 should be 8'\n    assert calculate(10, 2, '-') == 8, '10 - 2 should be 8'\n    assert calculate(4, 3, '*') == 12, '4 * 3 should be 12'\n    assert calculate(15, 3, '/') in [5.0, 5], '15 / 3 should be 5.0'\n    assert calculate(5, 0, '/') == 'Error', 'Division by zero should return \"Error\"'\n    print('TESTS_PASSED')\nexcept AssertionError as e:\n    print(str(e))\n    sys.exit(1)\nexcept Exception as e:\n    print('Code error:', str(e))\n    sys.exit(1)\n"
         }
     }
 }

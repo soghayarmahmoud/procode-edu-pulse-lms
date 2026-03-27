@@ -1,0 +1,24 @@
+{
+  "modules": [
+    {
+      "id": "html-basics",
+      "courseId": "html-fundamentals",
+      "title": "HTML Basics",
+      "lessons": [
+        "html-intro",
+        "html-elements",
+        "html-lists-links"
+      ]
+    },
+    {
+      "id": "html-advanced",
+      "courseId": "html-fundamentals",
+      "title": "Forms & Semantic",
+      "lessons": [
+        "html-forms",
+        "html-semantic",
+        "html-project"
+      ]
+    }
+  ]
+}

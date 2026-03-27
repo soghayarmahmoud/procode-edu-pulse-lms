@@ -1,0 +1,39 @@
+mutation CreateSeedData @transaction @auth(level: USER, insecureReason: "This mutation inserts example data and is safe for logged-in users to run.") {
+  product_insertMany(data: [
+    {
+      id: "prod-001",
+      name: "Smartwatch Alpha",
+      description: "A stylish and functional smartwatch with advanced health tracking.",
+      price: 199.99,
+      inStock: true
+    },
+    {
+      id: "prod-002",
+      name: "Wireless Earbuds Pro",
+      description: "Premium noise-cancelling earbuds with crystal clear audio.",
+      price: 129.00,
+      inStock: true
+    },
+    {
+      id: "prod-003",
+      name: "Portable Bluetooth Speaker",
+      description: "Compact speaker with rich sound and long battery life.",
+      price: 75.50,
+      inStock: false
+    }
+  ])
+  account_insertMany(data: [
+    {
+      id: "acc-001",
+      email: "jane.doe@example.com",
+      username: "janedoe",
+      createdAt: "2023-01-15T10:00:00Z"
+    },
+    {
+      id: "acc-002",
+      email: "john.smith@example.com",
+      username: "johnsmith",
+      createdAt: "2023-02-20T14:30:00Z"
+    }
+  ])
+}

@@ -1,0 +1,56 @@
+{
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Welcome to ProCode",
+      "icon": "fa-solid fa-flag-checkered",
+      "docs": [
+        {
+          "id": "introduction",
+          "title": "Introduction & Platform Overview",
+          "content": "<h2>What is ProCode EduPulse?</h2><p>ProCode EduPulse is a comprehensive, interactive Learning Management System (LMS) designed specifically for aspiring software developers. Our philosophy is simple: <strong>you learn by writing code, not just by watching videos.</strong></p><h3>Key Features</h3><ul><li><strong>Interactive IDE:</strong> An embedded code editor where you can write, run, and test HTML, CSS, JavaScript, and more.</li><li><strong>Structured Roadmaps:</strong> Step-by-step career tracks (Frontend, Backend, DevOps) guided by curated content.</li><li><strong>Automated Challenges:</strong> Test your knowledge instantly with live coding challenges that validate your syntax and logic.</li><li><strong>Community Driven:</strong> Join thousands of other learners on Discord, review courses, and help others debug code.</li></ul>"
+        },
+        {
+          "id": "setting-up-profile",
+          "title": "Setting Up Your Developer Profile",
+          "content": "<h2>Your Digital Portfolio</h2><p>Your ProCode profile acts as your developer showcase. Every time you complete a challenge or finish a course, your profile is updated.</p><h3>How to Customize</h3><p>Navigate to the <code>Profile</code> tab from the top navigation bar. Here, you can:</p><ol><li>Update your display name and professional role (e.g., 'Aspiring Full Stack Engineer').</li><li>Toggle between Dark and Light mode.</li><li>View your global rank (based on your earned Gems).</li><li>Link your GitHub and LinkedIn profiles for potential recruiters to find you.</li></ol>"
+        }
+      ]
+    },
+    {
+      "id": "using-the-ide",
+      "title": "Using the Web IDE",
+      "content": "Everything you need to know about the ProCode Editor.",
+      "icon": "fa-solid fa-terminal",
+      "docs": [
+        {
+          "id": "editor-shortcuts",
+          "title": "Essential Keyboard Shortcuts",
+          "content": "<h2>Work Faster with Shortcuts</h2><p>To maximize your productivity, we have mapped standard IDE keyboard shortcuts directly into the browser editor.</p><ul class=\"shortcuts-docs\"><li><kbd>Ctrl/Cmd + Enter</kbd>: <strong>Run Code</strong> (Executes the current code and refreshes the Live Preview).</li><li><kbd>Ctrl/Cmd + Shift + C</kbd>: <strong>Copy All Code</strong> to your clipboard.</li><li><kbd>Ctrl/Cmd + Shift + R</kbd>: <strong>Reset Editor</strong> back to the initial starting code (Warning: this deletes your progress!).</li><li><kbd>Ctrl/Cmd + S</kbd>: <strong>Auto-Save</strong>. The platform saves your code to local storage automatically, but this shortcut provides visual confirmation.</li></ul>"
+        },
+        {
+          "id": "ai-hints",
+          "title": "Using AI Tutor Hints",
+          "content": "<h2>Get Unstuck with AI</h2><p>ProCode integrates directly with AI models (like Gemini) to provide context-aware hints.</p><h3>How it works:</h3><p>If you are stuck on a challenge, click the <strong>AI Hint</strong> button. The system sends your current code and the challenge requirements to the AI. The AI is specifically prompted <strong>not to give you the exact answer</strong>, but to give you a conceptual hint or point out syntax errors.</p><p><em>Note: You must configure your API key in your Profile settings to enable this feature entirely.</em></p>"
+        }
+      ]
+    },
+    {
+      "id": "community-guidelines",
+      "title": "Community & Support",
+      "icon": "fa-solid fa-people-group",
+      "docs": [
+        {
+          "id": "code-of-conduct",
+          "title": "Code of Conduct",
+          "content": "<h2>Our Principles</h2><p>We are dedicated to providing a harassment-free experience for everyone, regardless of gender, sexual orientation, disability, physical appearance, race, or religion.</p><h3>Rules to Live By</h3><ul><li><strong>Be Respectful:</strong> Always assume positive intent. We were all beginners once.</li><li><strong>No Plagiarism:</strong> Do not post direct, copy-paste solutions to challenges on the forums. Guide users to the answer instead of giving it away.</li><li><strong>Constructive Reviews:</strong> When leaving a course review, be specific about what you liked or what needs improvement. Comments like 'this sucks' are not helpful and will be moderated.</li></ul>"
+        },
+        {
+          "id": "troubleshooting",
+          "title": "FAQ & Troubleshooting",
+          "content": "<h2>Common Issues</h2><div class=\"faq-item\"><strong>Q: My code runs, but the challenge fails. Why?</strong><p>A: Our automated testers look for specific HTML structures or CSS classes. Double-check that your class names match the instructions exactly, including case-sensitivity.</p></div><div class=\"faq-item\"><strong>Q: My progress disappeared!</strong><p>A: If you are not signed in, your progress is saved in your browser's <code>localStorage</code>. If you cleared your browser cache or used incognito mode, the data is lost. We highly recommend creating a free account to sync your data to the cloud.</p></div><div class=\"faq-item\"><strong>Q: The IDE is not responding.</strong><p>A: Sometimes infinite loops in JavaScript can crash the browser thread. Refresh the page. Changes are auto-saved every keystroke.</p></div>"
+        }
+      ]
+    }
+  ]
+}

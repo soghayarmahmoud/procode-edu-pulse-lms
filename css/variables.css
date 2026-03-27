@@ -4,14 +4,15 @@
 
 :root {
   /* ── Brand Colors ── */
-  --brand-primary: #6C5CE7;
-  --brand-primary-light: #A29BFE;
-  --brand-primary-dark: #4834D4;
-  --brand-accent: #00D2D3;
-  --brand-accent-light: #55EFC4;
-  --brand-gradient: linear-gradient(135deg, #6C5CE7 0%, #00D2D3 100%);
-  --brand-gradient-hover: linear-gradient(135deg, #4834D4 0%, #00B8B9 100%);
-  --brand-gradient-soft: linear-gradient(135deg, rgba(108, 92, 231, 0.15) 0%, rgba(0, 210, 211, 0.15) 100%);
+  --brand-primary: #0078D4;
+  --brand-primary-light: #3291FF;
+  --brand-primary-dark: #005A9E;
+  --brand-secondary: #00BCF2;
+  --brand-accent: #00BCF2;
+  --brand-accent-light: #50E0E0;
+  --brand-gradient: linear-gradient(135deg, #0078D4 0%, #00BCF2 100%);
+  --brand-gradient-hover: linear-gradient(135deg, #005A9E 0%, #0091D1 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(0, 120, 212, 0.1) 0%, rgba(0, 188, 242, 0.1) 100%);
 
   /* ── Semantic Colors ── */
   --color-success: #00B894;
@@ -68,12 +69,12 @@
   --radius-full: 9999px;
 
   /* ── Shadows ── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 30px rgba(108, 92, 231, 0.3);
-  --shadow-glow-accent: 0 0 30px rgba(0, 210, 211, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 15px 35px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 30px rgba(0, 120, 212, 0.25);
+  --shadow-glow-accent: 0 0 30px rgba(0, 188, 242, 0.25);
 
   /* ── Transitions ── */
   --transition-fast: 150ms ease;
@@ -111,9 +112,9 @@
   --bg-glass: rgba(15, 15, 26, 0.7);
   --bg-input: rgba(34, 34, 64, 0.6);
 
-  --border-primary: rgba(108, 92, 231, 0.2);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(108, 92, 231, 0.4);
+  --border-primary: rgba(0, 120, 212, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(0, 120, 212, 0.4);
 
   --text-primary: #F0F0F8;
   --text-secondary: #A0A0C0;
@@ -138,9 +139,9 @@
   --bg-glass: rgba(248, 249, 252, 0.85);
   --bg-input: rgba(240, 241, 245, 0.8);
 
-  --border-primary: rgba(108, 92, 231, 0.25);
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(108, 92, 231, 0.5);
+  --border-primary: rgba(0, 120, 212, 0.25);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 120, 212, 0.5);
 
   --text-primary: #1A1A2E;
   --text-secondary: #5A5A7A;

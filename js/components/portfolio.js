@@ -5,19 +5,30 @@
 import { $, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 
+/**
+ * Portfolio UI component.
+ */
 export class PortfolioComponent {
-    constructor(container) {
+  /**
+   * Create a PortfolioComponent instance.
+   * @param {string|Element} container
+   */
+  constructor(container) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.render();
     }
 
+    /**
+     * Render portfolio UI.
+     * @returns {void}
+     */
     render() {
         const submissions = storage.getPassedSubmissions();
 
         this.container.innerHTML = `
       <div class="container" style="padding-top:var(--space-8);padding-bottom:var(--space-16)">
         <div class="section-header" style="text-align:left">
-          <span class="section-badge">🎓 Your Work</span>
+          <span class="section-badge"><i class="fa-solid fa-graduation-cap"></i> Your Work</span>
           <h1 class="section-title">Project Portfolio</h1>
           <p class="section-subtitle" style="margin:0">
             All your completed coding challenges compiled in one place. 
@@ -27,7 +38,7 @@ export class PortfolioComponent {
 
         ${submissions.length === 0 ? `
           <div class="empty-state" style="padding:var(--space-16) 0">
-            <div class="empty-state-icon">🏗️</div>
+            <div class="empty-state-icon"><i class="fa-solid fa-hammer" style="font-size:3rem;color:var(--text-muted)"></i></div>
             <div class="empty-state-title">No projects yet</div>
             <div class="empty-state-text">Complete coding challenges to build your portfolio. Each challenge you pass gets added here!</div>
             <a href="#/courses" class="btn btn-primary" style="margin-top:var(--space-6)">Browse Courses</a>
@@ -35,7 +46,7 @@ export class PortfolioComponent {
         ` : `
           <div style="display:flex;gap:var(--space-4);margin-bottom:var(--space-8)">
             <button class="btn btn-primary" id="download-all-btn">
-              📦 Download All as ZIP
+              <i class="fa-solid fa-box-archive"></i> Download All as ZIP
             </button>
             <div class="badge badge-success" style="font-size:var(--text-sm);padding:var(--space-2) var(--space-4)">
               ${submissions.length} project${submissions.length > 1 ? 's' : ''}
@@ -52,6 +63,12 @@ export class PortfolioComponent {
         this._attachEvents();
     }
 
+    /**
+     * Render a project card.
+     * @param {object} submission
+     * @param {number} index
+     * @returns {string}
+     */
     _renderProject(submission, index) {
         return `
       <div class="card" style="overflow:hidden" data-animate data-index="${index}">
@@ -60,7 +77,7 @@ export class PortfolioComponent {
             <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-1)">${submission.challengeId}</h3>
             <span class="text-sm text-muted">${new Date(submission.submittedAt).toLocaleDateString()}</span>
           </div>
-          <span class="badge badge-success">✓ Passed</span>
+          <span class="badge badge-success"><i class="fa-solid fa-check"></i> Passed</span>
         </div>
         
         <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4);max-height:200px;overflow:auto">
@@ -69,22 +86,31 @@ export class PortfolioComponent {
 
         <div style="display:flex;gap:var(--space-3)">
           <button class="btn btn-secondary btn-sm download-single" data-index="${index}">
-            ⬇ Download
+            <i class="fa-solid fa-download"></i> Download
           </button>
           <button class="btn btn-ghost btn-sm preview-btn" data-index="${index}">
-            👁 Preview
+            <i class="fa-solid fa-eye"></i> Preview
           </button>
         </div>
       </div>
     `;
     }
 
+    /**
+     * Escape HTML for safe rendering.
+     * @param {string} str
+     * @returns {string}
+     */
     _escapeHTML(str) {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     }
 
+    /**
+     * Attach UI event handlers.
+     * @returns {void}
+     */
     _attachEvents() {
         const submissions = storage.getPassedSubmissions();
 
@@ -115,6 +141,11 @@ export class PortfolioComponent {
         });
     }
 
+    /**
+     * Download a single submission as HTML.
+     * @param {object} submission
+     * @returns {void}
+     */
     _downloadFile(submission) {
         const filename = `${submission.challengeId.replace(/\s+/g, '-').toLowerCase()}.html`;
         const blob = new Blob([submission.code], { type: 'text/html' });
@@ -127,6 +158,11 @@ export class PortfolioComponent {
         showToast('File downloaded!', 'success');
     }
 
+    /**
+     * Download all submissions as a ZIP.
+     * @param {Array<object>} submissions
+     * @returns {Promise<void>}
+     */
     async _downloadAllAsZip(submissions) {
         try {
             // Dynamically load JSZip
@@ -183,6 +219,11 @@ export class PortfolioComponent {
         }
     }
 
+    /**
+     * Preview a submission in a modal.
+     * @param {object} submission
+     * @returns {void}
+     */
     _previewCode(submission) {
         // Create modal with preview
         const overlay = document.createElement('div');
@@ -191,7 +232,7 @@ export class PortfolioComponent {
       <div class="modal" style="max-width:800px;width:95%">
         <div class="modal-header">
           <span class="modal-title">${submission.challengeId}</span>
-          <button class="modal-close" id="preview-close">✕</button>
+          <button class="modal-close" id="preview-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <iframe style="width:100%;height:400px;border:none;border-radius:var(--radius-md);background:#fff" sandbox="allow-scripts" title="Preview"></iframe>
       </div>

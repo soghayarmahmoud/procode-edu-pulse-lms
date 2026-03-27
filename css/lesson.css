@@ -126,22 +126,55 @@
     margin-bottom: var(--space-6);
 }
 
-.lesson-breadcrumb {
+/* ── Dynamic Breadcrumbs ── */
+.breadcrumb-nav {
+    margin-bottom: var(--space-4);
+}
+
+.breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     color: var(--text-muted);
-    margin-bottom: var(--space-3);
+    font-weight: 500;
 }
 
-.lesson-breadcrumb a {
+.breadcrumb-separator {
     color: var(--text-muted);
+    opacity: 0.5;
+    font-size: 10px;
 }
 
-.lesson-breadcrumb a:hover {
+.breadcrumb-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.breadcrumb-link:hover {
     color: var(--brand-primary-light);
 }
+
+.breadcrumb-current {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.breadcrumb-item.active .breadcrumb-separator {
+    display: none;
+}
+
 
 .lesson-title {
     font-size: var(--text-3xl);
@@ -310,6 +343,7 @@
 .editor-actions {
     display: flex;
     gap: var(--space-2);
+    position: relative;
 }
 
 .editor-action-btn {
@@ -458,7 +492,7 @@
 
 .quiz-option.selected {
     border-color: var(--brand-primary);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
 }
 
 .quiz-option.correct {
@@ -640,13 +674,13 @@
     cursor: pointer;
     white-space: nowrap;
     padding: var(--space-1) var(--space-2);
-    background: rgba(108, 92, 231, 0.1);
+    background: rgba(0, 120, 212, 0.1);
     border-radius: var(--radius-sm);
     height: fit-content;
 }
 
 .note-timestamp:hover {
-    background: rgba(108, 92, 231, 0.2);
+    background: rgba(0, 120, 212, 0.2);
 }
 
 .note-content {

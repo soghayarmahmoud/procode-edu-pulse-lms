@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Is the user an administrator?
+    // Checks both root-level isAdmin and legacy profile.isAdmin
+    function isAdmin() {
+      return request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.profile.isAdmin == true
+      );
+    }
+
+    // User Profiles: Users can only read/write their own data, Admins can do both
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Course Reviews: Nested structure /course_reviews/{courseId}/reviews/{reviewId}
+    match /course_reviews/{courseId}/reviews/{reviewId} {
+      allow read: if true; // Publicly readable
+      allow create: if request.auth != null; // Registered users can review
+      allow update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
+    // Dynamic CMS Content: Public read, Admin write
+    match /dynamic_courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /dynamic_lessons/{lessonId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /dynamic_challenges/{challengeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Discussions: Public read, authenticated write
+    match /discussions/{threadId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId || isAdmin()
+      );
+    }
+
+    // Lesson Comments: Public read, authenticated write
+    match /lesson_comments/{commentId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.authorId || isAdmin()
+      );
+    }
+
+    // Notifications subcollection
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Default Deny: All other collections are private
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
