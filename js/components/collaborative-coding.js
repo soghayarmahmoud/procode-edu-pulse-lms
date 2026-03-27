@@ -609,5 +609,5 @@ window.collaborativeCoding = null;
 // Export for use in router
 export function renderCollaborativeCoding() {
   window.collaborativeCoding = new CollaborativeCodingComponent();
-  return window.collaborativeCoding;
+  return window.collaborativeCoding.init();
 }

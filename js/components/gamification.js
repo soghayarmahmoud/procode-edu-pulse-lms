@@ -763,5 +763,5 @@ window.gamification = null;
 // Export for use in router
 export function renderGamification() {
   window.gamification = new GamificationComponent();
-  return window.gamification;
+  return window.gamification.init();
 }

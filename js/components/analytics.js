@@ -578,5 +578,5 @@ export class AnalyticsComponent {
 // Export for use in router
 export function renderAnalytics() {
   const analytics = new AnalyticsComponent();
-  return analytics;
+  return analytics.init();
 }

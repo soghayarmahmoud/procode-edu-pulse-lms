@@ -1042,6 +1042,42 @@ class StorageService {
         keys.forEach(k => localStorage.removeItem(k));
         this._initDefaults();
     }
+
+    // ── Gamification & Search Extensions ──
+
+    /**
+     * Get user progress data.
+     * @returns {object}
+     */
+    getUserProgress() {
+        return this._get('user_progress');
+    }
+
+    /**
+     * Save user progress data.
+     * @param {object} progress
+     * @returns {void}
+     */
+    saveUserProgress(progress) {
+        this._set('user_progress', progress);
+    }
+
+    /**
+     * Get recent searches.
+     * @returns {string[]}
+     */
+    getRecentSearches() {
+        return this._get('recent_searches') || [];
+    }
+
+    /**
+     * Save recent searches.
+     * @param {string[]} searches
+     * @returns {void}
+     */
+    saveRecentSearches(searches) {
+        this._set('recent_searches', searches);
+    }
 }
 
 export const storage = new StorageService();

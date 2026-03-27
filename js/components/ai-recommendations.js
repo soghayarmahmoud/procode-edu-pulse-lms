@@ -541,5 +541,5 @@ export class AIRecommendationsComponent {
 // Export for use in router
 export function renderAIRecommendations() {
   const recommendations = new AIRecommendationsComponent();
-  return recommendations;
+  return recommendations.init();
 }

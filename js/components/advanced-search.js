@@ -979,5 +979,5 @@ export class AdvancedSearchComponent {
 // Export for use in router
 export function renderAdvancedSearch() {
   const search = new AdvancedSearchComponent();
-  return search;
+  return search.init();
 }

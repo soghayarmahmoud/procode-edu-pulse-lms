@@ -1,3 +1,5 @@
+import { $ } from '../utils/dom.js';
+
 export class CertificatesComponent {
   async init() {
     this.render();
@@ -5,6 +7,8 @@ export class CertificatesComponent {
 
   render() {
     const app = $('#app');
+    if (!app) return;
+    
     app.innerHTML = `
       <div class="certificates-page">
         <div class="container">
@@ -17,5 +21,6 @@ export class CertificatesComponent {
 }
 
 export function renderCertificates() {
-  return new CertificatesComponent();
+  const certificates = new CertificatesComponent();
+  return certificates.init();
 }
