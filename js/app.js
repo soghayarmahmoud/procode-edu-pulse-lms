@@ -14,6 +14,9 @@ import { isFirebaseConfigured } from './services/firebase-config.js';
 import { renderBreadcrumb } from './components/breadcrumb.js';
 import 'https://cdn.jsdelivr.net/npm/chart.js';
 import { discussionService } from './services/discussion-service.js';
+import { renderAnalytics } from './components/analytics.js';
+import { renderAIRecommendations } from './components/ai-recommendations.js';
+import { renderCollaborativeCoding } from './components/collaborative-coding.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -4091,6 +4094,9 @@ async function startMainApp() {
         .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params), `#/docs/${params.docId}`))
         .on('/styleguide', () => transitionPage(renderStyleguide, '#/styleguide'))
         .on('/portfolio', () => transitionPage(renderPortfolio, '#/portfolio'))
+        .on('/analytics', () => transitionPage(renderAnalytics, '#/analytics'))
+        .on('/recommendations', () => transitionPage(renderAIRecommendations, '#/recommendations'))
+        .on('/collaborate', () => transitionPage(renderCollaborativeCoding, '#/collaborate'))
         .on('/profile', () => transitionPage(renderProfile, '#/profile'))
         .on('/admin', () => transitionPage(renderAdminDashboard, '#/admin'))
         .on('/about', () => transitionPage(renderAboutPage, '#/about'))
