@@ -1,6 +1,8 @@
 {
+  "manifest_version": 3,
   "name": "ProCode EduPulse - Professional Learning Platform",
   "short_name": "EduPulse",
+  "version": "1.0.0",
   "description": "A professional e-learning platform for coding education with interactive challenges and AI-powered learning",
   "start_url": "/",
   "display": "standalone",
@@ -9,7 +11,11 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["education", "productivity", "developer"],
+  "categories": [
+    "education",
+    "productivity",
+    "developer"
+  ],
   "icons": [
     {
       "src": "logo.png",
@@ -92,7 +98,29 @@
   ],
   "related_applications": [],
   "prefer_related_applications": false,
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/assets/styles.css",
+        "src/assets/locales/*",
+        "logo.png",
+        "html.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "edge_side_panel": {
     "preferred_width": 400
+  },
+  "content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+    "js": [
+      "src/libs/chart.js", 
+      "src/scripts/analytics.js"
+    ]
   }
+]
 }

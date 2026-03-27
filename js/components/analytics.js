@@ -2,7 +2,7 @@
 // ProCode EduPulse — Analytics Dashboard Component
 // ============================================
 
-import { Chart, registerables } from 'https://cdn.jsdelivr.net/npm/chart.js';
+import { Chart, registerables } from 'https://cdn.jsdelivr.net/npm/chart.js/+esm';
 import { $, showToast } from '../utils/dom.js';
 import { storage } from '../services/storage.js';
 import { firestoreService } from '../services/firestore-service.js';

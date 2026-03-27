@@ -12,7 +12,7 @@ import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
 import { renderBreadcrumb } from './components/breadcrumb.js';
-import 'https://cdn.jsdelivr.net/npm/chart.js';
+import 'https://cdn.jsdelivr.net/npm/chart.js/+esm';
 import { discussionService } from './services/discussion-service.js';
 import { renderAnalytics } from './components/analytics.js';
 import { renderAIRecommendations } from './components/ai-recommendations.js';
