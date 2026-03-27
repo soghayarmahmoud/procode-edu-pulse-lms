@@ -621,6 +621,7 @@ select {
     input, textarea, select {
         font-size: 16px; /* Prevent zoom on iOS */
         -webkit-appearance: none;
+        appearance: none;
         border-radius: var(--radius-md);
     }
     
