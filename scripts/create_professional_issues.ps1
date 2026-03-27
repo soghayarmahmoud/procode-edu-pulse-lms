@@ -1,5 +1,19 @@
 $ErrorActionPreference = "Stop"
 
+# Ensure the required labels exist before creating issues
+function Ensure-Label {
+    param([string]$Name, [string]$Color, [string]$Description)
+    # Correct PowerShell way to pass a dynamic string to a single-quoted argument
+    $query = ".[] | select(.name == `"$Name`")"
+    $exists = gh label list --json name -q $query
+    if (-not $exists) {
+        Write-Host "Creating label: $Name"
+        gh label create $Name --color $Color --description $Description
+    }
+}
+
+Ensure-Label -Name "professional-evolution" -Color "F9D0C4" -Description "Issues related to platform professionalization and monetization"
+
 function Create-Issue {
     param(
         [string]$Title,

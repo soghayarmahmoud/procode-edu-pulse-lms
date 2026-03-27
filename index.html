@@ -8,6 +8,28 @@
   <meta name="author" content="ProCode EduPulse">
   <meta name="theme-color" content="#0F0F1A">
   
+  <!-- PWA Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EduPulse">
+  <meta name="application-name" content="ProCode EduPulse">
+  <meta name="msapplication-TileColor" content="#0078D4">
+  <meta name="msapplication-config" content="/browserconfig.xml">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Apple Icons -->
+  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./logo.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./logo.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./logo.png">
+  <link rel="shortcut icon" href="./logo.png">
+  
   <meta property="og:title" content="ProCode EduPulse — Learn to Code, Build Real Projects">
   <meta property="og:description" content="Transform from a YouTube viewer into a confident developer with structured courses, interactive challenges, and AI-powered hints.">
   <meta property="og:type" content="website">
@@ -15,8 +37,6 @@
   
   <title>ProCode EduPulse — Learn to Code | Interactive LMS</title>
   
-  <link rel="icon" type="image/png" href="./logo.png">
-
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -29,6 +49,11 @@
   <link rel="stylesheet" href="./css/lesson.css">
   <link rel="stylesheet" href="./css/auth.css">
   <link rel="stylesheet" href="./css/pages.css">
+  <link rel="stylesheet" href="./css/analytics.css">
+  <link rel="stylesheet" href="./css/ai-recommendations.css">
+  <link rel="stylesheet" href="./css/collaborative-coding.css">
+  <link rel="stylesheet" href="./css/gamification.css">
+  <link rel="stylesheet" href="./css/advanced-search.css">
 </head>
 <body>
   <!-- App Mount Point -->
@@ -51,6 +76,83 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
 
   <!-- App Script -->
-  <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/app.js?v=3"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('[SW] Service Worker registered successfully:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available
+                  if (confirm('New version available! Reload to update?')) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch((error) => {
+            console.error('[SW] Service Worker registration failed:', error);
+          });
+      });
+    }
+    
+    // PWA Install Prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Show install button (you can customize this)
+      const installButton = document.createElement('button');
+      installButton.innerHTML = '📱 Install App';
+      installButton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: var(--brand-gradient);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        transition: all 0.3s ease;
+      `;
+      
+      installButton.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`[PWA] Install prompt ${outcome}`);
+          deferredPrompt = null;
+          installButton.remove();
+        }
+      });
+      
+      installButton.addEventListener('mouseenter', () => {
+        installButton.style.transform = 'translateY(-2px)';
+        installButton.style.boxShadow = '0 6px 16px rgba(0, 120, 212, 0.4)';
+      });
+      
+      installButton.addEventListener('mouseleave', () => {
+        installButton.style.transform = 'translateY(0)';
+        installButton.style.boxShadow = '0 4px 12px rgba(0, 120, 212, 0.3)';
+      });
+      
+      document.body.appendChild(installButton);
+    });
+  </script>
 </body>
 </html>

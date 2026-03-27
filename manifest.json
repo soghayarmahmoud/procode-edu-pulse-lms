@@ -1,0 +1,126 @@
+{
+  "manifest_version": 3,
+  "name": "ProCode EduPulse - Professional Learning Platform",
+  "short_name": "EduPulse",
+  "version": "1.0.0",
+  "description": "A professional e-learning platform for coding education with interactive challenges and AI-powered learning",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F0F1A",
+  "theme_color": "#0078D4",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": [
+    "education",
+    "productivity",
+    "developer"
+  ],
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Courses",
+      "short_name": "Courses",
+      "description": "Explore available coding courses",
+      "url": "/#/courses",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Progress",
+      "short_name": "Analytics",
+      "description": "View learning analytics and progress",
+      "url": "/#/analytics",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "AI Coach",
+      "short_name": "AI Coach",
+      "description": "Get personalized learning recommendations",
+      "url": "/#/recommendations",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Collaborate",
+      "short_name": "Collaborate",
+      "description": "Join collaborative coding sessions",
+      "url": "/#/collaborate",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "html.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Course learning interface"
+    },
+    {
+      "src": "html.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile course view"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/assets/styles.css",
+        "src/assets/locales/*",
+        "logo.png",
+        "html.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+    "js": [
+      "src/libs/chart.js", 
+      "src/scripts/analytics.js"
+    ]
+  }
+]
+}

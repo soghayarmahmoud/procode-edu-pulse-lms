@@ -12,8 +12,14 @@ import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
 import { renderBreadcrumb } from './components/breadcrumb.js';
-import 'https://cdn.jsdelivr.net/npm/chart.js';
+import 'https://cdn.jsdelivr.net/npm/chart.js/+esm';
 import { discussionService } from './services/discussion-service.js';
+import { renderAnalytics } from './components/analytics.js';
+import { renderAIRecommendations } from './components/ai-recommendations.js';
+import { renderCollaborativeCoding } from './components/collaborative-coding.js';
+import { renderGamification } from './components/gamification.js';
+import { renderAdvancedSearch } from './components/advanced-search.js';
+import { renderCertificates } from './components/certificates.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -257,9 +263,14 @@ function transitionPage(renderFn, path = window.location.hash) {
         }
         
         // After briefly showing skeleton, render real content and fade in
-        setTimeout(() => {
-            renderFn();
-            app.style.opacity = 1;
+        setTimeout(async () => {
+            try {
+                await renderFn();
+                app.style.opacity = 1;
+            } catch (error) {
+                console.error('Error rendering page:', error);
+                app.style.opacity = 1;
+            }
         }, 150); // brief skeleton display
         
     }, 200); // Wait for fade out
@@ -2512,271 +2523,6 @@ function renderRoadmapsPage() {
     `;
 }
 
-// ══════════════════════════════════════════════
-// STYLEGUIDE PAGE
-// ══════════════════════════════════════════════
-
-function renderStyleguide() {
-    const app = $('#app');
-
-    app.innerHTML = `
-    <div class="page-wrapper">
-      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16)">
-        <div class="text-center" style="margin-bottom:var(--space-10)">
-          <span class="badge badge-primary mb-4">Design System</span>
-          <h1 style="font-size:2.5rem;margin-bottom:var(--space-4)">Styleguide</h1>
-          <p class="text-muted" style="font-size:1.1rem;max-width:720px;margin:0 auto">
-            A complete reference of UI components, patterns, and tokens used across ProCode EduPulse.
-          </p>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Buttons</h2>
-          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-6)">
-            <div>
-              <p class="text-sm text-muted" style="margin-bottom:var(--space-3)">Variants</p>
-              <div class="flex gap-3" style="flex-wrap:wrap">
-                <button class="btn btn-primary">Primary</button>
-                <button class="btn btn-secondary">Secondary</button>
-                <button class="btn btn-outline">Outline</button>
-                <button class="btn btn-ghost">Ghost</button>
-              </div>
-            </div>
-            <div>
-              <p class="text-sm text-muted" style="margin-bottom:var(--space-3)">Sizes</p>
-              <div class="flex gap-3" style="align-items:center;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm">Small</button>
-                <button class="btn btn-primary">Default</button>
-                <button class="btn btn-primary btn-lg">Large</button>
-              </div>
-            </div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;button class=&quot;btn btn-primary&quot;&gt;Primary&lt;/button&gt;
-&lt;button class=&quot;btn btn-secondary&quot;&gt;Secondary&lt;/button&gt;
-&lt;button class=&quot;btn btn-outline&quot;&gt;Outline&lt;/button&gt;
-&lt;button class=&quot;btn btn-ghost&quot;&gt;Ghost&lt;/button&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Cards & Badges</h2>
-          <div class="grid grid-3 gap-6">
-            <div class="card" style="padding:var(--space-6)">
-              <div class="badge badge-primary mb-4">Primary</div>
-              <h3 style="margin-bottom:var(--space-2)">Card Title</h3>
-              <p class="text-muted">Use cards for grouped content and features.</p>
-            </div>
-            <div class="card" style="padding:var(--space-6)">
-              <div class="badge badge-success mb-4">Success</div>
-              <h3 style="margin-bottom:var(--space-2)">Completion</h3>
-              <p class="text-muted">Badges highlight states and statuses.</p>
-            </div>
-            <div class="card" style="padding:var(--space-6)">
-              <div class="badge badge-warning mb-4">Warning</div>
-              <h3 style="margin-bottom:var(--space-2)">Attention</h3>
-              <p class="text-muted">Card layout is consistent across pages.</p>
-            </div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;card&quot;&gt;...&lt;/div&gt;
-&lt;span class=&quot;badge badge-success&quot;&gt;Success&lt;/span&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Progress Bars</h2>
-          <div class="progress-label">Lesson Progress</div>
-          <div class="progress-track" style="margin-bottom:var(--space-4)">
-            <div class="progress-fill" style="width:65%"></div>
-          </div>
-          <div class="progress-label">Course Completion</div>
-          <div class="progress-track">
-            <div class="progress-fill" style="width:35%"></div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;progress-track&quot;&gt;
-  &lt;div class=&quot;progress-fill&quot; style=&quot;width:65%&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Form Inputs</h2>
-          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-6)">
-            <div class="input-group">
-              <label>Email</label>
-              <input class="input" type="email" placeholder="name@example.com" />
-            </div>
-            <div class="input-group">
-              <label>Password</label>
-              <input class="input" type="password" placeholder="••••••••" />
-            </div>
-            <div class="input-group">
-              <label>About you</label>
-              <textarea class="input textarea" rows="3" placeholder="Short bio"></textarea>
-            </div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;input-group&quot;&gt;
-  &lt;label&gt;Email&lt;/label&gt;
-  &lt;input class=&quot;input&quot; type=&quot;email&quot; /&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Tabs</h2>
-          <div class="tabs" id="styleguide-tabs">
-            <span class="tab active" data-tab-target="tab-a">Overview</span>
-            <span class="tab" data-tab-target="tab-b">Details</span>
-            <span class="tab" data-tab-target="tab-c">Notes</span>
-          </div>
-          <div class="card" style="margin-top:var(--space-4);padding:var(--space-6)">
-            <div class="tab-panel" data-tab-panel="tab-a">Use tabs to switch between content views.</div>
-            <div class="tab-panel" data-tab-panel="tab-b" style="display:none;">Tabs are styled with .tabs and .tab.</div>
-            <div class="tab-panel" data-tab-panel="tab-c" style="display:none;">Keep tab content concise and readable.</div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;tabs&quot;&gt;
-  &lt;span class=&quot;tab active&quot;&gt;Overview&lt;/span&gt;
-  &lt;span class=&quot;tab&quot;&gt;Details&lt;/span&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Accordion</h2>
-          <div class="accordion" id="styleguide-accordion">
-            <div class="accordion-item active">
-              <div class="accordion-header">What is ProCode EduPulse? <i class="fa-solid fa-chevron-down accordion-icon"></i></div>
-              <div class="accordion-body">
-                <div class="accordion-content">A hands-on LMS for coding education built with vanilla JS.</div>
-              </div>
-            </div>
-            <div class="accordion-item">
-              <div class="accordion-header">How are components styled? <i class="fa-solid fa-chevron-down accordion-icon"></i></div>
-              <div class="accordion-body">
-                <div class="accordion-content">Use CSS variables and component classes from components.css.</div>
-              </div>
-            </div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;div class=&quot;accordion-item&quot;&gt;
-  &lt;div class=&quot;accordion-header&quot;&gt;Title&lt;/div&gt;
-  &lt;div class=&quot;accordion-body&quot;&gt;...&lt;/div&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Toasts & Modals</h2>
-          <div class="flex gap-3" style="flex-wrap:wrap">
-            <button class="btn btn-primary" data-toast="success">Show Success Toast</button>
-            <button class="btn btn-secondary" data-toast="info">Show Info Toast</button>
-            <button class="btn btn-outline" data-toast="error">Show Error Toast</button>
-            <button class="btn btn-ghost" id="open-styleguide-modal">Open Modal</button>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>showToast('Saved!', 'success');
-document.querySelector('#open-modal').onclick = () => modal.classList.add('active');</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8);margin-bottom:var(--space-10)">
-          <h2 class="section-title">Colors</h2>
-          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-4)">
-            <div class="card" style="padding:var(--space-4)">
-              <div style="height:64px;border-radius:var(--radius-md);background:var(--brand-primary)"></div>
-              <div class="text-sm" style="margin-top:var(--space-3)">Brand Primary</div>
-            </div>
-            <div class="card" style="padding:var(--space-4)">
-              <div style="height:64px;border-radius:var(--radius-md);background:var(--brand-primary-light)"></div>
-              <div class="text-sm" style="margin-top:var(--space-3)">Brand Primary Light</div>
-            </div>
-            <div class="card" style="padding:var(--space-4)">
-              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-success)"></div>
-              <div class="text-sm" style="margin-top:var(--space-3)">Success</div>
-            </div>
-            <div class="card" style="padding:var(--space-4)">
-              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-warning)"></div>
-              <div class="text-sm" style="margin-top:var(--space-3)">Warning</div>
-            </div>
-            <div class="card" style="padding:var(--space-4)">
-              <div style="height:64px;border-radius:var(--radius-md);background:var(--color-error)"></div>
-              <div class="text-sm" style="margin-top:var(--space-3)">Error</div>
-            </div>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>background: var(--brand-primary);
-color: var(--text-primary);</code></pre>
-        </div>
-
-        <div class="card" style="padding:var(--space-8)">
-          <h2 class="section-title">Typography</h2>
-          <div style="display:grid;gap:var(--space-4)">
-            <h1>Heading 1 — Display Title</h1>
-            <h2>Heading 2 — Section Title</h2>
-            <h3>Heading 3 — Subsection</h3>
-            <p>Body text uses the default font size and line height for readability across pages.</p>
-            <p class="text-muted">Muted text uses the secondary text color for helpers and captions.</p>
-            <p class="text-sm">Small text for meta content and labels.</p>
-          </div>
-          <pre style="margin-top:var(--space-6);background:var(--bg-tertiary);padding:var(--space-4);border-radius:var(--radius-md);overflow:auto;"><code>&lt;h1&gt;Heading 1&lt;/h1&gt;
-&lt;p class=&quot;text-muted&quot;&gt;Muted text&lt;/p&gt;</code></pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-overlay" id="styleguide-modal">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="modal-title">Example Modal</h3>
-          <button class="modal-close" id="close-styleguide-modal"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <p class="text-secondary" style="margin-bottom:var(--space-6)">Use modals for focused actions and confirmations.</p>
-        <div class="flex justify-end gap-3">
-          <button class="btn btn-ghost" id="cancel-styleguide-modal">Cancel</button>
-          <button class="btn btn-primary" id="confirm-styleguide-modal">Confirm</button>
-        </div>
-      </div>
-    </div>
-    `;
-
-    // Tabs
-    $$('#styleguide-tabs .tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            $$('#styleguide-tabs .tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            const target = tab.dataset.tabTarget;
-            $$('[data-tab-panel]').forEach(panel => {
-                panel.style.display = panel.dataset.tabPanel === target ? 'block' : 'none';
-            });
-        });
-    });
-
-    // Accordion
-    $$('#styleguide-accordion .accordion-header').forEach(header => {
-        header.addEventListener('click', () => {
-            header.parentElement.classList.toggle('active');
-        });
-    });
-
-    // Toasts
-    $$('[data-toast]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const type = btn.dataset.toast;
-            const label = type.charAt(0).toUpperCase() + type.slice(1);
-            showToast(`${label} toast example.`, type);
-        });
-    });
-
-    // Modal
-    const modal = $('#styleguide-modal');
-    const openModalBtn = $('#open-styleguide-modal');
-    const closeModalBtn = $('#close-styleguide-modal');
-    const cancelModalBtn = $('#cancel-styleguide-modal');
-    const confirmModalBtn = $('#confirm-styleguide-modal');
-
-    const closeModal = () => modal.classList.remove('active');
-    const openModal = () => modal.classList.add('active');
-
-    openModalBtn?.addEventListener('click', openModal);
-    closeModalBtn?.addEventListener('click', closeModal);
-    cancelModalBtn?.addEventListener('click', closeModal);
-    modal?.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    confirmModalBtn?.addEventListener('click', () => {
-        showToast('Confirmed action.', 'success');
-        closeModal();
-    });
-}
 
 function renderDocsPage(params) {
     const app = $('#app');
@@ -4091,6 +3837,12 @@ async function startMainApp() {
         .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params), `#/docs/${params.docId}`))
         .on('/styleguide', () => transitionPage(renderStyleguide, '#/styleguide'))
         .on('/portfolio', () => transitionPage(renderPortfolio, '#/portfolio'))
+        .on('/analytics', () => transitionPage(renderAnalytics, '#/analytics'))
+        .on('/recommendations', () => transitionPage(renderAIRecommendations, '#/recommendations'))
+        .on('/collaborate', () => transitionPage(renderCollaborativeCoding, '#/collaborate'))
+        .on('/gamification', () => transitionPage(renderGamification, '#/gamification'))
+        .on('/search', () => transitionPage(renderAdvancedSearch, '#/search'))
+        .on('/certificates', () => transitionPage(renderCertificates, '#/certificates'))
         .on('/profile', () => transitionPage(renderProfile, '#/profile'))
         .on('/admin', () => transitionPage(renderAdminDashboard, '#/admin'))
         .on('/about', () => transitionPage(renderAboutPage, '#/about'))

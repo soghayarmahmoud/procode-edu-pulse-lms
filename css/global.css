@@ -582,11 +582,68 @@ select {
     .hide-mobile {
         display: none !important;
     }
+    
+    /* Mobile-specific adjustments */
+    .page-wrapper {
+        padding-top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    }
+    
+    /* Better touch targets */
+    button, a, .nav-link {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Mobile navigation improvements */
+    .navbar {
+        padding: var(--space-2) var(--space-4);
+    }
+    
+    .nav-links {
+        gap: var(--space-1);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-link {
+        white-space: nowrap;
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--text-sm);
+    }
+    
+    /* Mobile form improvements */
+    input, textarea, select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        -webkit-appearance: none;
+        appearance: none;
+        border-radius: var(--radius-md);
+    }
+    
+    /* Mobile cards */
+    .card {
+        margin: var(--space-2) 0;
+        border-radius: var(--radius-lg);
+    }
+    
+    /* Mobile tables */
+    table {
+        font-size: var(--text-sm);
+    }
+    
+    th, td {
+        padding: var(--space-2);
+    }
 }
 
 @media (max-width: 480px) {
     .container {
-        padding: 0 var(--space-4); /* Ensure containers aren't cut off */
+        padding: 0 var(--space-3);
     }
 
     h1 {
@@ -595,5 +652,174 @@ select {
 
     h2 {
         font-size: var(--text-xl);
+    }
+    
+    /* Extra small mobile adjustments */
+    .page-header {
+        text-align: center;
+        padding: var(--space-4) 0;
+    }
+    
+    .page-title {
+        font-size: var(--text-xl);
+        line-height: var(--leading-tight);
+    }
+    
+    .page-description {
+        font-size: var(--text-base);
+    }
+    
+    /* Mobile buttons */
+    .btn {
+        width: 100%;
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--text-base);
+        margin: var(--space-2) 0;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    
+    /* Mobile modals */
+    .modal-content {
+        margin: var(--space-4);
+        max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--space-8));
+        border-radius: var(--radius-lg);
+    }
+    
+    /* Mobile grid adjustments */
+    .grid {
+        gap: var(--space-3);
+    }
+    
+    /* Mobile spacing */
+    .section {
+        padding: var(--space-6) 0;
+    }
+    
+    /* Mobile typography */
+    .text-lg {
+        font-size: var(--text-base);
+    }
+    
+    .text-xl {
+        font-size: var(--text-lg);
+    }
+    
+    /* Mobile navigation improvements */
+    .nav-brand-text {
+        font-size: var(--text-lg);
+    }
+    
+    /* Mobile safe area handling */
+    @supports (padding: max(0px)) {
+        .page-wrapper {
+            padding-left: max(var(--space-4), env(safe-area-inset-left));
+            padding-right: max(var(--space-4), env(safe-area-inset-right));
+        }
+        
+        .navbar {
+            padding-left: max(var(--space-4), env(safe-area-inset-left));
+            padding-right: max(var(--space-4), env(safe-area-inset-right));
+        }
+        
+        .modal-content {
+            margin-left: max(var(--space-4), env(safe-area-inset-left));
+            margin-right: max(var(--space-4), env(safe-area-inset-right));
+        }
+    }
+}
+
+/* ── Landscape Mobile Adjustments ── */
+@media (max-width: 768px) and (orientation: landscape) {
+    .page-wrapper {
+        padding-top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    }
+    
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* ── High DPI Displays ── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Optimize for retina displays */
+    .user-avatar, .participant-avatar {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── Dark Mode Preference ── */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --bg-primary: #0F0F1A;
+        --bg-secondary: #1A1A2E;
+        --bg-tertiary: #222240;
+        --bg-elevated: #2A2A4A;
+        --bg-card: rgba(26, 26, 46, 0.8);
+        --bg-card-hover: rgba(42, 42, 74, 0.9);
+        --bg-glass: rgba(15, 15, 26, 0.7);
+        --bg-input: rgba(34, 34, 64, 0.6);
+
+        --border-primary: rgba(0, 120, 212, 0.2);
+        --border-subtle: rgba(255, 255, 255, 0.08);
+        --border-hover: rgba(0, 120, 212, 0.4);
+
+        --text-primary: #F0F0F8;
+        --text-secondary: #A0A0C0;
+        --text-muted: #6B6B8D;
+        --text-inverse: #0F0F1A;
+
+        --scrollbar-track: #1A1A2E;
+        --scrollbar-thumb: #3A3A5A;
+        --scrollbar-thumb-hover: #4A4A6A;
+    }
+}
+
+/* ── Light Mode Preference ── */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+        --bg-primary: #F8F9FC;
+        --bg-secondary: #FFFFFF;
+        --bg-tertiary: #F0F1F5;
+        --bg-elevated: #FFFFFF;
+        --bg-card: rgba(255, 255, 255, 0.9);
+        --bg-card-hover: rgba(255, 255, 255, 1);
+        --bg-glass: rgba(248, 249, 252, 0.85);
+        --bg-input: rgba(240, 241, 245, 0.8);
+
+        --border-primary: rgba(0, 120, 212, 0.25);
+        --border-subtle: rgba(0, 0, 0, 0.1);
+        --border-hover: rgba(0, 120, 212, 0.5);
+
+        --text-primary: #1A1A2E;
+        --text-secondary: #5A5A7A;
+        --text-muted: #9A9AB0;
+        --text-inverse: #F0F0F8;
+
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.15);
+
+        --scrollbar-track: #F0F1F5;
+        --scrollbar-thumb: #C8C8D8;
+        --scrollbar-thumb-hover: #A8A8C0;
     }
 }
