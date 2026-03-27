@@ -17,6 +17,8 @@ import { discussionService } from './services/discussion-service.js';
 import { renderAnalytics } from './components/analytics.js';
 import { renderAIRecommendations } from './components/ai-recommendations.js';
 import { renderCollaborativeCoding } from './components/collaborative-coding.js';
+import { renderGamification } from './components/gamification.js';
+import { renderAdvancedSearch } from './components/advanced-search.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -4097,6 +4099,8 @@ async function startMainApp() {
         .on('/analytics', () => transitionPage(renderAnalytics, '#/analytics'))
         .on('/recommendations', () => transitionPage(renderAIRecommendations, '#/recommendations'))
         .on('/collaborate', () => transitionPage(renderCollaborativeCoding, '#/collaborate'))
+        .on('/gamification', () => transitionPage(renderGamification, '#/gamification'))
+        .on('/search', () => transitionPage(renderAdvancedSearch, '#/search'))
         .on('/profile', () => transitionPage(renderProfile, '#/profile'))
         .on('/admin', () => transitionPage(renderAdminDashboard, '#/admin'))
         .on('/about', () => transitionPage(renderAboutPage, '#/about'))

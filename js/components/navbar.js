@@ -45,6 +45,8 @@ export function renderNavbar() {
         <a href="#/analytics" class="nav-link ${currentHash === '/analytics' ? 'active' : ''}" data-route="/analytics">Analytics</a>
         <a href="#/recommendations" class="nav-link ${currentHash === '/recommendations' ? 'active' : ''}" data-route="/recommendations">AI Coach</a>
         <a href="#/collaborate" class="nav-link ${currentHash === '/collaborate' ? 'active' : ''}" data-route="/collaborate">Collaborate</a>
+        <a href="#/gamification" class="nav-link ${currentHash === '/gamification' ? 'active' : ''}" data-route="/gamification">Achievements</a>
+        <a href="#/search" class="nav-link ${currentHash === '/search' ? 'active' : ''}" data-route="/search">Search</a>
         <a href="#/careers" class="nav-link ${currentHash.startsWith('/careers') ? 'active' : ''}" data-route="/careers">Volunteer</a>
         <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
         ${authService.isAdminSync() ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin"><i class="fa-solid fa-gauge"></i> Admin Panel</a>` : ''}
