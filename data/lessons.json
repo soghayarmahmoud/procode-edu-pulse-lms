@@ -40,6 +40,11 @@
                     "name": "MDN HTML Elements Reference",
                     "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element"
                 }
+            ],
+            "assessment": {
+                "type": "challenge",
+                "id": "html-elements-challenge"
+            }
         },
         {
             "id": "js-intro",
@@ -70,7 +75,7 @@
             "youtubeId": "qz0aGYrrlhU",
             "type": "theory",
             "duration": "22 min",
-            "content": "<h3>Variables</h3><p>Use <code>let</code> for reassignable values and <code>const</code> for values that won't be reassigned.</p><pre><code>let count = 1;\nconst siteName = 'ProCode';</code></pre><h3>Data Types</h3><ul><li>String</li><li>Number</li><li>Boolean</li><li>Undefined</li><li>Null</li><li>Object</li><li>Array</li></ul><h3>Type Checking</h3><pre><code>typeof 'hello' // "string"\ntypeof 42 // "number"</code></pre>",
+            "content": "<h3>Variables</h3><p>Use <code>let</code> for reassignable values and <code>const</code> for values that won't be reassigned.</p><pre><code>let count = 1;\nconst siteName = 'ProCode';</code></pre><h3>Data Types</h3><ul><li>String</li><li>Number</li><li>Boolean</li><li>Undefined</li><li>Null</li><li>Object</li><li>Array</li></ul><h3>Type Checking</h3><pre><code>typeof 'hello' // 'string'\ntypeof 42 // 'number'</code></pre>",
             "cheatSheet": "## Variables & Types Cheat Sheet\n\n### Syntax\n- `let` → reassignable\n- `const` → non-reassignable\n- `typeof` → type check\n\n### Examples\n```js\nlet score = 0;\nscore = score + 10;\n```\n```js\nconst appName = 'EduPulse';\n```\n```js\nconst isLoggedIn = true;\nconsole.log(typeof isLoggedIn); // boolean\n```\n\n### Common Mistakes\n- Reassigning a `const` variable\n- Using `var` unintentionally\n- Confusing `null` and `undefined`",
             "resources": [],
             "assessment": {
@@ -188,11 +193,6 @@
             "assessment": {
                 "type": "challenge",
                 "id": "js-project-challenge"
-            }
-            ],
-            "assessment": {
-                "type": "challenge",
-                "id": "html-elements-challenge"
             }
         },
         {
