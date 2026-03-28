@@ -18,14 +18,15 @@ export function renderNavbar() {
     navbar.id = 'navbar';
 
     const currentHash = window.location.hash.slice(1) || '/';
-
+    const user = authService.getCurrentUser();
+    const isAdmin = authService.isAdminSync();
+    
     const _p = window.location.pathname;
     const _s = _p.split('/').filter(Boolean);
     const _base = (_p !== '/' && _p !== '/index.html' && _s.length > 0 && _s[0] !== 'index.html') ? '/' + _s[0] + '/' : './';
 
-    const user = authService.getCurrentUser();
     const displayName = authService.getDisplayName();
-    const initial = displayName.charAt(0).toUpperCase();
+    const initial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
 
     navbar.innerHTML = `
     <div class="container">
@@ -36,63 +37,131 @@ export function renderNavbar() {
         </span>
       </a>
 
-      <div class="nav-links" id="nav-links">
+      <!-- Desktop Core Links -->
+      <div class="nav-links desktop-only" id="nav-links">
         <a href="#/" class="nav-link ${currentHash === '/' ? 'active' : ''}" data-route="/">Home</a>
         <a href="#/courses" class="nav-link ${currentHash.startsWith('/course') ? 'active' : ''}" data-route="/courses">Courses</a>
         <a href="#/roadmaps" class="nav-link ${currentHash.startsWith('/roadmap') ? 'active' : ''}" data-route="/roadmaps">Roadmaps</a>
-        <a href="#/docs" class="nav-link ${currentHash.startsWith('/docs') ? 'active' : ''}" data-route="/docs">Docs</a>
-        <a href="#/portfolio" class="nav-link ${currentHash === '/portfolio' ? 'active' : ''}" data-route="/portfolio">Portfolio</a>
-        <a href="#/analytics" class="nav-link ${currentHash === '/analytics' ? 'active' : ''}" data-route="/analytics">Analytics</a>
-        <a href="#/recommendations" class="nav-link ${currentHash === '/recommendations' ? 'active' : ''}" data-route="/recommendations">AI Coach</a>
-        <a href="#/collaborate" class="nav-link ${currentHash === '/collaborate' ? 'active' : ''}" data-route="/collaborate">Collaborate</a>
-        <a href="#/gamification" class="nav-link ${currentHash === '/gamification' ? 'active' : ''}" data-route="/gamification">Achievements</a>
-        <a href="#/search" class="nav-link ${currentHash === '/search' ? 'active' : ''}" data-route="/search">Search</a>
-        <a href="#/careers" class="nav-link ${currentHash.startsWith('/careers') ? 'active' : ''}" data-route="/careers">Volunteer</a>
-        <a href="#/about" class="nav-link ${currentHash === '/about' ? 'active' : ''}" data-route="/about">About</a>
-        ${authService.isAdminSync() ? `<a href="#/admin" class="nav-link ${currentHash === '/admin' ? 'active' : ''}" data-route="/admin"><i class="fa-solid fa-gauge"></i> Admin Panel</a>` : ''}
       </div>
 
       <div class="nav-actions">
-        <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark/light theme">
-          <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
-        </button>
-        ${user ? `
-          <div class="user-menu" style="display:flex; align-items:center; gap:var(--space-4);">
-            <button class="notif-bell" id="notif-bell" title="Notifications" aria-label="Notifications">
-              <i class="fa-solid fa-bell"></i>
-              <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
-            </button>
-            <div class="nav-gems" style="background:var(--bg-tertiary); padding:4px 10px; border-radius:20px; font-weight:bold; font-size:var(--text-sm); display:flex; align-items:center; gap:6px; color:var(--text-primary); border: 1px solid var(--border-subtle)">
-              <i class="fa-solid fa-gem" style="color: #00cec9; text-shadow: 0 0 5px rgba(0,206,201,0.5);"></i> <span class="nav-gems-display">${storage.getGems()}</span>
+        <div class="desktop-only" style="display:flex; align-items:center; gap:var(--space-3);">
+          <button class="theme-toggle" id="theme-toggle-desktop" title="Toggle theme" aria-label="Toggle dark/light theme">
+            <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
+          </button>
+          
+          ${user ? `
+            <div class="user-mini-profile" style="display:flex; align-items:center; gap:var(--space-3); padding: var(--space-1) var(--space-2); background: var(--bg-tertiary); border-radius: 30px; border: 1px solid var(--border-subtle)">
+               <div class="user-avatar-sm" style="width: 28px; height: 28px; font-size: 10px;">${initial}</div>
+               <div class="nav-gems" style="font-size: var(--text-xs); font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-gem" style="color: #00cec9;"></i> ${storage.getGems()}
+               </div>
             </div>
-            <a href="#/profile" style="display:flex; align-items:center; gap:var(--space-2); text-decoration:none;">
-              <div class="user-avatar-sm">${initial}</div>
-              <span class="user-name-display" style="color:var(--text-primary); font-weight:500;">${displayName}</span>
+          ` : `
+            <a href="#/login" class="btn btn-sm btn-primary" style="font-size:var(--text-xs); border-radius: 20px;">
+              Sign In
             </a>
-            <button class="logout-btn" id="logout-btn" title="Sign out" style="margin-left:var(--space-2);">
-              <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
-          </div>
-        ` : `
-          <a href="#/login" class="btn btn-sm btn-primary" style="font-size:var(--text-xs)">
-            <i class="fa-solid fa-right-to-bracket"></i> Sign In
-          </a>
-        `}
-        <button class="nav-mobile-toggle" id="nav-mobile-toggle" aria-label="Toggle menu">
-          <i class="fa-solid fa-bars"></i>
+          `}
+        </div>
+
+        <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Open menu">
+          <span class="menu-btn-text desktop-only">Menu</span>
+          <i class="fa-solid fa-bars-staggered"></i>
         </button>
       </div>
     </div>
 
-    <div class="nav-mobile-menu" id="nav-mobile-menu">
-      <a href="#/" class="nav-link" data-route="/">Home</a>
-      <a href="#/courses" class="nav-link" data-route="/courses">Courses</a>
-      <a href="#/roadmaps" class="nav-link" data-route="/roadmaps">Roadmaps</a>
-      <a href="#/docs" class="nav-link" data-route="/docs">Docs</a>
-      <a href="#/portfolio" class="nav-link" data-route="/portfolio">Portfolio</a>
-      <a href="#/careers" class="nav-link" data-route="/careers">Volunteer</a>
-      <a href="#/about" class="nav-link" data-route="/about">About</a>
-      ${authService.isAdminSync() ? `<a href="#/admin" class="nav-link" data-route="/admin"><i class="fa-solid fa-gauge"></i> Admin Panel</a>` : ''}
+    <!-- Unified Sidebar Menu -->
+    <div class="nav-sidebar-overlay" id="nav-sidebar-overlay"></div>
+    <div class="nav-sidebar" id="nav-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="${_base}logo.png" alt="ProCode">
+          <span>ProCode</span>
+        </div>
+        <button class="sidebar-close" id="sidebar-close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- User Section (if logged in) -->
+        ${user ? `
+          <div class="sidebar-user-card">
+            <div class="user-info">
+              <div class="user-avatar-lg">${initial}</div>
+              <div class="user-details">
+                <span class="user-name">${displayName}</span>
+                <span class="user-role">Student Learner</span>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="stat">
+                <i class="fa-solid fa-gem"></i>
+                <span>${storage.getGems()} Gems</span>
+              </div>
+              <div class="stat">
+                <i class="fa-solid fa-fire"></i>
+                <span>${storage.getStreak?.() || 0} Day Streak</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Menu Groups -->
+        <div class="sidebar-groups">
+          <div class="sidebar-group">
+            <h3 class="group-title">Learning</h3>
+            <div class="group-links">
+              <a href="#/" class="sidebar-link"><i class="fa-solid fa-house"></i> Home</a>
+              <a href="#/courses" class="sidebar-link"><i class="fa-solid fa-graduation-cap"></i> Courses</a>
+              <a href="#/roadmaps" class="sidebar-link"><i class="fa-solid fa-map"></i> Roadmaps</a>
+              <a href="#/docs" class="sidebar-link"><i class="fa-solid fa-book"></i> Documentation</a>
+              <a href="#/recommendations" class="sidebar-link"><i class="fa-solid fa-robot"></i> AI Coach</a>
+            </div>
+          </div>
+
+          <div class="sidebar-group">
+            <h3 class="group-title">Community</h3>
+            <div class="group-links">
+              <a href="#/portfolio" class="sidebar-link"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
+              <a href="#/collaborate" class="sidebar-link"><i class="fa-solid fa-users"></i> Collaborate</a>
+              <a href="#/careers" class="sidebar-link"><i class="fa-solid fa-handshake-angle"></i> Volunteer</a>
+              <a href="#/about" class="sidebar-link"><i class="fa-solid fa-circle-info"></i> About Us</a>
+            </div>
+          </div>
+
+          <div class="sidebar-group">
+            <h3 class="group-title">Dashboard</h3>
+            <div class="group-links">
+              <a href="#/analytics" class="sidebar-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+              <a href="#/gamification" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Achievements</a>
+              <a href="#/search" class="sidebar-link"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
+              ${isAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-settings">
+          <button class="theme-toggle-btn" id="theme-toggle-sidebar">
+            <i class="fa-solid ${storage.getTheme() === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
+            <span>${storage.getTheme() === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+        </div>
+        ${user ? `
+          <button class="sidebar-logout logout-btn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Sign Out</span>
+          </button>
+        ` : `
+          <a href="#/login" class="sidebar-login-btn">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Sign In</span>
+          </a>
+        `}
+      </div>
     </div>
   `;
 
@@ -101,77 +170,80 @@ export function renderNavbar() {
     if (existing) existing.remove();
     document.body.prepend(navbar);
 
-    // Event: theme toggle
-    $('#theme-toggle').addEventListener('click', () => {
+    // Sidebar Toggles
+    const menuBtn = $('#nav-menu-btn');
+    const closeBtn = $('#sidebar-close');
+    const overlay = $('#nav-sidebar-overlay');
+    const sidebar = $('#nav-sidebar');
+
+    const openSidebar = () => {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeSidebar = () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        document.body.style.overflow = '';
+    };
+
+    menuBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
+
+    // Close on link click
+    $$('.sidebar-link').forEach(link => {
+        link.addEventListener('click', closeSidebar);
+    });
+
+    // Theme Toggle
+    const toggleTheme = () => {
         const current = storage.getTheme();
         const next = current === 'dark' ? 'light' : 'dark';
         storage.setTheme(next);
-        const icon = $('#theme-toggle').querySelector('i');
-        icon.className = `fa-solid ${next === 'dark' ? 'fa-sun' : 'fa-moon'}`;
-    });
+        
+        // Update all theme icons
+        const icons = $$('.theme-toggle i, .theme-toggle-btn i');
+        icons.forEach(icon => {
+            icon.className = `fa-solid ${next === 'dark' ? 'fa-sun' : 'fa-moon'}`;
+        });
+        
+        // Update text if exists
+        const themeTexts = $$('.theme-toggle-btn span');
+        themeTexts.forEach(span => {
+            span.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+        });
+    };
+    $('#theme-toggle-desktop')?.addEventListener('click', toggleTheme);
+    $('#theme-toggle-sidebar')?.addEventListener('click', toggleTheme);
 
-    // Event: logout
-    const logoutBtn = $('#logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await authService.signOut();
-            localStorage.removeItem('procode_onboarding_done');
+    // Logout
+    const handleLogout = async () => {
+        await authService.signOut();
+        localStorage.removeItem('procode_onboarding_done');
         if (window.__notificationsUnsub) window.__notificationsUnsub();
-            window.location.hash = '/login';
-            renderNavbar();
-        });
-    }
+        window.location.hash = '/login';
+        renderNavbar();
+    };
 
-    // Event: mobile toggle
-    $('#nav-mobile-toggle').addEventListener('click', () => {
-        $('#nav-mobile-menu').classList.toggle('open');
-    });
-
-    // Close mobile menu on link click
-    $$('#nav-mobile-menu .nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            $('#nav-mobile-menu').classList.remove('open');
-        });
+    $$('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', handleLogout);
     });
 
     // Update active link on hash change
     window.addEventListener('hashchange', updateActiveLink);
-
-    // Notifications
-    const bell = $('#notif-bell');
-    const badge = $('#notif-badge');
-    if (bell && badge && isFirebaseConfigured() && user) {
-      if (window.__notificationsUnsub) window.__notificationsUnsub();
-      const notifQuery = query(
-        collection(db, 'users', user.uid, 'notifications'),
-        where('read', '==', false)
-      );
-      window.__notificationsUnsub = onSnapshot(notifQuery, (snap) => {
-        const count = snap.size || 0;
-        badge.textContent = String(count);
-        badge.style.display = count > 0 ? 'inline-flex' : 'none';
-        bell.classList.toggle('has-unread', count > 0);
-        if (count > 0) {
-          showToast('New reply received.', 'info');
-        }
-      }, (error) => {
-        if (String(error?.code || '').includes('permission-denied') || String(error?.message || '').includes('permission-denied')) {
-          badge.style.display = 'none';
-          bell.classList.remove('has-unread');
-          if (window.__notificationsUnsub) window.__notificationsUnsub();
-        }
-      });
-    }
+    updateActiveLink(); // Initial call
 }
 
-/**
- * Update active nav link state based on hash.
- * @returns {void}
- */
 function updateActiveLink() {
     const hash = window.location.hash.slice(1) || '/';
-    $$('.nav-link').forEach(link => {
-        const route = link.dataset.route;
+    // Update both navbar and sidebar links
+    $$('.nav-link, .sidebar-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        const route = href.replace('#', '');
+        
         if (route === hash || (route !== '/' && hash.startsWith(route))) {
             link.classList.add('active');
         } else {

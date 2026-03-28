@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="./css/components.css">
   <link rel="stylesheet" href="./css/navbar.css">
   <link rel="stylesheet" href="./css/landing.css">
+  <link rel="stylesheet" href="./css/footer.css">
   <link rel="stylesheet" href="./css/lesson.css">
   <link rel="stylesheet" href="./css/auth.css">
   <link rel="stylesheet" href="./css/pages.css">
@@ -106,53 +107,5 @@
       });
     }
     
-    // PWA Install Prompt
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      
-      // Show install button (you can customize this)
-      const installButton = document.createElement('button');
-      installButton.innerHTML = '📱 Install App';
-      installButton.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        background: var(--brand-gradient);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
-        transition: all 0.3s ease;
-      `;
-      
-      installButton.addEventListener('click', async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          console.log(`[PWA] Install prompt ${outcome}`);
-          deferredPrompt = null;
-          installButton.remove();
-        }
-      });
-      
-      installButton.addEventListener('mouseenter', () => {
-        installButton.style.transform = 'translateY(-2px)';
-        installButton.style.boxShadow = '0 6px 16px rgba(0, 120, 212, 0.4)';
-      });
-      
-      installButton.addEventListener('mouseleave', () => {
-        installButton.style.transform = 'translateY(0)';
-        installButton.style.boxShadow = '0 4px 12px rgba(0, 120, 212, 0.3)';
-      });
-      
-      document.body.appendChild(installButton);
-    });
-  </script>
 </body>
 </html>
