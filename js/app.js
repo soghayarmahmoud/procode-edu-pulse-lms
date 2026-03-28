@@ -20,6 +20,7 @@ import { renderCollaborativeCoding } from './components/collaborative-coding.js'
 import { renderGamification } from './components/gamification.js';
 import { renderAdvancedSearch } from './components/advanced-search.js';
 import { renderCertificates } from './components/certificates.js';
+import { renderFooter, initPWAInstall } from './components/footer.js';
 
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
@@ -266,6 +267,7 @@ function transitionPage(renderFn, path = window.location.hash) {
         setTimeout(async () => {
             try {
                 await renderFn();
+                renderFooter(); // Render global footer after content
                 app.style.opacity = 1;
             } catch (error) {
                 console.error('Error rendering page:', error);
@@ -3937,6 +3939,8 @@ async function initApp() {
 
     // If Firebase is NOT configured, fall back to local-only mode
     const onboardingDone = localStorage.getItem('procode_onboarding_done') === 'true';
+    initPWAInstall(); // Initialize PWA Install Logic
+
     if (!onboardingDone) {
         showWelcomeModel();
     } else {

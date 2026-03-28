@@ -97,6 +97,19 @@
     font-size: var(--text-base);
     border-radius: var(--radius-lg);
 }
+.btn-full {
+    width: 100%;
+}
+
+.btn-danger {
+    background: var(--color-error);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+    box-shadow: 0 4px 12px rgba(225, 112, 85, 0.3);
+}
 
 .btn .btn-spinner {
     width: 16px;
@@ -947,5 +960,23 @@ mark.search-highlight {
     .btn-lg {
         padding: var(--space-3) var(--space-6);
         font-size: var(--text-sm);
+    }
+}
+
+/* ── Visibility Utilities ── */
+.desktop-only {
+    display: flex !important;
+}
+
+.mobile-only {
+    display: none !important;
+}
+
+@media (max-width: 1150px) {
+    .desktop-only {
+        display: none !important;
+    }
+    .mobile-only {
+        display: flex !important;
     }
 }

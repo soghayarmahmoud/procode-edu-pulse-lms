@@ -1,0 +1,213 @@
+/* ============================================
+   ProCode EduPulse — Footer Styles
+   ============================================ */
+
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-16) 0 0 0;
+    margin-top: var(--space-16);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr;
+    gap: var(--space-12);
+    margin-bottom: var(--space-12);
+}
+
+.footer-brand-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.footer-logo img {
+    height: 36px;
+}
+
+.footer-tagline {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 300px;
+}
+
+.footer-socials {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.footer-socials a {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    border: 1px solid var(--border-subtle);
+}
+
+.footer-socials a:hover {
+    background: var(--brand-primary);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 120, 212, 0.3);
+}
+
+.footer-title {
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-6);
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-size: var(--text-sm);
+}
+
+.footer-links a:hover {
+    color: var(--brand-primary-light);
+}
+
+/* App Section */
+.footer-app-section {
+    background: var(--bg-tertiary);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.footer-app-text {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+.footer-install-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: var(--font-bold);
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 20px rgba(0, 120, 212, 0.2);
+}
+
+.footer-install-btn:hover {
+    background: #0086ea;
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(0, 120, 212, 0.3);
+}
+
+.footer-app-badges {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: var(--font-medium);
+}
+
+.badge-item i {
+    color: var(--color-success);
+}
+
+/* Footer Bottom */
+.footer-bottom {
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-8) 0;
+    background: var(--bg-primary);
+}
+
+.footer-bottom-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+}
+
+.footer-bottom-links {
+    display: flex;
+    gap: var(--space-6);
+}
+
+.footer-bottom-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.footer-bottom-links a:hover {
+    color: var(--text-secondary);
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-10);
+    }
+    
+    .footer-bottom-content {
+        flex-direction: column;
+        gap: var(--space-4);
+        text-align: center;
+    }
+    
+    .footer-brand-section {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .footer-tagline {
+        margin: 0 auto;
+    }
+}
