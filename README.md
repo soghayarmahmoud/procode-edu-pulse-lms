@@ -1,7 +1,7 @@
 <!-- ProCode EduPulse - Professional README -->
 <p align="center">
   <a href="https://soghayarmahmoud.github.io/procode-edu-pulse-lms">
-    <img src="./procode_readme_banner.png" alt="ProCode EduPulse Banner" width="100%">
+    <img src="logo.png" alt="ProCode EduPulse Banner" width="100%">
   </a>
 </p>
 
