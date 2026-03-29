@@ -1,5 +1,28 @@
 {
+  "name": "procode-edu-pulse-lms",
+  "version": "1.0.0",
+  "description": "A professional Learning Management System for coding education.",
+  "main": "js/app.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lms",
+    "coding",
+    "education"
+  ],
+  "author": "Soghayar Mahmoud",
+  "license": "MIT",
   "dependencies": {
     "firebase": "^12.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "eslint-config-prettier": "^9.1.0"
   }
 }
