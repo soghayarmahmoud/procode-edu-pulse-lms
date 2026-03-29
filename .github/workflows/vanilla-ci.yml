@@ -1,0 +1,27 @@
+name: Procode Quality Guard
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Tools
+        run: npm install
+
+      - name: Check Formatting
+        run: npx prettier --check .
+
+      - name: Lint Javascript
+        run: npx eslint .
