@@ -129,7 +129,7 @@ We love contributions! Whether you're fixing a bug, adding a new course, or impr
 If you love this project, please consider **giving it a star** on GitHub!
 
 <p align="center">
-  Built with 💙 by <a href="https://github.com/soghayarmahmoud">Mahmoud ElSoghayar</a>
+  Built with 💙 by <a href="https://github.com/soghayarmahmoud">Mahmoud ElSoghayar</a> & <a href="https://github.com/goldenBoy13420">Mahmoud Abdelrauf</a>
 </p>
 
 <p align="center">
