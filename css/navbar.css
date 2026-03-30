@@ -112,6 +112,30 @@
     flex-shrink: 0;
 }
 
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    padding: var(--space-1);
+    border-radius: 50%;
+}
+
+.theme-toggle:hover {
+    color: var(--brand-primary-light);
+    transform: scale(1.1);
+    background: var(--bg-tertiary);
+}
+
+.fa-sun {
+    color: #fff !important;
+}
+
 .nav-menu-btn {
     display: flex;
     align-items: center;

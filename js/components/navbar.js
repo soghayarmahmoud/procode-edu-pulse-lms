@@ -51,12 +51,12 @@ export function renderNavbar() {
           </button>
           
           ${user ? `
-            <div class="user-mini-profile" style="display:flex; align-items:center; gap:var(--space-3); padding: var(--space-1) var(--space-2); background: var(--bg-tertiary); border-radius: 30px; border: 1px solid var(--border-subtle)">
+            <a href="#/profile" class="user-mini-profile" style="display:flex; align-items:center; gap:var(--space-3); padding: var(--space-1) var(--space-2); background: var(--bg-tertiary); border-radius: 30px; border: 1px solid var(--border-subtle); text-decoration: none; transition: all 0.2s; cursor: pointer;">
                <div class="user-avatar-sm" style="width: 28px; height: 28px; font-size: 10px;">${initial}</div>
                <div class="nav-gems" style="font-size: var(--text-xs); font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 4px;">
                   <i class="fa-solid fa-gem" style="color: #00cec9;"></i> ${storage.getGems()}
                </div>
-            </div>
+            </a>
           ` : `
             <a href="#/login" class="btn btn-sm btn-primary" style="font-size:var(--text-xs); border-radius: 20px;">
               Sign In
@@ -87,7 +87,7 @@ export function renderNavbar() {
       <div class="sidebar-content">
         <!-- User Section (if logged in) -->
         ${user ? `
-          <div class="sidebar-user-card">
+          <a href="#/profile" class="sidebar-user-card" style="display:block; text-decoration:none;">
             <div class="user-info">
               <div class="user-avatar-lg">${initial}</div>
               <div class="user-details">
@@ -105,7 +105,7 @@ export function renderNavbar() {
                 <span>${storage.getStreak?.() || 0} Day Streak</span>
               </div>
             </div>
-          </div>
+          </a>
         ` : ''}
 
         <!-- Menu Groups -->
@@ -134,6 +134,7 @@ export function renderNavbar() {
           <div class="sidebar-group">
             <h3 class="group-title">Dashboard</h3>
             <div class="group-links">
+              <a href="#/profile" class="sidebar-link"><i class="fa-solid fa-user-circle"></i> My Profile</a>
               <a href="#/analytics" class="sidebar-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
               <a href="#/gamification" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Achievements</a>
               <a href="#/search" class="sidebar-link"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
