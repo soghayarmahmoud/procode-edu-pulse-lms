@@ -16,6 +16,15 @@
     transition: background var(--transition-base), height var(--transition-base);
 }
 
+/* ── Enhanced Dark Mode Navbar ── */
+[data-theme="dark"] .navbar {
+    background: rgba(10, 11, 15, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
 .navbar .container {
     display: flex;
     align-items: center;
@@ -80,8 +89,20 @@
 }
 
 .nav-link.active {
-    color: var(--brand-primary-light);
-    background: rgba(0, 120, 212, 0.1);
+    color: var(--brand-primary);
+    background: var(--brand-gradient-soft);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* ── Enhanced Dark Mode Navigation Links ── */
+[data-theme="dark"] .nav-link:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--brand-primary);
+}
+
+[data-theme="dark"] .nav-link.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    color: var(--text-primary);
 }
 
 .nav-actions {
@@ -405,4 +426,4 @@
     .menu-btn-text {
         display: none;
     }
-}
+}

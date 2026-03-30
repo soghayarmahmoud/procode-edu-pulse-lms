@@ -36,6 +36,17 @@
     box-shadow: var(--shadow-md);
 }
 
+/* ── Enhanced Dark Mode Buttons ── */
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
 .btn-secondary {
     background: var(--bg-tertiary);
     color: var(--text-primary);
@@ -45,6 +56,19 @@
 .btn-secondary:hover {
     background: var(--bg-elevated);
     border-color: var(--border-primary);
+}
+
+/* ── Enhanced Dark Mode Secondary Buttons ── */
+[data-theme="dark"] .btn-secondary {
+    background: rgba(41, 45, 54, 0.8);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--brand-primary);
 }
 
 .btn-success {
@@ -135,6 +159,19 @@
     border-color: var(--border-primary);
     box-shadow: var(--shadow-lg);
     transform: translateY(-3px);
+}
+
+/* ── Enhanced Dark Mode Cards ── */
+[data-theme="dark"] .card {
+    background: linear-gradient(135deg, rgba(31, 34, 41, 0.9) 0%, rgba(26, 29, 35, 0.9) 100%);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .card:hover {
+    background: linear-gradient(135deg, rgba(41, 45, 54, 0.95) 0%, rgba(31, 34, 41, 0.95) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
 }
 
 .card-flat {
@@ -339,6 +376,19 @@
     box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
+/* ── Enhanced Dark Mode Input Fields ── */
+[data-theme="dark"] .input {
+    background: rgba(41, 45, 54, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .input:focus {
+    background: rgba(41, 45, 54, 0.8);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 .input::placeholder {
     color: var(--text-muted);
 }
@@ -413,6 +463,17 @@
 
 .modal-overlay.active .modal {
     transform: scale(1) translateY(0);
+}
+
+/* ── Enhanced Dark Mode Modal ── */
+[data-theme="dark"] .modal {
+    background: linear-gradient(135deg, rgba(20, 23, 28, 0.95) 0%, rgba(26, 29, 35, 0.95) 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.8);
 }
 
 .modal-header {

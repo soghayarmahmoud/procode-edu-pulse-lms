@@ -3,26 +3,30 @@
    ============================================ */
 
 :root {
-  /* ── Brand Colors ── */
-  --brand-primary: #0078D4;
-  --brand-primary-light: #3291FF;
-  --brand-primary-dark: #005A9E;
-  --brand-secondary: #00BCF2;
-  --brand-accent: #00BCF2;
-  --brand-accent-light: #50E0E0;
-  --brand-gradient: linear-gradient(135deg, #0078D4 0%, #00BCF2 100%);
-  --brand-gradient-hover: linear-gradient(135deg, #005A9E 0%, #0091D1 100%);
-  --brand-gradient-soft: linear-gradient(135deg, rgba(0, 120, 212, 0.1) 0%, rgba(0, 188, 242, 0.1) 100%);
+  /* ── Enhanced Brand Colors ── */
+  --brand-primary: #3B82F6;
+  --brand-primary-light: #60A5FA;
+  --brand-primary-dark: #2563EB;
+  --brand-secondary: #8B5CF6;
+  --brand-accent: #06B6D4;
+  --brand-accent-light: #22D3EE;
+  --brand-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  --brand-gradient-hover: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
 
-  /* ── Semantic Colors ── */
-  --color-success: #00B894;
-  --color-success-light: rgba(0, 184, 148, 0.15);
-  --color-warning: #FDCB6E;
-  --color-warning-light: rgba(253, 203, 110, 0.15);
-  --color-error: #E17055;
-  --color-error-light: rgba(225, 112, 85, 0.15);
-  --color-info: #74B9FF;
-  --color-info-light: rgba(116, 185, 255, 0.15);
+  /* ── Enhanced Semantic Colors ── */
+  --color-success: #10B981;
+  --color-success-light: rgba(16, 185, 129, 0.15);
+  --color-success-dark: #059669;
+  --color-warning: #F59E0B;
+  --color-warning-light: rgba(245, 158, 11, 0.15);
+  --color-warning-dark: #D97706;
+  --color-error: #EF4444;
+  --color-error-light: rgba(239, 68, 68, 0.15);
+  --color-error-dark: #DC2626;
+  --color-info: #06B6D4;
+  --color-info-light: rgba(6, 182, 212, 0.15);
+  --color-info-dark: #0891B2;
 
   /* ── Typography ── */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -99,31 +103,63 @@
 }
 
 /* ============================================
-   Dark Theme (Default)
+   Dark Theme (Default) - Enhanced
    ============================================ */
 :root,
 [data-theme="dark"] {
-  --bg-primary: #0F0F1A;
-  --bg-secondary: #1A1A2E;
-  --bg-tertiary: #222240;
-  --bg-elevated: #2A2A4A;
-  --bg-card: rgba(26, 26, 46, 0.8);
-  --bg-card-hover: rgba(42, 42, 74, 0.9);
-  --bg-glass: rgba(15, 15, 26, 0.7);
-  --bg-input: rgba(34, 34, 64, 0.6);
+  /* ── Enhanced Background Palette ── */
+  --bg-primary: #0A0B0F;
+  --bg-secondary: #14151A;
+  --bg-tertiary: #1A1D23;
+  --bg-elevated: #1F2229;
+  --bg-card: rgba(31, 34, 41, 0.8);
+  --bg-card-hover: rgba(41, 45, 54, 0.9);
+  --bg-glass: rgba(10, 11, 15, 0.7);
+  --bg-input: rgba(41, 45, 54, 0.6);
+  --bg-surface: #1E2128;
+  --bg-overlay: rgba(0, 0, 0, 0.8);
 
-  --border-primary: rgba(0, 120, 212, 0.2);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(0, 120, 212, 0.4);
+  /* ── Enhanced Border System ── */
+  --border-primary: rgba(59, 130, 246, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(59, 130, 246, 0.5);
+  --border-focus: rgba(59, 130, 246, 0.6);
+  --border-accent: rgba(139, 92, 246, 0.4);
 
-  --text-primary: #F0F0F8;
-  --text-secondary: #A0A0C0;
-  --text-muted: #6B6B8D;
-  --text-inverse: #0F0F1A;
+  /* ── Enhanced Typography ── */
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-inverse: #0A0B0F;
+  --text-accent: #A5B4FC;
+  --text-success: #86EFAC;
+  --text-warning: #FDE047;
+  --text-error: #FCA5A5;
 
-  --scrollbar-track: #1A1A2E;
-  --scrollbar-thumb: #3A3A5A;
-  --scrollbar-thumb-hover: #4A4A6A;
+  /* ── Enhanced Shadows for Dark Mode ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 15px 35px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.3);
+  --shadow-glow-accent: 0 0 30px rgba(139, 92, 246, 0.3);
+
+  /* ── Enhanced Scrollbar ── */
+  --scrollbar-track: #1A1D23;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748B;
+
+  /* ── Dark Mode Specific Colors ── */
+  --accent-primary: #3B82F6;
+  --accent-secondary: #8B5CF6;
+  --accent-success: #10B981;
+  --accent-warning: #F59E0B;
+  --accent-error: #EF4444;
+
+  /* ── Surface Gradients ── */
+  --surface-gradient: linear-gradient(135deg, #1A1D23 0%, #14151A 100%);
+  --card-gradient: linear-gradient(135deg, rgba(31, 34, 41, 0.9) 0%, rgba(26, 29, 35, 0.9) 100%);
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
 }
 
 /* ============================================
