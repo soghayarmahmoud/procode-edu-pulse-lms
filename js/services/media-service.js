@@ -4,6 +4,7 @@
 
 import { storage } from './storage.js';
 import { showToast } from '../utils/dom.js';
+import { CLOUDINARY_CONFIG } from '../config/env.js';
 
 /**
  * Cloudinary media upload helper.
@@ -19,15 +20,20 @@ class MediaService {
     }
 
     /**
-     * Get the current Cloudinary configuration from storage.
-     * @returns {{cloudName: string, uploadPreset: string}}
+     * Get the current Cloudinary configuration from storage or env.js.
+     * @returns {{cloudName: string, uploadPreset: string, apiKey: string}}
      */
     getConfig() {
-        return storage._get(this.configKey) || { cloudName: '', uploadPreset: '' };
+        const local = storage._get(this.configKey) || {};
+        return {
+            cloudName: CLOUDINARY_CONFIG.cloudName || local.cloudName || '',
+            uploadPreset: CLOUDINARY_CONFIG.uploadPreset || local.uploadPreset || '',
+            apiKey: CLOUDINARY_CONFIG.apiKey || local.apiKey || ''
+        };
     }
 
     /**
-     * Save the Cloudinary configuration.
+     * Save the Cloudinary configuration (overrides env values only in current session).
      * @param {string} cloudName
      * @param {string} uploadPreset
      * @returns {boolean}
@@ -38,7 +44,7 @@ class MediaService {
             return false;
         }
         storage._set(this.configKey, { cloudName, uploadPreset });
-        showToast('Cloudinary configuration saved!', 'success');
+        showToast('Cloudinary configuration updated for this session!', 'success');
         return true;
     }
 

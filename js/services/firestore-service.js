@@ -267,6 +267,44 @@ class FirestoreService {
     }
 
     /**
+     * Save daily activity map to Firestore.
+     * @param {string} uid
+     * @param {object} dailyActivity
+     * @returns {Promise<void>}
+     */
+    async saveDailyActivity(uid, dailyActivity) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                daily_activity: dailyActivity,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveDailyActivity failed:', e);
+        }
+    }
+
+    /**
+     * Save bookmarks to Firestore.
+     * @param {string} uid
+     * @param {Array<string>} bookmarks
+     * @returns {Promise<void>}
+     */
+    async saveBookmarks(uid, bookmarks) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                bookmarks,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore saveBookmarks failed:', e);
+        }
+    }
+
+    /**
      * Get all reviews for a course.
      * @param {string} courseId
      * @returns {Promise<Array<object>>}

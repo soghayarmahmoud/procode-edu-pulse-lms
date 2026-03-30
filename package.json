@@ -4,6 +4,9 @@
   "description": "A professional Learning Management System for coding education.",
   "main": "js/app.js",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -23,6 +26,7 @@
   "devDependencies": {
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
-    "eslint-config-prettier": "^9.1.0"
+    "eslint-config-prettier": "^9.1.0",
+    "vite": "^5.0.0"
   }
 }
