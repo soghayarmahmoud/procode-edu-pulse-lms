@@ -3,18 +3,22 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Helper: Is the user an administrator?
-    // Checks both root-level isAdmin and legacy profile.isAdmin
+    // Checks email token natively, then document flags
     function isAdmin() {
       return request.auth != null && (
+        request.auth.token.email == "mahmoudsruby@gmail.com" ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.profile.isAdmin == true
       );
     }
 
-    // User Profiles: Users can only read/write their own data, Admins can do both
+    // User Profiles: Users can only read their own, Admins can do both.
+    // Fixed privilege escalation bug: users cannot modify their own isAdmin field.
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && (isAdmin() || (request.auth.uid == userId && !('isAdmin' in request.resource.data) && (!('profile' in request.resource.data) || !('isAdmin' in request.resource.data.profile))));
+      allow update: if request.auth != null && (isAdmin() || (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) && (!('profile' in request.resource.data) || !('isAdmin' in request.resource.data.profile) || request.resource.data.profile.isAdmin == resource.data.profile.isAdmin)));
+      allow delete: if isAdmin();
     }
 
     // Course Reviews: Nested structure /course_reviews/{courseId}/reviews/{reviewId}

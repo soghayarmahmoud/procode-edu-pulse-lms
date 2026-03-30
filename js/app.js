@@ -502,14 +502,7 @@ function renderLoginPage() {
             const uid = authService.getUid();
             const name = authService.getDisplayName();
             if (uid) {
-                storage.updateProfile({ name });
-                await firestoreService.syncLocalToCloud(uid, {
-                    profile: storage.getProfile(),
-                    progress: storage.getProgress(),
-                    submissions: storage.getSubmissions(),
-                    enrollments: storage.getEnrollments(),
-                    notes: storage._get('notes') || {}
-                });
+                await storage.hydrateFromCloud(); // Pull existing cloud data back to local storage
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             await startMainApp();
@@ -599,6 +592,7 @@ function renderSignupPage() {
                     submissions: {},
                     notes: {}
                 });
+                await storage.hydrateFromCloud();
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             localStorage.setItem('procode_user_name', name);
@@ -621,13 +615,7 @@ function renderSignupPage() {
             const name = authService.getDisplayName();
             if (uid) {
                 storage.updateProfile({ name });
-                await firestoreService.syncLocalToCloud(uid, {
-                    profile: storage.getProfile(),
-                    progress: storage.getProgress(),
-                    enrollments: storage.getEnrollments(),
-                    submissions: storage.getSubmissions(),
-                    notes: storage._get('notes') || {}
-                });
+                await storage.hydrateFromCloud(); // Pull data from Firestore
             }
             localStorage.setItem('procode_onboarding_done', 'true');
             await startMainApp();

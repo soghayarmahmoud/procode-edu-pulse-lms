@@ -92,6 +92,12 @@ class StorageService {
                 case 'active_time':
                     firestoreService.saveActivityTime(uid, value);
                     break;
+                case 'daily_activity':
+                    firestoreService.saveDailyActivity(uid, value);
+                    break;
+                case 'bookmarks':
+                    firestoreService.saveBookmarks(uid, value);
+                    break;
             }
         }, 0);
     }
@@ -141,6 +147,44 @@ class StorageService {
         }
         if (!this._get('bookmarks')) {
             this._set('bookmarks', []);
+        }
+    }
+
+    /**
+     * Restore all localStorage data from Firestore (hydration).
+     * @returns {Promise<boolean>}
+     */
+    async hydrateFromCloud() {
+        const uid = authService.getUid();
+        if (!uid) return false;
+
+        try {
+            const cloudData = await firestoreService.loadCloudData(uid);
+            if (!cloudData) return false;
+
+            const map = {
+                'profile': cloudData.profile,
+                'progress': cloudData.progress,
+                'submissions': cloudData.submissions,
+                'notes': cloudData.notes,
+                'enrollments': cloudData.enrollments,
+                'certifications': cloudData.certifications,
+                'active_time': cloudData.active_time,
+                'daily_activity': cloudData.daily_activity,
+                'bookmarks': cloudData.bookmarks,
+                'first_access': cloudData.first_access
+            };
+
+            for (const [key, val] of Object.entries(map)) {
+                if (val !== undefined && val !== null) {
+                    // Update local storage WITHOUT triggering another cloud sync loop
+                    localStorage.setItem(this._key(key), JSON.stringify(val));
+                }
+            }
+            return true;
+        } catch (e) {
+            console.error('Hydration failed:', e);
+            return false;
         }
     }
 
