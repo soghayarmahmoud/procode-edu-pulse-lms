@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [
     "lms",
@@ -27,6 +27,7 @@
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "eslint-config-prettier": "^9.1.0",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
   }
 }
