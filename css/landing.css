@@ -169,6 +169,14 @@
     font-style: italic;
 }
 
+/* Light Mode Overrides for Hero Code */
+[data-theme="light"] .hero-code .keyword { color: #8039b4; }
+[data-theme="light"] .hero-code .function { color: #0056b3; }
+[data-theme="light"] .hero-code .string { color: #2d8a4e; }
+[data-theme="light"] .hero-code .tag { color: #b91d1d; }
+[data-theme="light"] .hero-code .attr { color: #a35200; }
+[data-theme="light"] .hero-code .comment { color: #525252; }
+
 /* ── Stats Bar ── */
 .stats-bar {
     display: flex;

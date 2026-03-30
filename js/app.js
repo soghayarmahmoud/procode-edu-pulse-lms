@@ -469,8 +469,7 @@ function renderLoginPage() {
 
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner-sm"></div> Signing in...';
-        alert.className = 'auth-alert';
-        alert.style.display = 'none';
+        alert.classList.remove('visible', 'error', 'success');
 
         try {
             await authService.signIn(email, password);
@@ -488,7 +487,7 @@ function renderLoginPage() {
             await startMainApp();
             window.location.hash = '/';
         } catch (err) {
-            alert.className = 'auth-alert error visible';
+            alert.classList.add('error', 'visible');
             alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
@@ -517,7 +516,7 @@ function renderLoginPage() {
             window.location.hash = '/';
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
-                alert.className = 'auth-alert error visible';
+                alert.classList.add('error', 'visible');
                 alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
             }
         }
@@ -584,8 +583,7 @@ function renderSignupPage() {
 
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner-sm"></div> Creating account...';
-        alert.className = 'auth-alert';
-        alert.style.display = 'none';
+        alert.classList.remove('visible', 'error', 'success');
 
         try {
             await authService.signUp(email, password, name);
@@ -607,7 +605,7 @@ function renderSignupPage() {
             await startMainApp();
             window.location.hash = '/';
         } catch (err) {
-            alert.className = 'auth-alert error visible';
+            alert.classList.add('error', 'visible');
             alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
@@ -636,7 +634,7 @@ function renderSignupPage() {
             window.location.hash = '/';
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
-                alert.className = 'auth-alert error visible';
+                alert.classList.add('error', 'visible');
                 alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
             }
         }
@@ -653,7 +651,12 @@ function getAuthErrorMessage(code) {
         'auth/invalid-credential': 'Invalid email or password. Please try again.',
         'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
         'auth/popup-closed-by-user': 'Sign-in popup was closed.',
-        'auth/network-request-failed': 'Network error. Check your internet connection.',
+        'auth/popup-blocked': 'Popup blocked by browser. Please allow popups for this site.',
+        'auth/cancelled-popup-request': 'Sign-in request was cancelled.',
+        'auth/unauthorized-domain': 'This domain is not authorized for this project. Please add it in Firebase Console.',
+        'auth/operation-not-allowed': 'This sign-in method is not enabled. Please enable it in Firebase Console.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/account-exists-with-different-credential': 'An account already exists with the same email address but different sign-in credentials.',
     };
     return messages[code] || 'An error occurred. Please try again.';
 }
@@ -986,53 +989,6 @@ function renderLanding() {
         </div>
       </div>
     </section>
-
-    <footer class="site-footer">
-      <div class="container">
-        <div class="footer-grid">
-          <div class="footer-brand">
-            <div class="footer-logo">
-              <img src="${base}logo.png" alt="ProCode" onerror="this.style.display='none'">
-              <span><span style="color:var(--brand-primary-light)">Pro</span>Code</span>
-            </div>
-            <p class="footer-desc">
-              Transform from a YouTube viewer into a confident developer with structured courses, 
-              interactive challenges, and AI-powered guidance.
-            </p>
-          </div>
-          <div class="footer-column">
-            <h4>Platform</h4>
-            <div class="footer-links">
-              <a href="#/courses">Courses</a>
-              <a href="#/portfolio">Portfolio</a>
-              <a href="#/profile">Profile</a>
-            </div>
-          </div>
-          <div class="footer-column">
-            <h4>Resources</h4>
-            <div class="footer-links">
-              <a href="https://developer.mozilla.org" target="_blank">MDN Docs</a>
-              <a href="https://www.w3schools.com" target="_blank">W3Schools</a>
-              <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank">GitHub</a>
-            </div>
-          </div>
-          <div class="footer-column">
-            <h4>Connect</h4>
-            <div class="footer-links">
-              <a href="https://youtube.com/@procode4u" target="_blank"><i class="fa-brands fa-youtube"></i> @procode4u</a>
-              <a href="https://github.com/soghayarmahmoud" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <span>&copy; ${new Date().getFullYear()} ProCode EduPulse. Built with <i class="fa-solid fa-heart" style="color:var(--color-error)"></i> for learners.</span>
-          <div class="footer-social">
-            <a href="https://github.com/soghayarmahmoud/procode-edu-pulse-lms" target="_blank" title="GitHub"><i class="fa-brands fa-github"></i></a>
-            <a href="https://youtube.com/@procode4u" target="_blank" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
-          </div>
-        </div>
-      </div>
-    </footer>
   `;
 
     animateOnScroll();
