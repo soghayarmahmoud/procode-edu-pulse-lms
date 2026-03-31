@@ -113,6 +113,10 @@ export class AdminDashboard {
                             <i class="fa-solid fa-list-check" style="width:24px; text-align:center;"></i> Tasks Manager
                         </button>
 
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'portfolios' ? 'active' : ''}" data-tab="portfolios" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-briefcase" style="width:24px; text-align:center;"></i> Portfolio Manager
+                        </button>
+
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'gamification' ? 'active' : ''}" data-tab="gamification" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
                             <i class="fa-solid fa-gem" style="width:24px; text-align:center;"></i> Gamification Modifiers
                         </button>
@@ -131,9 +135,9 @@ export class AdminDashboard {
                         
                         <div style="display:flex; align-items:center; gap:var(--space-4);">
                             <button class="btn btn-ghost btn-icon"><i class="fa-regular fa-bell"></i></button>
-                            <div style="width:36px; height:36px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                            <a href="#/profile" style="width:36px; height:36px; border-radius:50%; background:var(--brand-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; text-decoration:none; cursor:pointer;" title="Go to Profile">
                                 ${user.displayName ? user.displayName.charAt(0).toUpperCase() : 'A'}
-                            </div>
+                            </a>
                         </div>
                     </header>
 
@@ -238,6 +242,10 @@ export class AdminDashboard {
                 case 'tasks':
                     title.innerHTML = 'Tasks Manager';
                     this._renderTasksTab(area);
+                    break;
+                case 'portfolios':
+                    title.innerHTML = 'Portfolio Manager';
+                    this._renderPortfoliosTab(area);
                     break;
             }
             
@@ -1713,6 +1721,143 @@ export class AdminDashboard {
                 document.getElementById('task-reward').value = t.reward || 100;
                 document.getElementById('task-content').value = t.content || '';
                 document.getElementById('task-id').scrollIntoView();
+            };
+        });
+    }
+
+    // ── Portfolios Manager ──
+    _renderPortfoliosTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
+                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(0, 206, 201, 0.1); color:#00cec9; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;">Create / Edit Portfolio Projects</h3>
+                            <p class="text-muted" style="font-size:0.9rem;">Add tutorial projects to the portfolio showcase.</p>
+                        </div>
+                    </div>
+                    <form id="portfolio-builder-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Project ID (unique-slug)</label>
+                                <input type="text" id="portfolio-id" class="input" placeholder="e.g. build-a-calculator" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Project Title</label>
+                                <input type="text" id="portfolio-title" class="input" placeholder="e.g. Build a Web Calculator" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Difficulty</label>
+                                <select id="portfolio-difficulty" class="input">
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Estimated Time (e.g. 2h)</label>
+                                <input type="text" id="portfolio-time" class="input" value="2h">
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Description (Short)</label>
+                            <textarea id="portfolio-desc" class="input textarea" rows="2" placeholder="Brief summary for the card..." required></textarea>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Tutorial Content (Markdown)</label>
+                            <textarea id="portfolio-content" class="input textarea" rows="10" placeholder="# Step 1..." required></textarea>
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" id="btn-save-portfolio" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Project</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Manage Projects</h3>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-portfolios"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="portfolios-list-container">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+            </div>`;
+            
+        this._initPortfolioBuilderLogic();
+    }
+
+    _initPortfolioBuilderLogic() {
+        const btnSave = document.getElementById('btn-save-portfolio');
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                const form = document.getElementById('portfolio-builder-form');
+                if (!form.checkValidity()) { form.reportValidity(); return; }
+                btnSave.disabled = true;
+                const portfolioData = {
+                    id: document.getElementById('portfolio-id').value.trim(),
+                    title: document.getElementById('portfolio-title').value.trim(),
+                    difficulty: document.getElementById('portfolio-difficulty').value,
+                    estimatedTime: document.getElementById('portfolio-time').value.trim(),
+                    description: document.getElementById('portfolio-desc').value.trim(),
+                    content: document.getElementById('portfolio-content').value
+                };
+                const ok = await firestoreService.saveDynamicPortfolio(portfolioData);
+                if (ok) {
+                    showToast('Project saved!', 'success');
+                    form.reset();
+                    this._loadExistingPortfolios();
+                } else {
+                    showToast('Failed to save project.', 'error');
+                }
+                btnSave.disabled = false;
+            };
+        }
+        const refreshBtn = document.getElementById('btn-refresh-portfolios');
+        if (refreshBtn) refreshBtn.onclick = () => this._loadExistingPortfolios();
+        setTimeout(() => this._loadExistingPortfolios(), 100);
+    }
+
+    async _loadExistingPortfolios() {
+        const lc = document.getElementById('portfolios-list-container');
+        if (!lc) return;
+        lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const portfolios = await firestoreService.getDynamicPortfolios();
+        if (portfolios.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No projects found.</div>';
+            return;
+        }
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${portfolios.map(p => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div><strong style="color:var(--text-primary);">${p.title}</strong></div>
+                <div style="display:flex; gap:var(--space-2);">
+                    <button class="btn btn-ghost btn-sm btn-edit-portfolio" data-json='${JSON.stringify(p).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-portfolio" data-id="${p.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('')}</div>`;
+
+        lc.querySelectorAll('.btn-delete-portfolio').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this project?')) return;
+                await firestoreService.deleteDynamicPortfolio(btn.dataset.id);
+                this._loadExistingPortfolios();
+            };
+        });
+        lc.querySelectorAll('.btn-edit-portfolio').forEach(btn => {
+            btn.onclick = () => {
+                const p = JSON.parse(btn.dataset.json);
+                document.getElementById('portfolio-id').value = p.id;
+                document.getElementById('portfolio-title').value = p.title;
+                document.getElementById('portfolio-difficulty').value = p.difficulty || 'Beginner';
+                document.getElementById('portfolio-time').value = p.estimatedTime || '2h';
+                document.getElementById('portfolio-desc').value = p.description || '';
+                document.getElementById('portfolio-content').value = p.content || '';
+                document.getElementById('portfolio-id').scrollIntoView();
             };
         });
     }

