@@ -42,6 +42,8 @@ export class AdminDashboard {
         try {
             const userDoc = await firestoreService.getUserProfile(user.uid);
             // Some profiles might have data nested under .profile
+            let isAdmin = userDoc?.isAdmin || (userDoc?.profile && userDoc.profile.isAdmin) || false;
+            
             // Super Admin Fallback for immediate access
             if (user.email === 'mahmoudsruby@gmail.com') {
                 isAdmin = true;
@@ -101,6 +103,14 @@ export class AdminDashboard {
 
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'challenges' ? 'active' : ''}" data-tab="challenges" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
                             <i class="fa-solid fa-code" style="width:24px; text-align:center;"></i> Challenge Builder
+                        </button>
+
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'docs' ? 'active' : ''}" data-tab="docs" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-file-code" style="width:24px; text-align:center;"></i> Docs Manager
+                        </button>
+                        
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'tasks' ? 'active' : ''}" data-tab="tasks" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-list-check" style="width:24px; text-align:center;"></i> Tasks Manager
                         </button>
 
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'gamification' ? 'active' : ''}" data-tab="gamification" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
@@ -220,6 +230,14 @@ export class AdminDashboard {
                 case 'gamification':
                     title.innerHTML = 'Gamification Logic Modifiers';
                     this._renderGamificationTab(area);
+                    break;
+                case 'docs':
+                    title.innerHTML = 'Documentation Manager';
+                    this._renderDocsTab(area);
+                    break;
+                case 'tasks':
+                    title.innerHTML = 'Tasks Manager';
+                    this._renderTasksTab(area);
                     break;
             }
             
@@ -675,12 +693,43 @@ export class AdminDashboard {
                         </div>
                     </form>
                 </div>
+
+                <!-- Manage Existing Courses -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Manage Existing Courses</h3>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-courses"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="courses-list-container">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Manage Existing Lessons -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Manage Existing Lessons</h3>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-lessons"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="lessons-list-container">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
             </div>
         `;
         
         // Initialize dynamic logic for this tab
         this._initCourseBuilderLogic();
         this._initMarkdownPreview();
+        setTimeout(() => {
+            this._loadExistingCourses();
+            this._loadExistingLessons();
+        }, 100);
     }
 
     /**
@@ -898,6 +947,11 @@ export class AdminDashboard {
                 btnSaveLesson.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Lesson to Cloud';
             };
         }
+
+        const btnRefreshCourses = document.getElementById('btn-refresh-courses');
+        if (btnRefreshCourses) btnRefreshCourses.onclick = () => this._loadExistingCourses();
+        const btnRefreshLessons = document.getElementById('btn-refresh-lessons');
+        if (btnRefreshLessons) btnRefreshLessons.onclick = () => this._loadExistingLessons();
     }
 
     /**
@@ -941,6 +995,108 @@ export class AdminDashboard {
         options.forEach(opt => {
             const searchData = opt.dataset.search || '';
             opt.style.display = searchData.includes(query) ? 'flex' : 'none';
+        });
+    }
+
+    async _loadExistingCourses() {
+        const lc = document.getElementById('courses-list-container');
+        if (!lc) return;
+        lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const courses = await firestoreService.getDynamicCourses();
+        if (courses.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No dynamic courses found.</div>';
+            return;
+        }
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${courses.map(c => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div><strong style="color:var(--text-primary);">${c.title}</strong> <span class="text-muted text-sm" style="margin-left:8px;">${c.id}</span></div>
+                <div style="display:flex; gap:var(--space-2);">
+                    <button class="btn btn-ghost btn-sm btn-edit-course" data-json='${JSON.stringify(c).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-course" data-id="${c.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('')}</div>`;
+
+        lc.querySelectorAll('.btn-delete-course').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this course permanently?')) return;
+                await firestoreService.deleteDynamicCourse(btn.dataset.id);
+                this._loadExistingCourses();
+            };
+        });
+
+        lc.querySelectorAll('.btn-edit-course').forEach(btn => {
+            btn.onclick = () => {
+                const c = JSON.parse(btn.dataset.json);
+                document.getElementById('course-id').value = c.id;
+                document.getElementById('course-title').value = c.title || '';
+                document.getElementById('course-icon').value = c.icon || 'fa-solid fa-code';
+                document.getElementById('course-difficulty').value = c.difficulty || 'Beginner';
+                document.getElementById('course-desc').value = c.description || '';
+                document.getElementById('course-total-lessons').value = c.totalLessons || 10;
+                this.courseThumbnail = c.thumbnail || '';
+                if (c.thumbnail) {
+                    const preview = document.getElementById('thumbnail-preview');
+                    if (preview) preview.innerHTML = `<img src="${c.thumbnail}" style="width:100%; height:100%; object-fit:cover;">`;
+                }
+                document.getElementById('course-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+        });
+    }
+
+    async _loadExistingLessons() {
+        const lc = document.getElementById('lessons-list-container');
+        if (!lc) return;
+        lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const lessons = await firestoreService.getDynamicLessons();
+        if (lessons.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No dynamic lessons found.</div>';
+            return;
+        }
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${lessons.map(l => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div style="display:flex; flex-direction:column;">
+                    <strong style="color:var(--text-primary);">${l.title}</strong>
+                    <span class="text-muted text-sm">Course: ${l.courseId} &bull; ${l.id}</span>
+                </div>
+                <div style="display:flex; gap:var(--space-2); align-items:center;">
+                    <button class="btn btn-ghost btn-sm btn-edit-lesson" data-json='${JSON.stringify(l).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-lesson" data-id="${l.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('')}</div>`;
+
+        lc.querySelectorAll('.btn-delete-lesson').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this lesson permanently?')) return;
+                await firestoreService.deleteDynamicLesson(btn.dataset.id);
+                this._loadExistingLessons();
+            };
+        });
+
+        lc.querySelectorAll('.btn-edit-lesson').forEach(btn => {
+            btn.onclick = () => {
+                const l = JSON.parse(btn.dataset.json);
+                document.getElementById('lesson-id').value = l.id;
+                document.getElementById('lesson-course-id').value = l.courseId;
+                document.getElementById('lesson-title').value = l.title || '';
+                document.getElementById('lesson-type').value = l.type || 'theory';
+                document.getElementById('lesson-youtube').value = l.youtubeId || '';
+                document.getElementById('lesson-duration').value = l.duration || '10 min';
+                document.getElementById('lesson-order').value = l.order || 1;
+                document.getElementById('lesson-content').value = l.content || '';
+                
+                const display = document.getElementById('lesson-course-display');
+                if (display && l.courseId) {
+                    const valueDisplay = display.querySelector('.custom-select-value');
+                    valueDisplay.textContent = l.courseId;
+                    valueDisplay.classList.remove('text-muted');
+                    valueDisplay.style.color = 'var(--text-primary)';
+                }
+                
+                this.lessonVideoUrl = l.videoUrl || '';
+                const ev = new Event('input', { bubbles: true });
+                document.getElementById('lesson-content').dispatchEvent(ev);
+                document.getElementById('lesson-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
         });
     }
 
@@ -1095,7 +1251,10 @@ export class AdminDashboard {
                     <div style="width:36px; height:36px; border-radius:8px; background:rgba(231,76,60,0.1); display:flex; align-items:center; justify-content:center; color:var(--color-error);"><i class="fa-solid fa-code"></i></div>
                     <div><div style="font-weight:600;">${ch.title || ch.id}</div><div class="text-muted" style="font-size:0.8rem;">${ch.language || 'html'} &bull; ${ch.difficulty || 'Medium'} &bull; ${ch.type || 'frontend'}</div></div>
                 </div>
-                <button class="btn btn-ghost btn-sm btn-delete-challenge" data-id="${ch.id}" title="Delete" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                <div style="display:flex; gap:var(--space-2);">
+                    <button class="btn btn-ghost btn-sm btn-edit-challenge" data-json='${JSON.stringify(ch).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-challenge" data-id="${ch.id}" title="Delete" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>`).join('')}</div>`;
         lc.querySelectorAll('.btn-delete-challenge').forEach(btn => {
             btn.onclick = async () => {
@@ -1104,6 +1263,22 @@ export class AdminDashboard {
                 const ok = await firestoreService.deleteDynamicChallenge(btn.dataset.id);
                 if (ok) { showToast('Challenge deleted.', 'success'); this._loadExistingChallenges(); }
                 else { showToast('Failed to delete.', 'error'); btn.disabled = false; }
+            };
+        });
+        lc.querySelectorAll('.btn-edit-challenge').forEach(btn => {
+            btn.onclick = () => {
+                const c = JSON.parse(btn.dataset.json);
+                document.getElementById('challenge-id').value = c.id;
+                document.getElementById('challenge-title').value = c.title || '';
+                document.getElementById('challenge-difficulty').value = c.difficulty || 'Easy';
+                document.getElementById('challenge-language').value = c.language || 'html';
+                document.getElementById('challenge-type').value = c.type || 'frontend';
+                document.getElementById('challenge-course-id').value = c.courseId || '';
+                document.getElementById('challenge-instructions').value = c.instructions || '';
+                document.getElementById('challenge-starter-code').value = c.starterCode || '';
+                const testCodeVal = c.type === 'frontend' ? (c.validationRules ? JSON.stringify(c.validationRules) : '') : (c.testCode || '');
+                document.getElementById('challenge-test-code').value = testCodeVal;
+                document.getElementById('challenge-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
             };
         });
     }
@@ -1282,5 +1457,263 @@ export class AdminDashboard {
                     <a href="#/" class="btn btn-primary">Return Home</a>
                 </div>
             </div>`;
+    }
+
+    // ── Docs Manager ──
+    _renderDocsTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
+                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(0, 120, 212, 0.1); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                            <i class="fa-solid fa-file-code"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;">Create / Edit Documentation</h3>
+                            <p class="text-muted" style="font-size:0.9rem;">Write articles, tutorials, or api guides.</p>
+                        </div>
+                    </div>
+                    <form id="doc-builder-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Doc ID (unique-slug)</label>
+                                <input type="text" id="doc-id" class="input" placeholder="e.g. intro-to-react" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Doc Title</label>
+                                <input type="text" id="doc-title" class="input" placeholder="e.g. Introduction to React" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Category</label>
+                                <input type="text" id="doc-category" class="input" placeholder="e.g. Guides" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Order #</label>
+                                <input type="number" id="doc-order" class="input" value="1">
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Content (Markdown)</label>
+                            <textarea id="doc-content" class="input textarea" rows="10" placeholder="# Overview..." required></textarea>
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" id="btn-save-doc" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Doc</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Manage Docs</h3>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-docs"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="docs-list-container">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+            </div>`;
+            
+        this._initDocBuilderLogic();
+    }
+
+    _initDocBuilderLogic() {
+        const btnSave = document.getElementById('btn-save-doc');
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                const form = document.getElementById('doc-builder-form');
+                if (!form.checkValidity()) { form.reportValidity(); return; }
+                btnSave.disabled = true;
+                const docData = {
+                    id: document.getElementById('doc-id').value.trim(),
+                    title: document.getElementById('doc-title').value.trim(),
+                    category: document.getElementById('doc-category').value.trim(),
+                    order: parseInt(document.getElementById('doc-order').value, 10),
+                    content: document.getElementById('doc-content').value
+                };
+                const ok = await firestoreService.saveDynamicDoc(docData);
+                if (ok) {
+                    showToast('Doc saved!', 'success');
+                    form.reset();
+                    this._loadExistingDocs();
+                } else {
+                    showToast('Failed to save doc.', 'error');
+                }
+                btnSave.disabled = false;
+            };
+        }
+        const refreshBtn = document.getElementById('btn-refresh-docs');
+        if (refreshBtn) refreshBtn.onclick = () => this._loadExistingDocs();
+        setTimeout(() => this._loadExistingDocs(), 100);
+    }
+
+    async _loadExistingDocs() {
+        const lc = document.getElementById('docs-list-container');
+        if (!lc) return;
+        lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const docs = await firestoreService.getDynamicDocs();
+        if (docs.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No docs found.</div>';
+            return;
+        }
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${docs.map(d => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div><strong style="color:var(--text-primary);">${d.title}</strong></div>
+                <div style="display:flex; gap:var(--space-2);">
+                    <button class="btn btn-ghost btn-sm btn-edit-doc" data-json='${JSON.stringify(d).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-doc" data-id="${d.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('')}</div>`;
+
+        lc.querySelectorAll('.btn-delete-doc').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this doc?')) return;
+                await firestoreService.deleteDynamicDoc(btn.dataset.id);
+                this._loadExistingDocs();
+            };
+        });
+        lc.querySelectorAll('.btn-edit-doc').forEach(btn => {
+            btn.onclick = () => {
+                const d = JSON.parse(btn.dataset.json);
+                document.getElementById('doc-id').value = d.id;
+                document.getElementById('doc-title').value = d.title;
+                document.getElementById('doc-category').value = d.category || '';
+                document.getElementById('doc-order').value = d.order || 1;
+                document.getElementById('doc-content').value = d.content || '';
+                document.getElementById('doc-id').scrollIntoView();
+            };
+        });
+    }
+
+    // ── Tasks Manager ──
+    _renderTasksTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
+                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(46, 204, 113, 0.1); color:var(--color-success); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;">Create / Edit Tasks</h3>
+                            <p class="text-muted" style="font-size:0.9rem;">Assign standalone projects or tasks.</p>
+                        </div>
+                    </div>
+                    <form id="task-builder-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Task ID (unique-slug)</label>
+                                <input type="text" id="task-id" class="input" placeholder="e.g. portfolio-cli" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Task Title</label>
+                                <input type="text" id="task-title" class="input" placeholder="e.g. Build a Portfolio CLI" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Difficulty</label>
+                                <select id="task-difficulty" class="input">
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Reward (XP / Gems)</label>
+                                <input type="number" id="task-reward" class="input" value="100">
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Description & Requirements (Markdown)</label>
+                            <textarea id="task-content" class="input textarea" rows="6" placeholder="Objective..." required></textarea>
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" id="btn-save-task" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Task</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <div>
+                            <h3 style="margin:0;"><i class="fa-solid fa-list"></i> Manage Tasks</h3>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-refresh-tasks"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="tasks-list-container">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+            </div>`;
+            
+        this._initTaskBuilderLogic();
+    }
+
+    _initTaskBuilderLogic() {
+        const btnSave = document.getElementById('btn-save-task');
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                const form = document.getElementById('task-builder-form');
+                if (!form.checkValidity()) { form.reportValidity(); return; }
+                btnSave.disabled = true;
+                const taskData = {
+                    id: document.getElementById('task-id').value.trim(),
+                    title: document.getElementById('task-title').value.trim(),
+                    difficulty: document.getElementById('task-difficulty').value,
+                    reward: parseInt(document.getElementById('task-reward').value, 10),
+                    content: document.getElementById('task-content').value
+                };
+                const ok = await firestoreService.saveDynamicTask(taskData);
+                if (ok) {
+                    showToast('Task saved!', 'success');
+                    form.reset();
+                    this._loadExistingTasks();
+                } else {
+                    showToast('Failed to save task.', 'error');
+                }
+                btnSave.disabled = false;
+            };
+        }
+        const refreshBtn = document.getElementById('btn-refresh-tasks');
+        if (refreshBtn) refreshBtn.onclick = () => this._loadExistingTasks();
+        setTimeout(() => this._loadExistingTasks(), 100);
+    }
+
+    async _loadExistingTasks() {
+        const lc = document.getElementById('tasks-list-container');
+        if (!lc) return;
+        lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const tasks = await firestoreService.getDynamicTasks();
+        if (tasks.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No tasks found.</div>';
+            return;
+        }
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${tasks.map(t => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div><strong style="color:var(--text-primary);">${t.title}</strong></div>
+                <div style="display:flex; gap:var(--space-2);">
+                    <button class="btn btn-ghost btn-sm btn-edit-task" data-json='${JSON.stringify(t).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm btn-delete-task" data-id="${t.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('')}</div>`;
+
+        lc.querySelectorAll('.btn-delete-task').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm('Delete this task?')) return;
+                await firestoreService.deleteDynamicTask(btn.dataset.id);
+                this._loadExistingTasks();
+            };
+        });
+        lc.querySelectorAll('.btn-edit-task').forEach(btn => {
+            btn.onclick = () => {
+                const t = JSON.parse(btn.dataset.json);
+                document.getElementById('task-id').value = t.id;
+                document.getElementById('task-title').value = t.title;
+                document.getElementById('task-difficulty').value = t.difficulty || 'Beginner';
+                document.getElementById('task-reward').value = t.reward || 100;
+                document.getElementById('task-content').value = t.content || '';
+                document.getElementById('task-id').scrollIntoView();
+            };
+        });
     }
 }

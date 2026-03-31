@@ -657,6 +657,98 @@ class FirestoreService {
     }
 
     // ==========================================
+    // DOCS READ, WRITE, DELETE
+    // ==========================================
+
+    async saveDynamicDoc(docData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_docs', docData.id);
+            await setDoc(ref, {
+                ...docData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic doc:', e);
+            return false;
+        }
+    }
+
+    async getDynamicDocs() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_docs'));
+            const docsList = [];
+            snap.forEach(d => docsList.push({ ...d.data(), id: d.id }));
+            return docsList;
+        } catch (e) {
+            console.error('Error getting dynamic docs:', e);
+            return [];
+        }
+    }
+
+    async deleteDynamicDoc(docId) {
+        if (!isFirebaseConfigured() || !docId) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_docs', docId));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic doc:', e);
+            return false;
+        }
+    }
+
+    // ==========================================
+    // TASKS READ, WRITE, DELETE
+    // ==========================================
+
+    async saveDynamicTask(taskData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_tasks', taskData.id);
+            await setDoc(ref, {
+                ...taskData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic task:', e);
+            return false;
+        }
+    }
+
+    async getDynamicTasks() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_tasks'));
+            const tasksList = [];
+            snap.forEach(d => tasksList.push({ ...d.data(), id: d.id }));
+            return tasksList;
+        } catch (e) {
+            console.error('Error getting dynamic tasks:', e);
+            return [];
+        }
+    }
+
+    async deleteDynamicTask(taskId) {
+        if (!isFirebaseConfigured() || !taskId) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_tasks', taskId));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic task:', e);
+            return false;
+        }
+    }
+
+    // ==========================================
     // ADMIN USER MANAGEMENT
     // ==========================================
 
