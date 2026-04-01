@@ -111,8 +111,8 @@ export function renderFooter() {
     `;
 
     // Append/Replace in body
-    const existing = $('#footer');
-    if (existing) existing.remove();
+    document.querySelectorAll('footer, .footer').forEach(f => f.remove());
+    
     
     // We want it at the end of the body or after #app
     const app = $('#app');

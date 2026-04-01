@@ -749,6 +749,52 @@ class FirestoreService {
     }
 
     // ==========================================
+    // PORTFOLIOS READ, WRITE, DELETE
+    // ==========================================
+
+    async saveDynamicPortfolio(portfolioData) {
+        if (!isFirebaseConfigured()) return false;
+        try {
+            const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, 'dynamic_portfolios', portfolioData.id);
+            await setDoc(ref, {
+                ...portfolioData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error('Error saving dynamic portfolio:', e);
+            return false;
+        }
+    }
+
+    async getDynamicPortfolios() {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'dynamic_portfolios'));
+            const portfoliosList = [];
+            snap.forEach(d => portfoliosList.push({ ...d.data(), id: d.id }));
+            return portfoliosList;
+        } catch (e) {
+            console.error('Error getting dynamic portfolios:', e);
+            return [];
+        }
+    }
+
+    async deleteDynamicPortfolio(portfolioId) {
+        if (!isFirebaseConfigured() || !portfolioId) return false;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            await deleteDoc(doc(db, 'dynamic_portfolios', portfolioId));
+            return true;
+        } catch (e) {
+            console.error('Error deleting dynamic portfolio:', e);
+            return false;
+        }
+    }
+
+    // ==========================================
     // ADMIN USER MANAGEMENT
     // ==========================================
 

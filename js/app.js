@@ -7,7 +7,7 @@ import { $, $$, animateOnScroll, showToast } from './utils/dom.js';
 import { storage } from './services/storage.js';
 import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
-import { PortfolioComponent } from './components/portfolio.js';
+import { PortfolioComponent, renderPortfolioProject } from './components/portfolio.js';
 import { authService } from './services/auth-service.js';
 import { firestoreService } from './services/firestore-service.js';
 import { isFirebaseConfigured } from './services/firebase-config.js';
@@ -3783,6 +3783,7 @@ async function startMainApp() {
         .on('/docs/:docId', (params) => transitionPage(() => renderDocsPage(params), `#/docs/${params.docId}`))
         .on('/styleguide', () => transitionPage(renderStyleguide, '#/styleguide'))
         .on('/portfolio', () => transitionPage(renderPortfolio, '#/portfolio'))
+        .on('/portfolio/:id', (params) => transitionPage(() => renderPortfolioProject(params), `#/portfolio/${params.id}`))
         .on('/analytics', () => transitionPage(renderAnalytics, '#/analytics'))
         .on('/recommendations', () => transitionPage(renderAIRecommendations, '#/recommendations'))
         .on('/collaborate', () => transitionPage(renderCollaborativeCoding, '#/collaborate'))

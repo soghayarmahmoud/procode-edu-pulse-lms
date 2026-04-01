@@ -53,8 +53,8 @@ export function renderNavbar() {
           ${user ? `
             <a href="#/profile" class="user-mini-profile" style="display:flex; align-items:center; gap:var(--space-3); padding: var(--space-1) var(--space-2); background: var(--bg-tertiary); border-radius: 30px; border: 1px solid var(--border-subtle); text-decoration: none; transition: all 0.2s; cursor: pointer;">
                <div class="user-avatar-sm" style="width: 28px; height: 28px; font-size: 10px;">${initial}</div>
-               <div class="nav-gems" style="font-size: var(--text-xs); font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 4px;">
-                  <i class="fa-solid fa-gem" style="color: #00cec9;"></i> ${storage.getGems()}
+               <div class="nav-gems" style="font-size: var(--text-xs); font-weight: bold; color: #ffffff !important; display: flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-gem" style="color: #ffffff;"></i> ${storage.getGems()}
                </div>
             </a>
           ` : `
@@ -96,13 +96,13 @@ export function renderNavbar() {
               </div>
             </div>
             <div class="user-stats">
-              <div class="stat">
-                <i class="fa-solid fa-gem"></i>
-                <span>${storage.getGems()} Gems</span>
+              <div class="stat" style="color: #ffffff;">
+                <i class="fa-solid fa-gem" style="color: #ffffff;"></i>
+                <span style="color: #ffffff;">${storage.getGems()} Gems</span>
               </div>
-              <div class="stat">
-                <i class="fa-solid fa-fire"></i>
-                <span>${storage.getStreak?.() || 0} Day Streak</span>
+              <div class="stat" style="color: #ffffff;">
+                <i class="fa-solid fa-fire" style="color: #ffffff;"></i>
+                <span style="color: #ffffff;">${storage.getStreak?.() || 0} Day Streak</span>
               </div>
             </div>
           </a>
@@ -152,7 +152,7 @@ export function renderNavbar() {
           </button>
         </div>
         ${user ? `
-          <button class="sidebar-logout logout-btn">
+          <button class="sidebar-logout logout-btn" onmouseover="this.style.color='#000000'" onmouseout="this.style.color=''">
             <i class="fa-solid fa-right-from-bracket"></i>
             <span>Sign Out</span>
           </button>
@@ -189,9 +189,22 @@ export function renderNavbar() {
         document.body.style.overflow = '';
     };
 
-    menuBtn?.addEventListener('click', openSidebar);
+    menuBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSidebar();
+    });
     closeBtn?.addEventListener('click', closeSidebar);
     overlay?.addEventListener('click', closeSidebar);
+
+    // Global outside click handler
+    document.addEventListener('click', (e) => {
+        if (sidebar && sidebar.classList.contains('open')) {
+            // Check if click was outside sidebar content and not on the menu toggle button itself
+            if (!sidebar.contains(e.target) && (!menuBtn || !menuBtn.contains(e.target))) {
+                closeSidebar();
+            }
+        }
+    });
 
     // Close on link click
     $$('.sidebar-link').forEach(link => {
