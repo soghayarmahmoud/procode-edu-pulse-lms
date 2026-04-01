@@ -11,33 +11,29 @@
 // 6. Copy your config values below
 // ============================================
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
-import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js';
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getAnalytics } from 'firebase/analytics';
 
 // ─── YOUR FIREBASE CONFIG ───
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAn4X_wlxzkn2yAm3wUpYo8JSm8iSow19g",
-  authDomain: "procode-e53b8.firebaseapp.com",
-  projectId: "procode-e53b8",
-  storageBucket: "procode-e53b8.firebasestorage.app",
-  messagingSenderId: "260188643661",
-  appId: "1:260188643661:web:ff94d866e2ab9d3fba9704",
-  measurementId: "G-26SC9Z33YG"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAn4X_wlxzkn2yAm3wUpYo8JSm8iSow19g",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "procode-e53b8.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "procode-e53b8",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "procode-e53b8.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "260188643661",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:260188643661:web:ff94d866e2ab9d3fba9704",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-26SC9Z33YG"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js').Analytics} */
 export const analytics = getAnalytics(app);
-/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').Auth} */
 export const auth = getAuth(app);
-/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').Firestore} */
 export const db = getFirestore(app);
-/** @type {import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js').FirebaseStorage} */
 export const storage = getStorage(app);
 
 // Check if Firebase is configured (not using placeholder values)
