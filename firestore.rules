@@ -29,17 +29,24 @@ service cloud.firestore {
         (request.auth.uid == resource.data.userId || isAdmin());
     }
 
-    // Dynamic CMS Content: Public read, Admin write
+    // Dynamic CMS Content: Public read for free courses, purchased access for premium
     match /dynamic_courses/{courseId} {
-      allow read: if true;
+      allow read: if true; // Course metadata is public
       allow write: if isAdmin();
     }
+
+    // Premium course content access control
     match /dynamic_lessons/{lessonId} {
-      allow read: if true;
+      allow read: if resource.data.courseId == null ||
+        get(/databases/$(database)/documents/dynamic_courses/$(resource.data.courseId)).data.pricing.type == 'free' ||
+        (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
       allow write: if isAdmin();
     }
+
     match /dynamic_challenges/{challengeId} {
-      allow read: if true;
+      allow read: if resource.data.courseId == null ||
+        get(/databases/$(database)/documents/dynamic_courses/$(resource.data.courseId)).data.pricing.type == 'free' ||
+        (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
       allow write: if isAdmin();
     }
 
@@ -61,8 +68,8 @@ service cloud.firestore {
       );
     }
 
-    // Notifications subcollection
-    match /users/{userId}/notifications/{notificationId} {
+    // User purchases: Private to user
+    match /users/{userId}/purchases/{purchaseId} {
       allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
 
