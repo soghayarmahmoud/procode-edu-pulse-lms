@@ -122,12 +122,10 @@ export function renderNavbar() {
           </div>
 
           <div class="sidebar-group">
-            <h3 class="group-title">Community</h3>
+            <h3 class="group-title">Premium</h3>
             <div class="group-links">
-              <a href="#/portfolio" class="sidebar-link"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
-              <a href="#/collaborate" class="sidebar-link"><i class="fa-solid fa-users"></i> Collaborate</a>
-              <a href="#/careers" class="sidebar-link"><i class="fa-solid fa-handshake-angle"></i> Volunteer</a>
-              <a href="#/about" class="sidebar-link"><i class="fa-solid fa-circle-info"></i> About Us</a>
+              <a href="#/pricing" class="sidebar-link"><i class="fa-solid fa-crown"></i> Pricing</a>
+              <a href="#/mentorship" class="sidebar-link"><i class="fa-solid fa-user-tie"></i> Mentorship</a>
             </div>
           </div>
 

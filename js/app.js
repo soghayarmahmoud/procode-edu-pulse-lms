@@ -872,6 +872,546 @@ async function renderPaymentSuccessPage() {
 }
 
 // ══════════════════════════════════════════════
+// PRICING & SUBSCRIPTION PAGE
+// ══════════════════════════════════════════════
+
+async function renderPricingPage() {
+    const app = $('#app');
+    const user = authService.getCurrentUser();
+    let currentSubscription = null;
+
+    if (user) {
+        const { paymentService } = await import('./services/payment-service.js');
+        currentSubscription = await paymentService.getActiveSubscription(user.uid);
+    }
+
+    const subscriptionTiers = [
+        {
+            id: 'free',
+            name: 'Free',
+            price: 0,
+            period: 'forever',
+            description: 'Perfect for getting started',
+            features: [
+                'Access to free courses',
+                'Basic code editor',
+                'Progress tracking',
+                'Community forum access',
+                'Basic support'
+            ],
+            buttonText: 'Get Started',
+            buttonClass: 'btn-outline',
+            popular: false
+        },
+        {
+            id: 'monthly',
+            name: 'Pro Monthly',
+            price: 19.99,
+            period: 'month',
+            description: 'Full access to all premium features',
+            features: [
+                'All free features',
+                'Access to all premium courses',
+                'Advanced code editor with AI hints',
+                'Downloadable project files',
+                'Priority support',
+                'Certificates of completion',
+                'Live mentorship sessions (2/month)',
+                'Exclusive webinars'
+            ],
+            buttonText: 'Subscribe Monthly',
+            buttonClass: 'btn-primary',
+            popular: true
+        },
+        {
+            id: 'annual',
+            name: 'Pro Annual',
+            price: 199.99,
+            period: 'year',
+            description: 'Best value - save 17% annually',
+            features: [
+                'All Pro Monthly features',
+                'Save $39.89 annually',
+                'Early access to new courses',
+                '1-on-1 mentorship sessions (4/month)',
+                'Custom learning path recommendations',
+                'Advanced analytics & insights',
+                'Offline course downloads'
+            ],
+            buttonText: 'Subscribe Annual',
+            buttonClass: 'btn-success',
+            popular: false,
+            savings: 'Save 17%'
+        }
+    ];
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:1200px;">
+        <div class="text-center" style="margin-bottom:var(--space-12);">
+          <span class="badge badge-primary" style="margin-bottom:var(--space-4);">Choose Your Plan</span>
+          <h1 style="font-size:3rem; margin-bottom:var(--space-4);">
+            Unlock Your <span class="text-gradient">Full Potential</span>
+          </h1>
+          <p style="font-size:1.1rem; color:var(--text-secondary); max-width:600px; margin:0 auto;">
+            Join thousands of developers who have accelerated their careers with ProCode's premium learning experience.
+          </p>
+        </div>
+
+        ${currentSubscription ? `
+        <div class="card" style="background:linear-gradient(135deg, var(--color-success) 0%, #22c55e 100%); color:white; margin-bottom:var(--space-8); text-align:center; padding:var(--space-6);">
+          <h3 style="margin-bottom:var(--space-2);"><i class="fa-solid fa-crown"></i> Active ${currentSubscription.tier === 'monthly' ? 'Pro Monthly' : 'Pro Annual'} Subscription</h3>
+          <p style="margin:0; opacity:0.9;">Renews on ${new Date(currentSubscription.renewalDate).toLocaleDateString()}</p>
+        </div>
+        ` : ''}
+
+        <div class="grid grid-3 gap-6" style="margin-bottom:var(--space-12);">
+          ${subscriptionTiers.map(tier => `
+            <div class="card ${tier.popular ? 'card-popular' : ''}" style="position:relative; ${tier.popular ? 'border:2px solid var(--brand-primary); transform:scale(1.05);' : ''}">
+              ${tier.popular ? '<div class="popular-badge">Most Popular</div>' : ''}
+              ${tier.savings ? `<div class="savings-badge">${tier.savings}</div>` : ''}
+
+              <div class="text-center" style="margin-bottom:var(--space-6);">
+                <h3 style="font-size:1.5rem; margin-bottom:var(--space-2);">${tier.name}</h3>
+                <div style="font-size:2.5rem; font-weight:800; margin-bottom:var(--space-1);">
+                  ${tier.price === 0 ? 'Free' : `$${tier.price}`}
+                  ${tier.price > 0 ? `<span style="font-size:1rem; font-weight:400; color:var(--text-muted);">/${tier.period}</span>` : ''}
+                </div>
+                <p style="color:var(--text-secondary);">${tier.description}</p>
+              </div>
+
+              <ul style="list-style:none; padding:0; margin-bottom:var(--space-6);">
+                ${tier.features.map(feature => `
+                  <li style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-2);">
+                    <i class="fa-solid fa-check" style="color:var(--color-success);"></i>
+                    <span>${feature}</span>
+                  </li>
+                `).join('')}
+              </ul>
+
+              <button class="btn ${tier.buttonClass} btn-lg" style="width:100%;"
+                ${currentSubscription && currentSubscription.tier === tier.id ? 'disabled' : ''}
+                onclick="${tier.id === 'free' ? "window.location.hash='/'" : `subscribeToTier('${tier.id}')`}">
+
+                ${currentSubscription && currentSubscription.tier === tier.id ?
+                  '<i class="fa-solid fa-check"></i> Current Plan' :
+                  tier.buttonText}
+              </button>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="text-center">
+          <h3 style="margin-bottom:var(--space-6);">Frequently Asked Questions</h3>
+          <div class="grid grid-2 gap-6" style="text-align:left;">
+            <div class="card">
+              <h4 style="margin-bottom:var(--space-3);">Can I cancel anytime?</h4>
+              <p style="color:var(--text-secondary); margin:0;">Yes, you can cancel your subscription at any time. You'll retain access until the end of your billing period.</p>
+            </div>
+            <div class="card">
+              <h4 style="margin-bottom:var(--space-3);">Do you offer refunds?</h4>
+              <p style="color:var(--text-secondary); margin:0;">We offer a 30-day money-back guarantee for all new subscriptions. Contact support for refund requests.</p>
+            </div>
+            <div class="card">
+              <h4 style="margin-bottom:var(--space-3);">What's included in mentorship?</h4>
+              <p style="color:var(--text-secondary); margin:0;">Book 1-on-1 sessions with experienced developers to get personalized guidance on your projects and career.</p>
+            </div>
+            <div class="card">
+              <h4 style="margin-bottom:var(--space-3);">Can I download courses?</h4>
+              <p style="color:var(--text-secondary); margin:0;">Annual subscribers get offline access to courses. Download them to your device for learning on the go.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+
+    // Add subscription function
+    window.subscribeToTier = async (tier) => {
+        if (!user) {
+            showToast('Please sign in to subscribe.', 'error');
+            window.location.hash = '/login';
+            return;
+        }
+
+        try {
+            const { paymentService } = await import('./services/payment-service.js');
+            const tierData = subscriptionTiers.find(t => t.id === tier);
+
+            showToast('Preparing subscription...', 'info');
+
+            const session = await paymentService.createSubscriptionCheckout(tier, tierData);
+            await paymentService.redirectToCheckout(session.id);
+
+        } catch (error) {
+            console.error('Subscription failed:', error);
+            showToast('Failed to start subscription. Please try again.', 'error');
+        }
+    };
+}
+
+// ══════════════════════════════════════════════
+// SUBSCRIPTION SUCCESS PAGE
+// ══════════════════════════════════════════════
+
+async function renderSubscriptionSuccessPage() {
+    const app = $('#app');
+    const urlParams = new URLSearchParams(window.location.search);
+    const tier = urlParams.get('tier');
+
+    const tierNames = {
+        'monthly': 'Pro Monthly',
+        'annual': 'Pro Annual'
+    };
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:600px;">
+        <div class="card text-center" style="padding:var(--space-12);">
+          <div style="font-size:4rem; color:var(--color-success); margin-bottom:var(--space-6);">
+            <i class="fa-solid fa-crown"></i>
+          </div>
+          <h1 style="font-size:2.5rem; margin-bottom:var(--space-4); color:var(--text-primary);">
+            Welcome to ${tierNames[tier] || 'ProCode Pro'}!
+          </h1>
+          <p style="font-size:1.1rem; color:var(--text-secondary); margin-bottom:var(--space-8);">
+            Congratulations! You've successfully subscribed to ProCode Pro. You now have access to all premium features and courses.
+          </p>
+
+          <div class="card" style="background:var(--bg-tertiary); padding:var(--space-6); margin-bottom:var(--space-8); border:1px solid var(--border-subtle);">
+            <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-4);">
+              <div style="font-size:3rem; color:var(--brand-primary);">
+                <i class="fa-solid fa-crown"></i>
+              </div>
+              <div style="text-align:left;">
+                <h3 style="margin:0; font-size:1.2rem;">${tierNames[tier] || 'Pro'} Subscription</h3>
+                <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">Active subscription</p>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Payment Confirmed</span>
+              <span style="font-weight:600; color:var(--color-success);">Activated</span>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            <a href="#/courses" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-play"></i> Explore Premium Courses
+            </a>
+            <a href="#/mentorship" class="btn btn-outline btn-lg">
+              <i class="fa-solid fa-calendar"></i> Book Mentorship Session
+            </a>
+            <a href="#/profile" class="btn btn-ghost btn-lg">
+              <i class="fa-solid fa-user"></i> View Profile
+            </a>
+          </div>
+
+          <div style="margin-top:var(--space-8); padding-top:var(--space-6); border-top:1px solid var(--border-subtle);">
+            <p style="font-size:0.9rem; color:var(--text-muted); margin:0;">
+              <i class="fa-solid fa-envelope"></i> A confirmation email has been sent to your inbox with your subscription details.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+
+    // Handle subscription verification in background
+    if (tier) {
+        try {
+            const { paymentService } = await import('./services/payment-service.js');
+            await paymentService.handleSubscriptionSuccess(tier, urlParams.get('session_id'));
+            showToast('Subscription activated! Welcome to ProCode Pro.', 'success');
+        } catch (error) {
+            console.error('Subscription verification failed:', error);
+            showToast('Subscription processed but verification failed. Please contact support if you have issues accessing premium features.', 'warning');
+        }
+    }
+}
+
+// ══════════════════════════════════════════════
+// MENTORSHIP PAGE
+// ══════════════════════════════════════════════
+
+async function renderMentorshipPage() {
+    const app = $('#app');
+    const user = authService.getCurrentUser();
+
+    if (!user) {
+        app.innerHTML = `
+        <div class="page-wrapper">
+          <div class="container text-center" style="padding:var(--space-16);">
+            <h1>Please sign in to access mentorship</h1>
+            <a href="#/login" class="btn btn-primary">Sign In</a>
+          </div>
+        </div>
+        `;
+        return;
+    }
+
+    // Check subscription status
+    const { paymentService } = await import('./services/payment-service.js');
+    const subscription = await paymentService.getActiveSubscription(user.uid);
+    const hasSubscription = !!subscription;
+
+    if (!hasSubscription) {
+        app.innerHTML = `
+        <div class="page-wrapper">
+          <div class="container text-center" style="padding:var(--space-16);">
+            <h1>Mentorship requires Pro subscription</h1>
+            <p>Upgrade to Pro to book 1-on-1 sessions with experienced developers.</p>
+            <a href="#/pricing" class="btn btn-primary">View Pricing</a>
+          </div>
+        </div>
+        `;
+        return;
+    }
+
+    const mentors = [
+        {
+            id: 'mentor1',
+            name: 'Sarah Chen',
+            title: 'Senior Frontend Developer',
+            company: 'Google',
+            expertise: ['React', 'JavaScript', 'Web Performance'],
+            rating: 4.9,
+            sessions: 150,
+            avatar: 'SC',
+            bio: '10+ years building scalable web applications. Former Google engineer with expertise in React, performance optimization, and modern JavaScript.'
+        },
+        {
+            id: 'mentor2',
+            name: 'Marcus Rodriguez',
+            title: 'Full Stack Engineer',
+            company: 'Meta',
+            expertise: ['Node.js', 'React', 'System Design'],
+            rating: 4.8,
+            sessions: 120,
+            avatar: 'MR',
+            bio: '8 years in full-stack development. Specializes in scalable architectures, API design, and helping developers transition to senior roles.'
+        },
+        {
+            id: 'mentor3',
+            name: 'Emily Watson',
+            title: 'DevOps Engineer',
+            company: 'Amazon',
+            expertise: ['AWS', 'Docker', 'CI/CD'],
+            rating: 4.7,
+            sessions: 95,
+            avatar: 'EW',
+            bio: 'DevOps engineer with 7 years experience. Expert in cloud infrastructure, containerization, and building reliable deployment pipelines.'
+        }
+    ];
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:1200px;">
+        <div class="text-center" style="margin-bottom:var(--space-12);">
+          <span class="badge badge-primary" style="margin-bottom:var(--space-4);">1-on-1 Mentorship</span>
+          <h1 style="font-size:3rem; margin-bottom:var(--space-4);">
+            Get <span class="text-gradient">Personal Guidance</span>
+          </h1>
+          <p style="font-size:1.1rem; color:var(--text-secondary); max-width:600px; margin:0 auto;">
+            Book personalized sessions with experienced developers who can help you overcome challenges and accelerate your learning.
+          </p>
+        </div>
+
+        <div class="grid grid-3 gap-6" style="margin-bottom:var(--space-12);">
+          ${mentors.map(mentor => `
+            <div class="card" style="text-align:center;">
+              <div class="avatar avatar-lg" style="margin:0 auto var(--space-4); background:var(--brand-gradient); color:#fff; font-size:2rem; width:80px; height:80px;">
+                ${mentor.avatar}
+              </div>
+              <h3 style="margin-bottom:var(--space-1);">${mentor.name}</h3>
+              <p style="color:var(--brand-primary); font-weight:600; margin-bottom:var(--space-1);">${mentor.title}</p>
+              <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:var(--space-4);">${mentor.company}</p>
+
+              <div style="display:flex; justify-content:center; gap:var(--space-2); margin-bottom:var(--space-4);">
+                ${mentor.expertise.map(skill => `<span class="badge badge-outline">${skill}</span>`).join('')}
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); font-size:0.9rem;">
+                <span><i class="fa-solid fa-star" style="color:#f1c40f;"></i> ${mentor.rating}</span>
+                <span><i class="fa-solid fa-users"></i> ${mentor.sessions} sessions</span>
+              </div>
+
+              <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:var(--space-6); line-height:1.5;">
+                ${mentor.bio}
+              </p>
+
+              <button class="btn btn-primary" style="width:100%;" onclick="bookMentorSession('${mentor.id}')">
+                <i class="fa-solid fa-calendar"></i> Book Session
+              </button>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-6); text-align:center;">Your Upcoming Sessions</h3>
+          <div id="user-sessions" class="text-center text-muted">
+            <i class="fa-solid fa-calendar-xmark" style="font-size:2rem; margin-bottom:var(--space-3);"></i>
+            <p>No upcoming sessions scheduled</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal-overlay" id="booking-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Book Mentorship Session</h3>
+          <button class="modal-close" id="close-booking-modal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="booking-content">
+          <!-- Booking form will be loaded here -->
+        </div>
+      </div>
+    </div>
+    `;
+
+    // Load user's sessions
+    loadUserSessions();
+
+    // Add booking function
+    window.bookMentorSession = async (mentorId) => {
+        const mentor = mentors.find(m => m.id === mentorId);
+        const modal = $('#booking-modal');
+        const content = $('#booking-content');
+
+        content.innerHTML = `
+        <div class="text-center" style="margin-bottom:var(--space-6);">
+          <div class="avatar avatar-lg" style="margin:0 auto var(--space-4); background:var(--brand-gradient); color:#fff; font-size:2rem;">
+            ${mentor.avatar}
+          </div>
+          <h4>${mentor.name}</h4>
+          <p style="color:var(--text-muted);">${mentor.title} at ${mentor.company}</p>
+        </div>
+
+        <form id="booking-form">
+          <div class="input-group mb-4">
+            <label>Session Topic</label>
+            <input type="text" class="input" id="session-topic" placeholder="e.g., React performance optimization" required>
+          </div>
+
+          <div class="input-group mb-4">
+            <label>Preferred Date & Time</label>
+            <select class="input" id="session-datetime" required>
+              <option value="">Select a time slot...</option>
+              <!-- Time slots will be loaded dynamically -->
+            </select>
+          </div>
+
+          <div class="input-group mb-6">
+            <label>Additional Details (Optional)</label>
+            <textarea class="input textarea" id="session-details" rows="3" placeholder="Tell your mentor about your current project or specific questions..."></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('booking-modal').classList.remove('active')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Book Session</button>
+          </div>
+        </form>
+        `;
+
+        // Load available time slots
+        loadTimeSlots(mentorId);
+
+        modal.classList.add('active');
+
+        // Handle form submission
+        $('#booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const topic = $('#session-topic').value.trim();
+            const dateTimeStr = $('#session-datetime').value;
+            const details = $('#session-details').value.trim();
+
+            if (!topic || !dateTimeStr) {
+                showToast('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            try {
+                const dateTime = new Date(dateTimeStr);
+                const booking = await paymentService.bookMentorshipSession(mentorId, dateTime, topic);
+
+                showToast('Session booked successfully! Check your email for confirmation.', 'success');
+                modal.classList.remove('active');
+                loadUserSessions();
+
+            } catch (error) {
+                console.error('Booking failed:', error);
+                showToast('Failed to book session. Please try again.', 'error');
+            }
+        });
+    };
+
+    $('#close-booking-modal').addEventListener('click', () => {
+        $('#booking-modal').classList.remove('active');
+    });
+
+    async function loadTimeSlots(mentorId) {
+        try {
+            const slots = await paymentService.getMentorshipSlots(mentorId);
+            const select = $('#session-datetime');
+
+            let options = '<option value="">Select a time slot...</option>';
+
+            slots.forEach(slot => {
+                const date = new Date(slot.date);
+                const dateStr = date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+
+                slot.times.forEach(time => {
+                    const dateTime = new Date(`${slot.date}T${time}`);
+                    const value = dateTime.toISOString();
+                    const label = `${dateStr} at ${time}`;
+                    options += `<option value="${value}">${label}</option>`;
+                });
+            });
+
+            select.innerHTML = options;
+        } catch (error) {
+            console.error('Failed to load time slots:', error);
+        }
+    }
+
+    async function loadUserSessions() {
+        try {
+            const sessions = await paymentService.getUserMentorshipBookings(user.uid);
+            const container = $('#user-sessions');
+
+            if (sessions.length === 0) {
+                container.innerHTML = `
+                <i class="fa-solid fa-calendar-xmark" style="font-size:2rem; margin-bottom:var(--space-3);"></i>
+                <p>No upcoming sessions scheduled</p>
+                `;
+                return;
+            }
+
+            container.innerHTML = sessions.map(session => `
+                <div class="card-glass" style="margin-bottom:var(--space-3); padding:var(--space-4);">
+                  <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                      <h4 style="margin-bottom:var(--space-1);">${session.topic}</h4>
+                      <p style="color:var(--text-muted); font-size:0.9rem; margin:0;">
+                        ${new Date(session.dateTime).toLocaleString()}
+                      </p>
+                    </div>
+                    <span class="badge ${session.status === 'confirmed' ? 'badge-success' : 'badge-warning'}">
+                      ${session.status}
+                    </span>
+                  </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load user sessions:', error);
+        }
+    }
+}
+
+// ══════════════════════════════════════════════
 // PAGE RENDERERS
 // ══════════════════════════════════════════════
 
@@ -3198,7 +3738,7 @@ function renderErrorPage() {
     app.innerHTML = '';
     app.appendChild(container);
 }
-}
+
 
 function renderOfflinePage() {
     const app = $('#app');
@@ -3948,6 +4488,9 @@ async function startMainApp() {
         .on('/login', () => transitionPage(renderLoginPage, '#/login'))
         .on('/signup', () => transitionPage(renderSignupPage, '#/signup'))
         .on('/payment-success', () => transitionPage(renderPaymentSuccessPage, '#/payment-success'))
+        .on('/pricing', () => transitionPage(renderPricingPage, '#/pricing'))
+        .on('/subscription-success', () => transitionPage(renderSubscriptionSuccessPage, '#/subscription-success'))
+        .on('/mentorship', () => transitionPage(renderMentorshipPage, '#/mentorship'))
         .on('/instructor-dashboard', () => {
             // Elevate to Admin Panel
             showToast('Redirecting to Unified Admin Panel...', 'info');
