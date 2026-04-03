@@ -2067,13 +2067,17 @@ export class AdminDashboard {
                 return;
             }
             
-            list.innerHTML = courses.map(course => `
+            list.innerHTML = courses.map(course => {
+                const sanitizedTitle = (course.title || 'Untitled Course').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const sanitizedDesc = (course.description || 'No description').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const sanitizedInstructor = course.instructorId.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `
                 <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--color-warning); margin-bottom:var(--space-3);">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <div style="flex:1;">
-                            <h4 style="margin:0 0 var(--space-2) 0; color:var(--text-primary);">${course.title || 'Untitled Course'}</h4>
-                            <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">${course.description || 'No description'}</p>
-                            <p style="margin:var(--space-2) 0 0 0; font-size:0.85rem; color:var(--text-muted);">Instructor: ${course.instructorId}</p>
+                            <h4 style="margin:0 0 var(--space-2) 0; color:var(--text-primary);">${sanitizedTitle}</h4>
+                            <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">${sanitizedDesc}</p>
+                            <p style="margin:var(--space-2) 0 0 0; font-size:0.85rem; color:var(--text-muted);">Instructor: ${sanitizedInstructor}</p>
                         </div>
                         <div style="display:flex; gap:var(--space-2);">
                             <button class="btn btn-success btn-sm approve-course" data-id="${course.id}"><i class="fa-solid fa-thumbs-up"></i> Approve</button>
@@ -2112,12 +2116,14 @@ export class AdminDashboard {
                 return;
             }
 
-            list.innerHTML = queue.map(flag => `
+            list.innerHTML = queue.map(flag => {
+                const sanitizedReason = (flag.reason || 'No reason provided').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `
                 <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--color-error); margin-bottom:var(--space-3);">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <div style="flex:1;">
                             <p style="margin:0; color:var(--text-primary); font-weight:600;">Flagged Item</p>
-                            <p style="margin:var(--space-2) 0 0 0; color:var(--text-muted); font-size:0.9rem;"><strong>Reason:</strong> ${flag.reason || 'No reason provided'}</p>
+                            <p style="margin:var(--space-2) 0 0 0; color:var(--text-muted); font-size:0.9rem;"><strong>Reason:</strong> ${sanitizedReason}</p>
                         </div>
                         <div style="display:flex; gap:var(--space-2);">
                             <button class="btn btn-success btn-sm approve-flag" data-id="${flag.id}"><i class="fa-solid fa-check"></i> Approve</button>

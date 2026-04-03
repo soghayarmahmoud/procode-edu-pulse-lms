@@ -561,9 +561,11 @@ export class CollaborativeCodingComponent {
     
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
+    const sanitizedAuthor = (this.currentUser?.displayName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const sanitizedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     messageElement.innerHTML = `
-      <div class="message-author">${this.currentUser?.displayName || 'Anonymous'}</div>
-      <div class="message-content">${message}</div>
+      <div class="message-author">${sanitizedAuthor}</div>
+      <div class="message-content">${sanitizedMessage}</div>
       <div class="message-time">${new Date().toLocaleTimeString()}</div>
     `;
     

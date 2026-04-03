@@ -679,10 +679,11 @@ export class InstructorDashboard {
             } else {
                 coursesContainer.innerHTML = this.dynamicCourses.map(course => {
                     const lessonCount = this.dynamicLessons.filter(l => l.courseId === course.id).length;
+                    const sanitizedTitle = course.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     return `
                         <div class="flex" style="justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
                             <div>
-                                <strong>${course.title}</strong>
+                                <strong>${sanitizedTitle}</strong>
                                 <div class="text-xs text-muted">${course.id} • ${lessonCount} lessons</div>
                             </div>
                             <div class="flex gap-2">
@@ -871,17 +872,21 @@ export class InstructorDashboard {
             return;
         }
 
-        container.innerHTML = interactions.map(interaction => `
+        container.innerHTML = interactions.map(interaction => {
+            const sanitizedCourseName = interaction.courseName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const sanitizedAuthorName = (interaction.authorName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const sanitizedText = (interaction.text || interaction.comment || 'No text').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `
             <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
                 <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
                     <div style="flex:1;">
-                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${interaction.courseName}</strong></p>
-                        <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${interaction.authorName || 'Anonymous'}</h4>
+                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${sanitizedCourseName}</strong></p>
+                        <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${sanitizedAuthorName}</h4>
                         <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
                             ${[...Array(5)].map((_, i) => `<i class="fa-solid fa-star" style="color:${i < (interaction.rating || 0) ? 'var(--color-success)' : 'var(--border-subtle)'}; font-size:0.8rem;"></i>`).join('')}
                             <span style="font-size:0.85rem; color:var(--text-muted);">${interaction.rating || 0}/5</span>
                         </div>
-                        <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${interaction.text || interaction.comment || 'No text'}</p>
+                        <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${sanitizedText}</p>
                     </div>
                     <button class="btn btn-outline btn-sm reply-button" data-course-id="${interaction.courseId}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Reply</button>
                 </div>
@@ -889,12 +894,15 @@ export class InstructorDashboard {
                     <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-subtle);">
                         <p style="margin:0 0 var(--space-3) 0; font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-comments"></i> Your replies:</p>
                         <div style="display:flex; flex-direction:column; gap:var(--space-2);">
-                            ${interaction.replies.map(reply => `
+                            ${interaction.replies.map(reply => {
+                                const sanitizedReplyAuthor = (reply.authorName || 'You').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const sanitizedReplyText = (reply.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                return `
                                 <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
-                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${reply.authorName || 'You'}</p>
-                                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${reply.text || ''}</p>
+                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sanitizedReplyAuthor}</p>
+                                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${sanitizedReplyText}</p>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -956,10 +964,12 @@ export class InstructorDashboard {
             return;
         }
 
-        container.innerHTML = earnings.map(course => `
+        container.innerHTML = earnings.map(course => {
+            const sanitizedCourseName = course.courseName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `
             <div style="padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); border-left:3px solid var(--color-success); display:flex; justify-content:space-between; align-items:center;">
                 <div style="flex:1;">
-                    <h4 style="margin:0 0 var(--space-1) 0; color:var(--text-primary);">${course.courseName}</h4>
+                    <h4 style="margin:0 0 var(--space-1) 0; color:var(--text-primary);">${sanitizedCourseName}</h4>
                     <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">${course.enrolledStudents} students enrolled</p>
                 </div>
                 <div style="text-align:right;">
@@ -967,7 +977,7 @@ export class InstructorDashboard {
                     <div style="font-size:0.8rem; color:var(--text-muted);">$${course.revenuePerStudent}/student avg</div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     _renderStudentBreakdown(students) {
@@ -978,18 +988,21 @@ export class InstructorDashboard {
             return;
         }
 
-        container.innerHTML = students.map(student => `
+        container.innerHTML = students.map(student => {
+            const sanitizedStudentName = student.studentName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const sanitizedStudentEmail = student.studentEmail.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `
             <div style="padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center; border-left:3px solid var(--brand-primary);">
                 <div style="flex:1;">
-                    <h4 style="margin:0; color:var(--text-primary);">${student.studentName}</h4>
-                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-muted); font-size:0.85rem;">${student.studentEmail} • ${student.coursesPurchased} course(s)</p>
+                    <h4 style="margin:0; color:var(--text-primary);">${sanitizedStudentName}</h4>
+                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-muted); font-size:0.85rem;">${sanitizedStudentEmail} • ${student.coursesPurchased} course(s)</p>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:600; color:var(--text-primary);">$${student.totalSpent.toFixed(2)}</div>
                     <div style="font-size:0.8rem; color:var(--text-muted);">Total spent</div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         // Attach search listener
         const searchInput = document.getElementById('filter-students');
