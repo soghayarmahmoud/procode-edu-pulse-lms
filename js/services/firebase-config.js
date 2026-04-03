@@ -20,13 +20,13 @@ import { getAnalytics } from 'firebase/analytics';
 // ─── YOUR FIREBASE CONFIG ───
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAn4X_wlxzkn2yAm3wUpYo8JSm8iSow19g",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "procode-e53b8.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "procode-e53b8",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "procode-e53b8.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "260188643661",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:260188643661:web:ff94d866e2ab9d3fba9704",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-26SC9Z33YG"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

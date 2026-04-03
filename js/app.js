@@ -2968,12 +2968,13 @@ function setupGlobalSearch() {
             selectedIndex = -1;
 
             if (topResults.length === 0) {
-                resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${query}"</div>`;
+                const sanitizedQuery = query.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                resultsContainer.innerHTML = `<div style="padding:var(--space-6) var(--space-4);text-align:center;color:var(--text-muted)">No results found for "${sanitizedQuery}"</div>`;
             } else {
                 resultsContainer.innerHTML = topResults.map((r, i) => `
                     <a href="${r.link}" class="search-result-item" data-index="${i}" onclick="document.getElementById('global-search-overlay').classList.remove('active')">
-                        <div class="search-result-title"><i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> ${r.title}</div>
-                        <div class="search-result-desc">${r.type}${r.desc ? ' • ' + r.desc : ''}</div>
+                        <div class="search-result-title"><i class="${r.icon}" style="color:var(--brand-primary);width:20px;text-align:center"></i> ${r.title.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                        <div class="search-result-desc">${r.type}${r.desc ? ' • ' + r.desc.replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</div>
                     </a>
                 `).join('');
             }
@@ -3033,20 +3034,42 @@ function setupGlobalSearch() {
 
 function renderErrorPage() {
     const app = $('#app');
-    app.innerHTML = `
-      <div class="container page-wrapper" style="display:flex;align-items:center;justify-content:center;min-height:70vh;">
-        <div class="card text-center animate-scaleIn" style="max-width:500px;padding:var(--space-10);">
-          <div class="error-offline-icon" style="font-size:5rem;color:var(--brand-primary);margin-bottom:var(--space-6);">
-            <i class="fa-solid fa-satellite-dish"></i>
-          </div>
-          <h1 style="font-size:2.5rem;margin-bottom:var(--space-2);">Lost in Space</h1>
-          <p class="text-muted" style="margin-bottom:var(--space-8);font-size:1.1rem;line-height:1.6;">
-            We can't seem to find the page you're looking for. It might have been moved or deleted.
-          </p>
-          <a href="#/" class="btn btn-primary btn-lg" style="width:100%;">Return to Mission Control</a>
-        </div>
-      </div>
-    `;
+    const container = document.createElement('div');
+    container.className = 'container page-wrapper';
+    container.style.cssText = 'display:flex;align-items:center;justify-content:center;min-height:70vh;';
+
+    const card = document.createElement('div');
+    card.className = 'card text-center animate-scaleIn';
+    card.style.cssText = 'max-width:500px;padding:var(--space-10);';
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'error-offline-icon';
+    iconDiv.style.cssText = 'font-size:5rem;color:var(--brand-primary);margin-bottom:var(--space-6);';
+    iconDiv.innerHTML = '<i class="fa-solid fa-satellite-dish"></i>';
+
+    const h1 = document.createElement('h1');
+    h1.style.cssText = 'font-size:2.5rem;margin-bottom:var(--space-2);';
+    h1.textContent = 'Lost in Space';
+
+    const p = document.createElement('p');
+    p.className = 'text-muted';
+    p.style.cssText = 'margin-bottom:var(--space-8);font-size:1.1rem;line-height:1.6;';
+    p.textContent = "We can't seem to find the page you're looking for. It might have been moved or deleted.";
+
+    const a = document.createElement('a');
+    a.href = '#/';
+    a.className = 'btn btn-primary btn-lg';
+    a.style.width = '100%';
+    a.textContent = 'Return to Mission Control';
+
+    card.appendChild(iconDiv);
+    card.appendChild(h1);
+    card.appendChild(p);
+    card.appendChild(a);
+    container.appendChild(card);
+    app.innerHTML = '';
+    app.appendChild(container);
+}
 }
 
 function renderOfflinePage() {
