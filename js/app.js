@@ -5,6 +5,7 @@
 import { Router } from './utils/router.js';
 import { $, $$, animateOnScroll, showToast } from './utils/dom.js';
 import { storage } from './services/storage.js';
+import { paymentService } from './services/payment-service.js';
 import { renderNavbar } from './components/navbar.js';
 import { initTheme } from './components/theme-toggle.js';
 import { PortfolioComponent, renderPortfolioProject } from './components/portfolio.js';
@@ -794,6 +795,83 @@ function showWelcomeModel() {
 }
 
 // ══════════════════════════════════════════════
+// PAYMENT SUCCESS PAGE
+// ══════════════════════════════════════════════
+
+async function renderPaymentSuccessPage() {
+    const app = $('#app');
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseId = urlParams.get('course');
+    const sessionId = urlParams.get('session_id');
+
+    // Find course data
+    const course = coursesData.find(c => c.id === courseId);
+
+    app.innerHTML = `
+    <div class="page-wrapper bg-dots-pattern">
+      <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16); max-width:600px;">
+        <div class="card text-center" style="padding:var(--space-12);">
+          <div style="font-size:4rem; color:var(--color-success); margin-bottom:var(--space-6);">
+            <i class="fa-solid fa-check-circle"></i>
+          </div>
+          <h1 style="font-size:2.5rem; margin-bottom:var(--space-4); color:var(--text-primary);">
+            Payment Successful!
+          </h1>
+          <p style="font-size:1.1rem; color:var(--text-secondary); margin-bottom:var(--space-8);">
+            ${course ? `Congratulations! You've successfully purchased <strong>${course.title}</strong>.` : 'Your payment has been processed successfully.'}
+          </p>
+
+          ${course ? `
+          <div class="card" style="background:var(--bg-tertiary); padding:var(--space-6); margin-bottom:var(--space-8); border:1px solid var(--border-subtle);">
+            <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-4);">
+              <div class="avatar avatar-lg" style="background:var(--brand-gradient); color:#fff; font-size:1.5rem;">
+                <i class="${course.icon}"></i>
+              </div>
+              <div style="text-align:left;">
+                <h3 style="margin:0; font-size:1.2rem;">${course.title}</h3>
+                <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">${course.description}</p>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge badge-success"><i class="fa-solid fa-unlock"></i> Access Granted</span>
+              <span style="font-weight:600; color:var(--color-success);">$${course.pricing?.price || 0}</span>
+            </div>
+          </div>
+          ` : ''}
+
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            <a href="${course ? `#/course/${course.id}` : '#/courses'}" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-play"></i> ${course ? 'Start Learning' : 'Browse Courses'}
+            </a>
+            <a href="#/profile" class="btn btn-outline btn-lg">
+              <i class="fa-solid fa-user"></i> View Profile
+            </a>
+          </div>
+
+          <div style="margin-top:var(--space-8); padding-top:var(--space-6); border-top:1px solid var(--border-subtle);">
+            <p style="font-size:0.9rem; color:var(--text-muted); margin:0;">
+              <i class="fa-solid fa-envelope"></i> A confirmation email has been sent to your inbox.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+
+    // Handle payment verification in background
+    if (courseId && sessionId) {
+        try {
+            const { paymentService } = await import('./services/payment-service.js');
+            await paymentService.handlePaymentSuccess(courseId, sessionId);
+            showToast('Purchase confirmed! Welcome to your new course.', 'success');
+        } catch (error) {
+            console.error('Payment verification failed:', error);
+            showToast('Payment processed but verification failed. Please contact support if you have issues accessing the course.', 'warning');
+        }
+    }
+}
+
+// ══════════════════════════════════════════════
 // PAGE RENDERERS
 // ══════════════════════════════════════════════
 
@@ -1008,6 +1086,8 @@ function renderCoursesPage() {
             const avgRating = storage.getCourseAverageRating(course.id);
             const reviews = storage.getReviews(course.id);
             const isEnrolled = storage.isEnrolled(course.id);
+            const isPremium = course.pricing?.type === 'premium';
+            const price = course.pricing?.price || 0;
             return `
             <div class="course-card" onclick="location.hash='/course/${course.id}'" data-animate>
               ${(() => {
@@ -1017,6 +1097,7 @@ function renderCoursesPage() {
               <div class="course-body">
                 <div class="course-meta">
                   <span class="badge badge-primary">${course.difficulty}</span>
+                  ${isPremium ? '<span class="badge badge-warning" style="margin-left:8px"><i class="fa-solid fa-crown"></i> Premium</span>' : '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-lock-open"></i> Free</span>'}
                   ${percent === 100 ? '<span class="badge badge-success" style="margin-left:8px"><i class="fa-solid fa-check"></i> Completed</span>' : `<span class="text-sm text-muted">${course.estimatedHours}h</span>`}
                 </div>
                 <h3 class="course-title">${course.title}</h3>
@@ -1037,7 +1118,8 @@ function renderCoursesPage() {
                 </div>` : ''}
                 <div class="course-footer">
                   <span class="course-lessons-count"><i class="fa-solid fa-book"></i> ${lessonCount} lessons</span>
-                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? `<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>` : `<span class="btn btn-sm btn-primary">Start <i class="fa-solid fa-arrow-right"></i></span>`)}
+                  ${isPremium ? `<span class="course-price" style="font-weight:600; color:var(--color-success); font-size:1.1rem;">$${price}</span>` : ''}
+                  ${percent === 100 ? '<span class="btn btn-sm btn-ghost text-success">Review <i class="fa-solid fa-rotate-right"></i></span>' : (isEnrolled ? `<span class="btn btn-sm btn-primary">Continue <i class="fa-solid fa-play"></i></span>` : (isPremium ? `<span class="btn btn-sm btn-warning" onclick="event.stopPropagation(); purchaseCourse('${course.id}')"><i class="fa-solid fa-shopping-cart"></i> Buy Now</span>` : `<span class="btn btn-sm btn-primary">Start <i class="fa-solid fa-arrow-right"></i></span>`))}
                 </div>
               </div>
             </div>`;
@@ -1109,6 +1191,52 @@ function renderCoursesPage() {
     }
 
     animateOnScroll();
+}
+
+/**
+ * Handle premium course purchase flow.
+ * Initiates Stripe checkout session for the specified course.
+ * @param {string} courseId - The ID of the course to purchase
+ */
+async function purchaseCourse(courseId) {
+    try {
+        // Check if user is logged in
+        const user = authService.getCurrentUser();
+        if (!user) {
+            showToast('Please sign in to purchase courses.', 'error');
+            window.location.hash = '/login';
+            return;
+        }
+
+        // Find course data
+        const course = coursesData.find(c => c.id === courseId);
+        if (!course) {
+            showToast('Course not found.', 'error');
+            return;
+        }
+
+        // Check if course is premium
+        if (course.pricing?.type !== 'premium') {
+            showToast('This course is free to access.', 'info');
+            return;
+        }
+
+        // Import payment service dynamically
+        const { paymentService } = await import('./services/payment-service.js');
+
+        // Show loading state
+        showToast('Preparing checkout...', 'info');
+
+        // Create checkout session
+        const session = await paymentService.createCheckoutSession(courseId, course);
+
+        // Redirect to Stripe checkout
+        await paymentService.redirectToCheckout(session.id);
+
+    } catch (error) {
+        console.error('Purchase failed:', error);
+        showToast('Failed to start purchase. Please try again.', 'error');
+    }
 }
 
 async function renderCourse(params) {
@@ -3819,6 +3947,7 @@ async function startMainApp() {
         .on('/careers', () => transitionPage(renderCareersPage, '#/careers'))
         .on('/login', () => transitionPage(renderLoginPage, '#/login'))
         .on('/signup', () => transitionPage(renderSignupPage, '#/signup'))
+        .on('/payment-success', () => transitionPage(renderPaymentSuccessPage, '#/payment-success'))
         .on('/instructor-dashboard', () => {
             // Elevate to Admin Panel
             showToast('Redirecting to Unified Admin Panel...', 'info');

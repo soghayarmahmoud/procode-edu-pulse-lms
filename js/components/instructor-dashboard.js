@@ -110,6 +110,27 @@ export class InstructorDashboard {
                                     <label>Estimated Total Lessons (number)</label>
                                     <input type="number" id="course-total-lessons" class="input" value="10" required>
                                 </div>
+                                <!-- Pricing Configuration -->
+                                <div class="input-group" style="margin-top:var(--space-4);">
+                                    <label>Course Pricing</label>
+                                    <div style="display:flex; gap:var(--space-4); align-items:center;">
+                                        <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer;">
+                                            <input type="radio" name="course-type" value="free" checked style="margin:0;">
+                                            <span>Free</span>
+                                        </label>
+                                        <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer;">
+                                            <input type="radio" name="course-type" value="premium" style="margin:0;">
+                                            <span>Premium</span>
+                                        </label>
+                                    </div>
+                                    <div id="price-input-container" style="margin-top:var(--space-3); display:none;">
+                                        <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                            <span style="font-size:var(--text-sm); color:var(--text-muted);">$</span>
+                                            <input type="number" id="course-price" class="input" placeholder="29.99" min="0.99" step="0.01" style="flex:1;">
+                                            <span style="font-size:var(--text-sm); color:var(--text-muted);">USD</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
                                     <button class="btn btn-primary" id="btn-save-course" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Course</button>
                                 </div>
@@ -453,6 +474,24 @@ export class InstructorDashboard {
      * @returns {void}
      */
     _attachEvents() {
+        // Handle pricing type toggle
+        const priceRadios = document.querySelectorAll('input[name="course-type"]');
+        const priceInputContainer = document.getElementById('price-input-container');
+        const priceInput = document.getElementById('course-price');
+
+        priceRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'premium') {
+                    priceInputContainer.style.display = 'block';
+                    priceInput.required = true;
+                } else {
+                    priceInputContainer.style.display = 'none';
+                    priceInput.required = false;
+                    priceInput.value = '';
+                }
+            });
+        });
+
         const thumbnailInput = document.getElementById('course-thumbnail');
         const thumbnailStatus = document.getElementById('course-thumbnail-status');
         if (thumbnailInput) {
@@ -483,6 +522,9 @@ export class InstructorDashboard {
                     }
                 }
 
+                const courseType = document.querySelector('input[name="course-type"]:checked').value;
+                const coursePrice = courseType === 'premium' ? parseFloat(document.getElementById('course-price').value) : 0;
+
                 const courseData = {
                     id: courseId,
                     title: document.getElementById('course-title').value.trim(),
@@ -491,7 +533,11 @@ export class InstructorDashboard {
                     description: document.getElementById('course-desc').value.trim(),
                     totalLessons: parseInt(document.getElementById('course-total-lessons').value, 10),
                     thumbnail: thumbnailUrl || '',
-                    isDynamic: true // Flag to identify cloud courses
+                    isDynamic: true, // Flag to identify cloud courses
+                    pricing: {
+                        type: courseType, // 'free' or 'premium'
+                        price: coursePrice // 0 for free, price in USD for premium
+                    }
                 };
 
                 const success = await firestoreService.saveDynamicCourse(courseData);
@@ -753,6 +799,26 @@ export class InstructorDashboard {
         document.getElementById('course-difficulty').value = course.difficulty || 'Beginner';
         document.getElementById('course-desc').value = course.description || '';
         document.getElementById('course-total-lessons').value = course.totalLessons || 1;
+
+        // Load pricing information
+        const courseType = course.pricing?.type || 'free';
+        const priceRadios = document.querySelectorAll('input[name="course-type"]');
+        priceRadios.forEach(radio => {
+            radio.checked = radio.value === courseType;
+        });
+
+        const priceInputContainer = document.getElementById('price-input-container');
+        const priceInput = document.getElementById('course-price');
+        if (courseType === 'premium') {
+            priceInputContainer.style.display = 'block';
+            priceInput.required = true;
+            priceInput.value = course.pricing?.price || '';
+        } else {
+            priceInputContainer.style.display = 'none';
+            priceInput.required = false;
+            priceInput.value = '';
+        }
+
         document.getElementById('course-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
         showToast('Course loaded for editing.', 'info');
     }
