@@ -2,6 +2,7 @@ import { $, showToast } from '../utils/dom.js';
 import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
 import { mediaService } from '../services/media-service.js';
+import { adminManagementService } from '../services/admin-management-service.js';
 
 /**
  * Admin dashboard UI component.
@@ -115,6 +116,20 @@ export class AdminDashboard {
 
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'portfolios' ? 'active' : ''}" data-tab="portfolios" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
                             <i class="fa-solid fa-briefcase" style="width:24px; text-align:center;"></i> Portfolio Manager
+                        </button>
+
+                        <span class="text-muted" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-top:var(--space-4); margin-bottom:var(--space-2); padding-left:var(--space-2); font-weight:700;">Advanced Controls</span>
+
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'analytics' ? 'active' : ''}" data-tab="analytics" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-chart-line" style="width:24px; text-align:center;"></i> Analytics & Revenue
+                        </button>
+
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'moderation' ? 'active' : ''}" data-tab="moderation" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-shield" style="width:24px; text-align:center;"></i> Content Moderation
+                        </button>
+
+                        <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'settings' ? 'active' : ''}" data-tab="settings" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
+                            <i class="fa-solid fa-sliders" style="width:24px; text-align:center;"></i> System Settings
                         </button>
 
                         <button class="btn btn-ghost admin-tab-btn ${this.currentTab === 'gamification' ? 'active' : ''}" data-tab="gamification" style="justify-content:flex-start; text-align:left; padding:var(--space-3) var(--space-4); font-weight:500;">
@@ -246,6 +261,18 @@ export class AdminDashboard {
                 case 'portfolios':
                     title.innerHTML = 'Portfolio Manager';
                     this._renderPortfoliosTab(area);
+                    break;
+                case 'analytics':
+                    title.innerHTML = 'Platform Analytics & Revenue';
+                    this._renderAnalyticsTab(area);
+                    break;
+                case 'moderation':
+                    title.innerHTML = 'Content Moderation Hub';
+                    this._renderModerationTab(area);
+                    break;
+                case 'settings':
+                    title.innerHTML = 'System Configuration';
+                    this._renderSettingsTab(area);
                     break;
             }
             
@@ -1859,6 +1886,485 @@ export class AdminDashboard {
                 document.getElementById('portfolio-content').value = p.content || '';
                 document.getElementById('portfolio-id').scrollIntoView();
             };
+        });
+    }
+
+    // ================== NEW: ANALYTICS & REVENUE TAB ==================
+
+    /**
+     * Render analytics and revenue tracking tab.
+     * @param {Element} container
+     * @returns {void}
+     */
+    _renderAnalyticsTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                
+                <!-- Key Metrics -->
+                <div class="grid grid-4" style="gap:var(--space-4); margin-bottom:var(--space-4);">
+                    <div class="admin-stats-card">
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-dollar-sign"></i> Total Revenue</div>
+                        <div class="admin-stats-value" id="stat-revenue">$0.00</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">All time</div>
+                    </div>
+                    
+                    <div class="admin-stats-card">
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Total Subscriptions</div>
+                        <div class="admin-stats-value" id="stat-subscriptions">0</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Active users</div>
+                    </div>
+                    
+                    <div class="admin-stats-card">
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-chart-line"></i> Platform Growth</div>
+                        <div class="admin-stats-value" id="stat-growth">+0%</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">This month</div>
+                    </div>
+                    
+                    <div class="admin-stats-card">
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-book-open"></i> Enrollments</div>
+                        <div class="admin-stats-value" id="stat-enrollments">0</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Total course enrollments</div>
+                    </div>
+                </div>
+
+                <!-- Analytics Dashboard -->
+                <div class="card" style="padding:var(--space-8);">
+                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-chart-bar"></i> Revenue & Analytics</h3>
+                    
+                    <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-6); flex-wrap: wrap;">
+                        <button class="btn btn-outline stats-period-btn" data-period="month">This Month</button>
+                        <button class="btn btn-outline stats-period-btn" data-period="quarter">This Quarter</button>
+                        <button class="btn btn-outline stats-period-btn" data-period="year">This Year</button>
+                        <button class="btn btn-outline stats-period-btn" data-period="all">All Time</button>
+                    </div>
+
+                    <div id="analytics-container" style="min-height:300px;">
+                        <div style="text-align:center; padding:var(--space-8);"><div class="spinner-sm"></div> Loading analytics...</div>
+                    </div>
+                </div>
+
+                <!-- Revenue Transactions -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-receipt"></i> Recent Transactions</h3>
+                        <input type="text" class="input" id="filter-transactions" placeholder="Search transactions..." style="width:250px;">
+                    </div>
+                    <div id="transactions-list" style="display:flex; flex-direction:column; gap:var(--space-3);">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this._initAnalyticsLogic();
+    }
+
+    async _initAnalyticsLogic() {
+        // Load analytics data
+        const analytics = await adminManagementService.computeRealTimeAnalytics();
+        
+        document.getElementById('stat-revenue').textContent = `$${analytics.totalRevenue.toFixed(2)}`;
+        document.getElementById('stat-subscriptions').textContent = analytics.totalUsers;
+        document.getElementById('stat-growth').textContent = `+${analytics.platformGrowth.newUsersThisMonth}`;
+        document.getElementById('stat-enrollments').textContent = analytics.totalEnrollments;
+
+        // Add period filter listeners
+        document.querySelectorAll('.stats-period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.stats-period-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this._renderAnalyticsChart(btn.dataset.period);
+            });
+        });
+
+        // Load default month view
+        this._renderAnalyticsChart('month');
+    }
+
+    _renderAnalyticsChart(period) {
+        const container = document.getElementById('analytics-container');
+        container.innerHTML = `
+            <div style="background:var(--bg-tertiary); border-radius:var(--radius-lg); padding:var(--space-6);">
+                <p style="color:var(--text-muted); text-align:center;">Analytics visualization for <strong>${period}</strong></p>
+                <div style="height:250px; background:var(--bg-secondary); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
+                    <i class="fa-solid fa-chart-line" style="font-size:3rem; opacity:0.3;"></i>
+                </div>
+                <p style="color:var(--text-muted); text-align:center; margin-top:var(--space-4); font-size:0.9rem;">Chart ready for integration with analytics library (e.g., Chart.js, Recharts)</p>
+            </div>
+        `;
+    }
+
+    // ================== NEW: CONTENT MODERATION TAB ==================
+
+    /**
+     * Render content moderation tab.
+     * @param {Element} container
+     * @returns {void}
+     */
+    _renderModerationTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                
+                <!-- Course Approval Queue -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-hourglass-end"></i> Pending Course Approvals</h3>
+                        <button class="btn btn-outline btn-sm" id="refresh-pending-courses"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="pending-courses-list">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Content Flags Queue -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-flag"></i> Flagged Content for Review</h3>
+                        <button class="btn btn-outline btn-sm" id="refresh-flagged-content"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="flagged-content-list">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Manual Flag -->
+                <div class="card" style="padding:var(--space-8);">
+                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-plus"></i> Flag Content Manually</h3>
+                    <form id="flag-content-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Course ID</label>
+                                <input type="text" id="flag-course-id" class="input" placeholder="course_123" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Review/Comment ID</label>
+                                <input type="text" id="flag-review-id" class="input" placeholder="review_456" required>
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Reason for Flagging</label>
+                            <textarea id="flag-reason" class="input textarea" rows="3" placeholder="Describe why this content needs review..." required></textarea>
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-flag"></i> Flag for Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        this._initModerationLogic();
+    }
+
+    async _initModerationLogic() {
+        const loadPendingCourses = async () => {
+            const list = document.getElementById('pending-courses-list');
+            list.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+            
+            const courses = await adminManagementService.getPendingCourses();
+            if (courses.length === 0) {
+                list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No pending courses.</div>';
+                return;
+            }
+            
+            list.innerHTML = courses.map(course => `
+                <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--color-warning); margin-bottom:var(--space-3);">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div style="flex:1;">
+                            <h4 style="margin:0 0 var(--space-2) 0; color:var(--text-primary);">${course.title || 'Untitled Course'}</h4>
+                            <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">${course.description || 'No description'}</p>
+                            <p style="margin:var(--space-2) 0 0 0; font-size:0.85rem; color:var(--text-muted);">Instructor: ${course.instructorId}</p>
+                        </div>
+                        <div style="display:flex; gap:var(--space-2);">
+                            <button class="btn btn-success btn-sm approve-course" data-id="${course.id}"><i class="fa-solid fa-thumbs-up"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm reject-course" data-id="${course.id}"><i class="fa-solid fa-thumbs-down"></i> Reject</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Attach event listeners
+            list.querySelectorAll('.approve-course').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (await adminManagementService.approveCourse(btn.dataset.id)) {
+                        loadPendingCourses();
+                    }
+                });
+            });
+
+            list.querySelectorAll('.reject-course').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const reason = prompt('Enter rejection reason:');
+                    if (reason && await adminManagementService.rejectCourse(btn.dataset.id, reason)) {
+                        loadPendingCourses();
+                    }
+                });
+            });
+        };
+
+        const loadFlaggedContent = async () => {
+            const list = document.getElementById('flagged-content-list');
+            list.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+            
+            const queue = await adminManagementService.getModerationQueue();
+            if (queue.length === 0) {
+                list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No flagged content.</div>';
+                return;
+            }
+
+            list.innerHTML = queue.map(flag => `
+                <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--color-error); margin-bottom:var(--space-3);">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div style="flex:1;">
+                            <p style="margin:0; color:var(--text-primary); font-weight:600;">Flagged Item</p>
+                            <p style="margin:var(--space-2) 0 0 0; color:var(--text-muted); font-size:0.9rem;"><strong>Reason:</strong> ${flag.reason || 'No reason provided'}</p>
+                        </div>
+                        <div style="display:flex; gap:var(--space-2);">
+                            <button class="btn btn-success btn-sm approve-flag" data-id="${flag.id}"><i class="fa-solid fa-check"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm remove-content" data-flag-id="${flag.id}" data-course-id="${flag.courseId}" data-review-id="${flag.reviewId}"><i class="fa-solid fa-trash"></i> Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Attach event listeners
+            list.querySelectorAll('.approve-flag').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (await adminManagementService.approveModerationFlag(btn.dataset.id)) {
+                        loadFlaggedContent();
+                    }
+                });
+            });
+
+            list.querySelectorAll('.remove-content').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Remove this content permanently?')) {
+                        if (await adminManagementService.removeFlaggedContent(btn.dataset.flagId, btn.dataset.courseId, btn.dataset.reviewId)) {
+                            loadFlaggedContent();
+                        }
+                    }
+                });
+            });
+        };
+
+        // Initial loads
+        loadPendingCourses();
+        loadFlaggedContent();
+
+        // Refresh buttons
+        document.getElementById('refresh-pending-courses').addEventListener('click', loadPendingCourses);
+        document.getElementById('refresh-flagged-content').addEventListener('click', loadFlaggedContent);
+
+        // Flag form
+        document.getElementById('flag-content-form').addEventListener('submit', async (e) => {
+            const courseId = document.getElementById('flag-course-id').value;
+            const reviewId = document.getElementById('flag-review-id').value;
+            const reason = document.getElementById('flag-reason').value;
+            
+            if (await adminManagementService.flagForModeration(courseId, reviewId, reason)) {
+                document.getElementById('flag-content-form').reset();
+                loadFlaggedContent();
+            }
+        });
+    }
+
+    // ================== NEW: SYSTEM SETTINGS TAB ==================
+
+    /**
+     * Render system settings tab.
+     * @param {Element} container
+     * @returns {void}
+     */
+    _renderSettingsTab(container) {
+        container.innerHTML = `
+            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                
+                <!-- Subscription Pricing -->
+                <div class="card" style="padding:var(--space-8);">
+                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-tag"></i> Subscription Pricing</h3>
+                    <div class="grid grid-3" style="gap:var(--space-6);">
+                        <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <label style="font-weight:600; color:var(--text-primary);">Basic Plan</label>
+                            <div style="margin-top:var(--space-4); display:flex; align-items:baseline; gap:var(--space-2);">
+                                <span style="font-size:2rem; font-weight:800;">$</span>
+                                <input type="number" id="price-basic" class="input" placeholder="9.99" style="width:120px;" step="0.01">
+                                <span style="color:var(--text-muted);">/month</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('basic')"><i class="fa-solid fa-save"></i> Save</button>
+                        </div>
+
+                        <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); border-color:var(--brand-primary);">
+                            <label style="font-weight:600; color:var(--text-primary);">Pro Plan</label>
+                            <div style="margin-top:var(--space-4); display:flex; align-items:baseline; gap:var(--space-2);">
+                                <span style="font-size:2rem; font-weight:800;">$</span>
+                                <input type="number" id="price-pro" class="input" placeholder="19.99" style="width:120px;" step="0.01">
+                                <span style="color:var(--text-muted);">/month</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('pro')"><i class="fa-solid fa-save"></i> Save</button>
+                        </div>
+
+                        <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <label style="font-weight:600; color:var(--text-primary);">Premium Plan</label>
+                            <div style="margin-top:var(--space-4); display:flex; align-items:baseline; gap:var(--space-2);">
+                                <span style="font-size:2rem; font-weight:800;">$</span>
+                                <input type="number" id="price-premium" class="input" placeholder="49.99" style="width:120px;" step="0.01">
+                                <span style="color:var(--text-muted);">/month</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('premium')"><i class="fa-solid fa-save"></i> Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotional Banner -->
+                <div class="card" style="padding:var(--space-8);">
+                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-megaphone"></i> Promotional Banner</h3>
+                    <form id="banner-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label><input type="checkbox" id="banner-active"> Active</label>
+                            </div>
+                            <div class="input-group">
+                                <label>Banner Color</label>
+                                <input type="color" id="banner-color" class="input" value="#FF6B6B">
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Banner Text</label>
+                            <input type="text" id="banner-text" class="input" placeholder="e.g. 50% Off Summer Sale!">
+                        </div>
+                        <div class="input-group" style="margin-top:var(--space-4);">
+                            <label>Banner Link (Optional)</label>
+                            <input type="url" id="banner-url" class="input" placeholder="https://...">
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Update Banner</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Platform Announcements -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-bullhorn"></i> Platform Announcements</h3>
+                        <button class="btn btn-primary btn-sm" id="btn-new-announcement"><i class="fa-solid fa-plus"></i> New Announcement</button>
+                    </div>
+
+                    <div id="announcements-list" style="display:flex; flex-direction:column; gap:var(--space-3);">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Cloudinary Config -->
+                <div class="card" style="padding:var(--space-8);">
+                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-cloud"></i> Cloudinary Configuration</h3>
+                    <form id="cloudinary-form" onsubmit="event.preventDefault();">
+                        <div class="grid grid-2" style="gap:var(--space-4);">
+                            <div class="input-group">
+                                <label>Cloud Name</label>
+                                <input type="text" id="cloudinary-name" class="input" placeholder="your-cloud-name" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Upload Preset</label>
+                                <input type="text" id="cloudinary-preset" class="input" placeholder="your-upload-preset" required>
+                            </div>
+                        </div>
+                        <div style="margin-top:var(--space-6); display:flex; justify-content:flex-end;">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Save Configuration</button>
+                        </div>
+                    </form>
+                    <div style="margin-top:var(--space-4); padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); border-left:2px solid var(--color-info);">
+                        <p style="color:var(--text-muted); margin:0; font-size:0.9rem;"><i class="fa-solid fa-circle-info"></i> Get these credentials from your Cloudinary dashboard at console.cloudinary.com</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this._initSettingsLogic();
+    }
+
+    async _initSettingsLogic() {
+        // Load current settings
+        const settings = await adminManagementService.getSystemSettings();
+        
+        // Populate pricing
+        if (settings.subscriptionPricing) {
+            document.getElementById('price-basic').value = settings.subscriptionPricing.basic?.price || '9.99';
+            document.getElementById('price-pro').value = settings.subscriptionPricing.pro?.price || '19.99';
+            document.getElementById('price-premium').value = settings.subscriptionPricing.premium?.price || '49.99';
+        }
+
+        // Populate banner
+        if (settings.promotionalBanner) {
+            document.getElementById('banner-active').checked = settings.promotionalBanner.active;
+            document.getElementById('banner-text').value = settings.promotionalBanner.text || '';
+            document.getElementById('banner-color').value = settings.promotionalBanner.color || '#FF6B6B';
+            document.getElementById('banner-url').value = settings.promotionalBanner.url || '';
+        }
+
+        // Populate Cloudinary config
+        const cloudinaryConfig = mediaService.getConfig();
+        document.getElementById('cloudinary-name').value = cloudinaryConfig.cloudName || '';
+        document.getElementById('cloudinary-preset').value = cloudinaryConfig.uploadPreset || '';
+
+        // Banner form handler
+        document.getElementById('banner-form').addEventListener('submit', async () => {
+            const banner = {
+                active: document.getElementById('banner-active').checked,
+                text: document.getElementById('banner-text').value,
+                color: document.getElementById('banner-color').value,
+                url: document.getElementById('banner-url').value
+            };
+            await adminManagementService.setPromotionalBanner(banner);
+        });
+
+        // Cloudinary form handler
+        document.getElementById('cloudinary-form').addEventListener('submit', () => {
+            const cloudName = document.getElementById('cloudinary-name').value;
+            const uploadPreset = document.getElementById('cloudinary-preset').value;
+            mediaService.saveConfig(cloudName, uploadPreset);
+        });
+
+        // New announcement button
+        document.getElementById('btn-new-announcement').addEventListener('click', () => {
+            const text = prompt('Enter announcement text:');
+            if (text) {
+                adminManagementService.createAnnouncement({
+                    title: prompt('Announcement title:') || 'Announcement',
+                    text,
+                    type: 'info'
+                }).then(() => this._loadAnnouncements());
+            }
+        });
+
+        // Load announcements
+        this._loadAnnouncements();
+    }
+
+    async _loadAnnouncements() {
+        const list = document.getElementById('announcements-list');
+        const announcements = await adminManagementService.getAnnouncements();
+        
+        if (announcements.length === 0) {
+            list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No active announcements.</div>';
+            return;
+        }
+
+        list.innerHTML = announcements.map(ann => `
+            <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); display:flex; justify-content:space-between; align-items:center;">
+                <div style="flex:1;">
+                    <h4 style="margin:0; color:var(--text-primary);">${ann.title || 'Announcement'}</h4>
+                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-muted); font-size:0.9rem;">${ann.text || ''}</p>
+                </div>
+                <button class="btn btn-ghost btn-sm deactivate-ann" data-id="${ann.id}" style="color:var(--color-error);"><i class="fa-solid fa-times"></i></button>
+            </div>
+        `).join('');
+
+        list.querySelectorAll('.deactivate-ann').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (await adminManagementService.deactivateAnnouncement(btn.dataset.id)) {
+                    this._loadAnnouncements();
+                }
+            });
         });
     }
 }

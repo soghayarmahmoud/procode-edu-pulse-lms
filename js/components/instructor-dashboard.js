@@ -1,6 +1,8 @@
 import { $, showToast } from '../utils/dom.js';
 import { firestoreService } from '../services/firestore-service.js';
 import { authService } from '../services/auth-service.js';
+import { instructorService } from '../services/instructor-service.js';
+import { mediaService } from '../services/media-service.js';
 
 /**
  * Instructor dashboard UI component.
@@ -64,6 +66,8 @@ export class InstructorDashboard {
                             <span class="tab active" data-tab-target="tab-course">Course Builder</span>
                             <span class="tab" data-tab-target="tab-lesson">Lesson Builder</span>
                             <span class="tab" data-tab-target="tab-challenge">Create Challenge</span>
+                            <span class="tab" data-tab-target="tab-interactions">Course Interactions</span>
+                            <span class="tab" data-tab-target="tab-revenue">Revenue Tracking</span>
                         </div>
 
                         <!-- Course Builder -->
@@ -255,6 +259,66 @@ export class InstructorDashboard {
                                     <h4 style="margin-bottom:var(--space-3);">Lessons</h4>
                                     <div id="manage-lessons-list" class="card" style="padding:var(--space-4); min-height:160px;"></div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Course Interactions -->
+                        <div class="tab-panel" data-tab-panel="tab-interactions" style="display:none;">
+                            <div class="card" style="padding:var(--space-8);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                                    <h3 style="margin:0;"><i class="fa-solid fa-comments"></i> Course Reviews & Comments</h3>
+                                    <button class="btn btn-outline btn-sm" id="btn-refresh-interactions"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                </div>
+                                <div id="interactions-container">
+                                    <div style="text-align:center; padding:var(--space-8);"><div class="spinner-sm"></div> Loading interactions...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Revenue Tracking -->
+                        <div class="tab-panel" data-tab-panel="tab-revenue" style="display:none;">
+                            <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+                                
+                                <!-- Revenue Overview -->
+                                <div class="grid grid-3" style="gap:var(--space-4);">
+                                    <div class="admin-stats-card">
+                                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-dollar-sign"></i> Total Earnings</div>
+                                        <div class="admin-stats-value" id="stat-total-earnings">$0.00</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">All time</div>
+                                    </div>
+
+                                    <div class="admin-stats-card">
+                                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Total Enrollments</div>
+                                        <div class="admin-stats-value" id="stat-total-enrollments">0</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">Active students</div>
+                                    </div>
+
+                                    <div class="admin-stats-card">
+                                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-book"></i> Active Courses</div>
+                                        <div class="admin-stats-value" id="stat-active-courses">0</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">Published courses</div>
+                                    </div>
+                                </div>
+
+                                <!-- Earnings By Course -->
+                                <div class="card" style="padding:var(--space-8);">
+                                    <h3 style="margin-bottom:var(--space-6);"><i class="fa-solid fa-chart-pie"></i> Earnings by Course</h3>
+                                    <div id="earnings-by-course-list" style="display:flex; flex-direction:column; gap:var(--space-3);">
+                                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- Student Breakdown -->
+                                <div class="card" style="padding:var(--space-8);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                                        <h3 style="margin:0;"><i class="fa-solid fa-person-hiking"></i> Student Revenue Breakdown</h3>
+                                        <input type="text" id="filter-students" class="input" placeholder="Search by name..." style="width:200px;">
+                                    </div>
+                                    <div id="student-breakdown-list" style="display:flex; flex-direction:column; gap:var(--space-3);">
+                                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -576,6 +640,17 @@ export class InstructorDashboard {
                 document.querySelectorAll('.tab-panel').forEach(panel => {
                     panel.style.display = panel.dataset.tabPanel === target ? 'block' : 'none';
                 });
+
+                // Load data for new tabs
+                if (target === 'tab-interactions') {
+                    this._loadInteractions();
+                    const refreshBtn = document.getElementById('btn-refresh-interactions');
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', () => this._loadInteractions());
+                    }
+                } else if (target === 'tab-revenue') {
+                    this._loadRevenueTracking();
+                }
             });
         });
     }
@@ -775,4 +850,159 @@ export class InstructorDashboard {
         textarea.addEventListener('input', onInput);
         render();
     }
+
+    // ================== NEW: COURSE INTERACTIONS ==================
+
+    /**
+     * Load and render course interactions (reviews/comments).
+     * @returns {Promise<void>}
+     */
+    async _loadInteractions() {
+        const user = authService.getCurrentUser();
+        if (!user) return;
+
+        const container = document.getElementById('interactions-container');
+        container.innerHTML = '<div style="text-align:center; padding:var(--space-8);"><div class="spinner-sm"></div> Loading interactions...</div>';
+
+        const interactions = await instructorService.getInstructorCourseInteractions(user.uid);
+        
+        if (interactions.length === 0) {
+            container.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-8);">No interactions yet. Share your courses to get reviews!</div>';
+            return;
+        }
+
+        container.innerHTML = interactions.map(interaction => `
+            <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
+                    <div style="flex:1;">
+                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${interaction.courseName}</strong></p>
+                        <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${interaction.authorName || 'Anonymous'}</h4>
+                        <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
+                            ${[...Array(5)].map((_, i) => `<i class="fa-solid fa-star" style="color:${i < (interaction.rating || 0) ? 'var(--color-success)' : 'var(--border-subtle)'}; font-size:0.8rem;"></i>`).join('')}
+                            <span style="font-size:0.85rem; color:var(--text-muted);">${interaction.rating || 0}/5</span>
+                        </div>
+                        <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${interaction.text || interaction.comment || 'No text'}</p>
+                    </div>
+                    <button class="btn btn-outline btn-sm reply-button" data-course-id="${interaction.courseId}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Reply</button>
+                </div>
+                ${interaction.replies && interaction.replies.length > 0 ? `
+                    <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-subtle);">
+                        <p style="margin:0 0 var(--space-3) 0; font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-comments"></i> Your replies:</p>
+                        <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+                            ${interaction.replies.map(reply => `
+                                <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
+                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${reply.authorName || 'You'}</p>
+                                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${reply.text || ''}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+        // Attach reply listeners
+        container.querySelectorAll('.reply-button').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const replyText = prompt('Enter your reply:');
+                if (replyText) {
+                    const success = await instructorService.replyToReview(btn.dataset.courseId, btn.dataset.reviewId, {
+                        authorId: user.uid,
+                        authorName: user.displayName || 'Instructor',
+                        authorEmail: user.email,
+                        text: replyText
+                    });
+                    if (success) {
+                        this._loadInteractions();
+                    }
+                }
+            });
+        });
+    }
+
+    // ================== NEW: REVENUE TRACKING ==================
+
+    /**
+     * Load and render revenue tracking data.
+     * @returns {Promise<void>}
+     */
+    async _loadRevenueTracking() {
+        const user = authService.getCurrentUser();
+        if (!user) return;
+
+        // Load stats
+        const earnings = await instructorService.getEarningsSummary(user.uid, 'all');
+        const enrollments = await instructorService.getTotalEnrollments(user.uid);
+        const courses = await instructorService.getInstructorCourses(user.uid);
+
+        document.getElementById('stat-total-earnings').textContent = `$${earnings.totalEarnings}`;
+        document.getElementById('stat-total-enrollments').textContent = enrollments;
+        document.getElementById('stat-active-courses').textContent = courses.filter(c => c.status === 'approved').length;
+
+        // Load earnings by course
+        const earningsByCoursee = await instructorService.getEarningsByCoursee(user.uid);
+        this._renderEarningsByCoursee(earningsByCoursee);
+
+        // Load student breakdown
+        const studentBreakdown = await instructorService.getStudentEarningsBreakdown(user.uid);
+        this._renderStudentBreakdown(studentBreakdown);
+    }
+
+    _renderEarningsByCoursee(earnings) {
+        const container = document.getElementById('earnings-by-course-list');
+        
+        if (earnings.length === 0) {
+            container.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No earnings data yet.</div>';
+            return;
+        }
+
+        container.innerHTML = earnings.map(course => `
+            <div style="padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); border-left:3px solid var(--color-success); display:flex; justify-content:space-between; align-items:center;">
+                <div style="flex:1;">
+                    <h4 style="margin:0 0 var(--space-1) 0; color:var(--text-primary);">${course.courseName}</h4>
+                    <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">${course.enrolledStudents} students enrolled</p>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:1.5rem; font-weight:800; color:var(--color-success);">$${course.totalRevenue.toFixed(2)}</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">$${course.revenuePerStudent}/student avg</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    _renderStudentBreakdown(students) {
+        const container = document.getElementById('student-breakdown-list');
+        
+        if (students.length === 0) {
+            container.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No student data yet.</div>';
+            return;
+        }
+
+        container.innerHTML = students.map(student => `
+            <div style="padding:var(--space-4); background:var(--bg-secondary); border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center; border-left:3px solid var(--brand-primary);">
+                <div style="flex:1;">
+                    <h4 style="margin:0; color:var(--text-primary);">${student.studentName}</h4>
+                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-muted); font-size:0.85rem;">${student.studentEmail} • ${student.coursesPurchased} course(s)</p>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:600; color:var(--text-primary);">$${student.totalSpent.toFixed(2)}</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Total spent</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Attach search listener
+        const searchInput = document.getElementById('filter-students');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                container.querySelectorAll('div[style*="padding"]').forEach(item => {
+                    const name = item.querySelector('h4')?.textContent.toLowerCase() || '';
+                    const email = item.querySelector('p')?.textContent.toLowerCase() || '';
+                    item.style.display = name.includes(query) || email.includes(query) ? '' : 'none';
+                });
+            });
+        }
+    }
 }
+
