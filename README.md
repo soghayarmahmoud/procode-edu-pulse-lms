@@ -58,6 +58,7 @@ ProCode EduPulse is a state-of-the-art **Single Page Application (SPA)** built w
 | Feature | Description |
 | :--- | :--- |
 | **Unified CMS** | A powerful dashboard to create courses, lessons, and challenges. |
+| **Course Content Studio** | Manage courses, upload thumbnails, add video lessons, and edit course content directly from the Admin Dashboard. |
 | **Advanced Search** | Instantly find and manage content with **Ctrl + K** global search. |
 | **Content Analytics** | Track completion rates and student performance metrics. |
 | **No-Code Management** | Publish rich markdown content and video lessons with zero technical overhead. |
@@ -111,6 +112,36 @@ To unlock the full potential of the platform:
 | [`css/`](css/) | **Design System**: Variables, global styles, and modular component CSS. |
 | [`data/`](data/) | **Content fallback**: JSON files for course/lesson metadata. |
 | [`.github/`](.github/) | **CI/CD**: Workflows for automated linting and formatting. |
+
+---
+
+## 🛠️ Admin Course Content & Media Management
+
+The Admin Panel now includes built-in support for full course and lesson management with media uploads:
+
+- **Course Builder**: create new courses, edit course metadata, and publish them dynamically to the platform.
+- **Lesson Builder**: attach lessons to a target course, add YouTube video IDs, upload Cloudinary lesson videos, and author markdown lesson content.
+- **Content & Media tab**: configure Cloudinary credentials, manage course thumbnails, and upload media assets for course content.
+- **Existing course management**: view the static course catalog and cloud-published courses from the admin panel, then edit them directly from the dashboard.
+- **Direct media link**: use the new `Course Media Library` button inside the Course Builder to open the Content & Media tab and manage video/image uploads.
+
+### How to add course content videos and images
+
+1. Open the Admin Dashboard via `#/admin`.
+2. Navigate to **Course Builder** to create or edit a course.
+3. Use **Upload Thumbnail** to attach an image to the course.
+4. Switch to **Add Lesson to Course**, choose the target course, then add a YouTube ID or upload a video file.
+5. Save the lesson to publish it.
+6. Use **Manage Existing Courses** or **Manage Existing Lessons** to update course details or lesson content later.
+
+### Future provider integration roadmap
+
+The roadmap includes provider options such as:
+
+- **Back4App / Supabase** for hosted backend data, API, and auth.
+- **OneSignal** for push notifications and announcements.
+- **SendGrid / Twilio** for email and SMS messaging.
+- **Cloudinary** for media storage, CDN delivery, and video/image optimization.
 
 ---
 

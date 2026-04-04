@@ -570,14 +570,19 @@ export class AdminDashboard {
             <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
                 <!-- Course Builder -->
                 <div class="card" style="padding:var(--space-8);">
-                    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-6);">
-                        <div style="width:48px; height:48px; border-radius:12px; background:rgba(108, 92, 231, 0.1); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
-                            <i class="fa-solid fa-plus"></i>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-6);">
+                        <div style="display:flex; align-items:center; gap:var(--space-4);">
+                            <div style="width:48px; height:48px; border-radius:12px; background:rgba(108, 92, 231, 0.1); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0;">Create New Course</h3>
+                                <p class="text-muted" style="font-size:0.9rem;">Define a new learning path in the catalog.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 style="margin:0;">Create New Course</h3>
-                            <p class="text-muted" style="font-size:0.9rem;">Define a new learning path in the catalog.</p>
-                        </div>
+                        <button class="btn btn-outline btn-sm" id="btn-open-media-library" type="button">
+                            <i class="fa-solid fa-photo-film"></i> Course Media Library
+                        </button>
                     </div>
                     
                     <form id="course-builder-form" onsubmit="event.preventDefault();">
@@ -987,6 +992,14 @@ export class AdminDashboard {
         if (btnRefreshCourses) btnRefreshCourses.onclick = () => this._loadExistingCourses();
         const btnRefreshLessons = document.getElementById('btn-refresh-lessons');
         if (btnRefreshLessons) btnRefreshLessons.onclick = () => this._loadExistingLessons();
+
+        const btnOpenMediaLibrary = document.getElementById('btn-open-media-library');
+        if (btnOpenMediaLibrary) {
+            btnOpenMediaLibrary.onclick = () => {
+                this.currentTab = 'content';
+                this._renderActiveTab();
+            };
+        }
     }
 
     /**
@@ -1037,19 +1050,50 @@ export class AdminDashboard {
         const lc = document.getElementById('courses-list-container');
         if (!lc) return;
         lc.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+        const staticCourses = this.systemData.coursesData || [];
         const courses = await firestoreService.getDynamicCourses();
-        if (courses.length === 0) {
-            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No dynamic courses found.</div>';
+
+        if (staticCourses.length === 0 && courses.length === 0) {
+            lc.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No courses found in the static catalog or cloud library.</div>';
             return;
         }
-        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-3);">${courses.map(c => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-                <div><strong style="color:var(--text-primary);">${c.title}</strong> <span class="text-muted text-sm" style="margin-left:8px;">${c.id}</span></div>
-                <div style="display:flex; gap:var(--space-2);">
-                    <button class="btn btn-ghost btn-sm btn-edit-course" data-json='${JSON.stringify(c).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-ghost btn-sm btn-delete-course" data-id="${c.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+
+        const courseSections = [];
+
+        if (staticCourses.length > 0) {
+            courseSections.push(`
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                    <div style="font-weight:700; color:var(--text-primary);">Static Course Catalog</div>
+                    ${staticCourses.map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div><strong style="color:var(--text-primary);">${c.title}</strong> <span class="badge" style="background:rgba(0, 120, 212, 0.1); color:var(--brand-primary);">Static</span><span class="text-muted text-sm" style="margin-left:8px;">${c.id}</span></div>
+                            <div style="display:flex; gap:var(--space-2);">
+                                <button class="btn btn-ghost btn-sm btn-edit-course" data-source="static" data-json='${JSON.stringify(c).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-            </div>`).join('')}</div>`;
+            `);
+        }
+
+        if (courses.length > 0) {
+            courseSections.push(`
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                    <div style="font-weight:700; color:var(--text-primary);">Published Course Library</div>
+                    ${courses.map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div><strong style="color:var(--text-primary);">${c.title}</strong> <span class="badge" style="background:rgba(40, 180, 99, 0.1); color:var(--color-success);">Cloud</span><span class="text-muted text-sm" style="margin-left:8px;">${c.id}</span></div>
+                            <div style="display:flex; gap:var(--space-2);">
+                                <button class="btn btn-ghost btn-sm btn-edit-course" data-source="dynamic" data-json='${JSON.stringify(c).replace(/'/g, "&#39;")}'><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-ghost btn-sm btn-delete-course" data-id="${c.id}" style="color:var(--color-error);"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `);
+        }
+
+        lc.innerHTML = `<div style="display:flex; flex-direction:column; gap:var(--space-6);">${courseSections.join('')}</div>`;
 
         lc.querySelectorAll('.btn-delete-course').forEach(btn => {
             btn.onclick = async () => {
