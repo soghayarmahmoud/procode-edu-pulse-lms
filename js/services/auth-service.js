@@ -307,6 +307,22 @@ class AuthService {
      * @returns {object|null}
      */
     getCurrentUser() {
+        if (!this._user && !isFirebaseConfigured()) {
+            const users = getLocalAuthStore();
+            const uid = localStorage.getItem(LOCAL_SESSION_KEY);
+            if (uid && users[uid]) {
+                this._user = {
+                    uid,
+                    email: users[uid].email,
+                    displayName: users[uid].displayName || users[uid].email?.split('@')[0] || 'Student'
+                };
+            }
+        }
+
+        if (!this._user && isFirebaseConfigured() && auth?.currentUser) {
+            this._user = auth.currentUser;
+        }
+
         return this._user;
     }
 
@@ -460,6 +476,28 @@ class AuthService {
         if (AuthService.isSuperInstructorEmail(this._user?.email)) return true;
         if (!this._profile) return false;
         return this._profile.isInstructor === true || this._profile.profile?.isInstructor === true;
+    }
+
+    /**
+     * Check if current user can access admin UI (sync).
+     * Includes super-admin allowlist and cached profile roles.
+     * @returns {boolean}
+     */
+    hasAdminAccessSync() {
+        const user = this.getCurrentUser();
+        if (!user) return false;
+        if (AuthService.isSuperAdminEmail(user.email)) return true;
+        return this.isAdminSync();
+    }
+
+    /**
+     * Check if current user is in super-admin allowlist (sync).
+     * @returns {boolean}
+     */
+    hasSuperAdminAccessSync() {
+        const user = this.getCurrentUser();
+        if (!user) return false;
+        return AuthService.isSuperAdminEmail(user.email);
     }
 }
 
