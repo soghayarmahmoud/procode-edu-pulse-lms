@@ -4435,6 +4435,14 @@ showToast('New update available.', 'info');`)}
 
 async function startMainApp() {
     renderNavbar();
+
+  if (!window.__authNavbarSyncBound) {
+    authService.onAuthChange(() => {
+      renderNavbar();
+    });
+    window.__authNavbarSyncBound = true;
+  }
+
     await loadData();
     setupGlobalSearch();
 

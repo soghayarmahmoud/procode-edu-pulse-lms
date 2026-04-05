@@ -175,9 +175,13 @@ class AuthService {
 
         if (displayName) {
             await updateProfile(cred.user, { displayName });
+            this._user = { ...cred.user, displayName };
+        } else {
+            this._user = cred.user;
         }
 
-        return cred.user;
+        this._listeners.forEach(cb => cb(this._user));
+        return this._user;
     }
 
     /**
@@ -213,7 +217,9 @@ class AuthService {
         }
 
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        return cred.user;
+        this._user = cred.user;
+        this._listeners.forEach(cb => cb(this._user));
+        return this._user;
     }
 
     /**
@@ -251,7 +257,9 @@ class AuthService {
         }
 
         const cred = await signInWithPopup(auth, googleProvider);
-        return cred.user;
+        this._user = cred.user;
+        this._listeners.forEach(cb => cb(this._user));
+        return this._user;
     }
 
     /**
@@ -272,6 +280,7 @@ class AuthService {
         await fbSignOut(auth);
         this._user = null;
         this._profile = null;
+        this._listeners.forEach(cb => cb(null));
     }
 
     /**
