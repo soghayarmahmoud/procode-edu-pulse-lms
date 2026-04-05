@@ -481,6 +481,7 @@ export class AdminDashboard {
             const initials = name.slice(0,2).toUpperCase();
             const isAdmin = u.isAdmin || profile.isAdmin;
             const isInstructor = u.isInstructor || profile.isInstructor;
+            const status = (u.status || 'active').toLowerCase();
             const roleBadge = isAdmin && isInstructor
                 ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin / Instructor</span>'
                 : isAdmin
@@ -488,6 +489,11 @@ export class AdminDashboard {
                     : isInstructor
                         ? '<span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Instructor</span>'
                         : '<span class="badge" style="background:rgba(136,136,136,0.12); color:var(--text-muted);">Student</span>';
+            const statusBadge = status === 'banned'
+                ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Banned</span>'
+                : status === 'suspended'
+                    ? '<span class="badge" style="background:rgba(243,156,18,0.14); color:var(--color-warning);">Suspended</span>'
+                    : '<span class="badge" style="background:rgba(39,174,96,0.12); color:var(--color-success);">Active</span>';
             const lastActive = u.updatedAt?.seconds
                 ? new Date(u.updatedAt.seconds * 1000).toLocaleDateString()
                 : 'N/A';
@@ -504,10 +510,15 @@ export class AdminDashboard {
                         </div>
                     </td>
                     <td style="padding:var(--space-4) var(--space-2);">${roleBadge}</td>
+                    <td style="padding:var(--space-4) var(--space-2);">${statusBadge}</td>
                     <td style="padding:var(--space-4) var(--space-2);">${lastActive}</td>
                     <td style="padding:var(--space-4) var(--space-2); text-align:right; display:flex; justify-content:flex-end; gap:6px;">
+                        <button class="btn btn-ghost btn-sm btn-promote-instructor-row" data-uid="${u.uid}" title="Promote to Instructor"><i class="fa-solid fa-arrow-up-right-dots"></i></button>
                         <button class="btn btn-ghost btn-sm btn-toggle-instructor" data-uid="${u.uid}" data-instructor="${isInstructor ? 'true' : 'false'}" title="${isInstructor ? 'Revoke Instructor' : 'Make Instructor'}"><i class="fa-solid fa-chalkboard-user"></i></button>
                         <button class="btn btn-ghost btn-sm btn-toggle-admin" data-uid="${u.uid}" data-admin="${isAdmin ? 'true' : 'false'}" title="${isAdmin ? 'Revoke Admin' : 'Make Admin'}"><i class="fa-solid fa-shield-halved"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-suspend-user" data-uid="${u.uid}" title="Suspend user" style="color:var(--color-warning);"><i class="fa-solid fa-user-clock"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-ban-user" data-uid="${u.uid}" title="Ban user" style="color:var(--color-error);"><i class="fa-solid fa-user-slash"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-restore-user" data-uid="${u.uid}" title="Restore user" style="color:var(--color-success);"><i class="fa-solid fa-user-check"></i></button>
                     </td>
                 </tr>
             `;
@@ -519,6 +530,7 @@ export class AdminDashboard {
                     <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">
                         <th style="padding:var(--space-3) var(--space-2);">User</th>
                         <th style="padding:var(--space-3) var(--space-2);">Role</th>
+                        <th style="padding:var(--space-3) var(--space-2);">Status</th>
                         <th style="padding:var(--space-3) var(--space-2);">Last Active</th>
                         <th style="padding:var(--space-3) var(--space-2); text-align:right;">Actions</th>
                     </tr>
@@ -560,6 +572,70 @@ export class AdminDashboard {
                     this._loadUsersData();
                 } else {
                     showToast('Failed to update user role.', 'error');
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-promote-instructor-row').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                if (!confirm('Promote this user to instructor?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.elevateUserRole(uid, 'instructor');
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-suspend-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const daysInput = prompt('Suspend for how many days?', '7');
+                if (daysInput === null) return;
+                const days = parseInt(daysInput, 10);
+                if (!Number.isFinite(days) || days <= 0) {
+                    showToast('Please enter a valid number of days.', 'error');
+                    return;
+                }
+                const reason = prompt('Suspension reason (optional):', '') || '';
+                btn.disabled = true;
+                const ok = await adminManagementService.suspendUser(uid, days, reason);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-ban-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const reason = prompt('Ban reason (optional):', '') || '';
+                if (!confirm('This will ban the user account. Continue?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.banUser(uid, reason);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-restore-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                if (!confirm('Restore this user to active status?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.restoreUser(uid);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
                     btn.disabled = false;
                 }
             };
