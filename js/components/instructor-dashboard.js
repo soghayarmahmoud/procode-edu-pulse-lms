@@ -1136,48 +1136,69 @@ export class InstructorDashboard {
             return;
         }
 
-        container.innerHTML = interactions.map(interaction => {
-            const sanitizedCourseName = interaction.courseName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const sanitizedAuthorName = (interaction.authorName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const sanitizedText = (interaction.text || interaction.comment || 'No text').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapeHtml = (value) => String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        const cardsHtml = interactions.map((interaction) => {
+            const sanitizedCourseName = escapeHtml(interaction.courseName);
+            const sanitizedAuthorName = escapeHtml(interaction.authorName || 'Anonymous');
+            const sanitizedText = escapeHtml(interaction.text || interaction.comment || 'No text');
             const interactionType = interaction.type === 'comment' ? 'Lesson Comment' : 'Course Review';
-            const contextLine = interaction.type === 'comment' ? `<span style="font-size:0.8rem; color:var(--text-muted);">${(interaction.lessonTitle || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>` : '';
-            return `
-            <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
-                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
-                    <div style="flex:1;">
-                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${sanitizedCourseName}</strong> · ${interactionType}</p>
-                        ${contextLine}
-                        <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${sanitizedAuthorName}</h4>
-                        <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
-                            ${[...Array(5)].map((_, i) => `<i class="fa-solid fa-star" style="color:${i < (interaction.rating || 0) ? 'var(--color-success)' : 'var(--border-subtle)'}; font-size:0.8rem;"></i>`).join('')}
-                            <span style="font-size:0.85rem; color:var(--text-muted);">${interaction.rating || 0}/5</span>
-                        </div>
-                        <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${sanitizedText}</p>
+            const lessonTitle = escapeHtml(interaction.lessonTitle || '');
+            const rating = Number(interaction.rating || 0);
+
+            const stars = Array.from({ length: 5 }, (_, i) => {
+                const color = i < rating ? 'var(--color-success)' : 'var(--border-subtle)';
+                return `<i class="fa-solid fa-star" style="color:${color}; font-size:0.8rem;"></i>`;
+            }).join('');
+
+            const repliesHtml = (interaction.replies || []).map((reply) => {
+                const sanitizedReplyAuthor = escapeHtml(reply.authorName || 'You');
+                const sanitizedReplyText = escapeHtml(reply.text || '');
+                return `
+                    <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sanitizedReplyAuthor}</p>
+                        <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${sanitizedReplyText}</p>
                     </div>
-                </div>
-                <div style="margin-top:var(--space-3); display:flex; gap:var(--space-2);">
-                    <textarea class="input textarea" rows="2" data-reply-input="${interaction.reviewId}" placeholder="Write a direct reply to this student..."></textarea>
-                    <button class="btn btn-outline btn-sm reply-button" data-type="${interaction.type || 'review'}" data-course-id="${interaction.courseId}" data-lesson-id="${interaction.lessonId || ''}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Send</button>
-                </div>
-                ${interaction.replies && interaction.replies.length > 0 ? `
+                `;
+            }).join('');
+
+            const contextLine = interaction.type === 'comment'
+                ? `<span style="font-size:0.8rem; color:var(--text-muted);">${lessonTitle}</span>`
+                : '';
+
+            const repliesSection = repliesHtml
+                ? `
                     <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-subtle);">
                         <p style="margin:0 0 var(--space-3) 0; font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-comments"></i> Your replies:</p>
-                        <div style="display:flex; flex-direction:column; gap:var(--space-2);">
-                            ${interaction.replies.map(reply => {
-                                const sanitizedReplyAuthor = (reply.authorName || 'You').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                const sanitizedReplyText = (reply.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                return `
-                                <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
-                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sanitizedReplyAuthor}</p>
-                                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${sanitizedReplyText}</p>
-                                </div>
-                            `}).join('')}
+                        <div style="display:flex; flex-direction:column; gap:var(--space-2);">${repliesHtml}</div>
+                    </div>
+                `
+                : '';
+
+            return `
+                <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
+                        <div style="flex:1;">
+                            <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${sanitizedCourseName}</strong> · ${interactionType}</p>
+                            ${contextLine}
+                            <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${sanitizedAuthorName}</h4>
+                            <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
+                                ${stars}
+                                <span style="font-size:0.85rem; color:var(--text-muted);">${rating}/5</span>
+                            </div>
+                            <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${sanitizedText}</p>
                         </div>
                     </div>
-                ` : ''}
-            </div>
-        `).join('');
+                    <div style="margin-top:var(--space-3); display:flex; gap:var(--space-2);">
+                        <textarea class="input textarea" rows="2" data-reply-input="${interaction.reviewId}" placeholder="Write a direct reply to this student..."></textarea>
+                        <button class="btn btn-outline btn-sm reply-button" data-type="${interaction.type || 'review'}" data-course-id="${interaction.courseId}" data-lesson-id="${interaction.lessonId || ''}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Send</button>
+                    </div>
+                    ${repliesSection}
+                </div>
+            `;
+        });
+
+        container.innerHTML = cardsHtml.join('');
 
         // Attach reply listeners
         container.querySelectorAll('.reply-button').forEach(btn => {
