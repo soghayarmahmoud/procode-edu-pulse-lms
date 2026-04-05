@@ -2111,21 +2111,21 @@ export class AdminDashboard {
                     </div>
                     
                     <div class="admin-stats-card">
-                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Total Subscriptions</div>
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Active Subscriptions</div>
                         <div class="admin-stats-value" id="stat-subscriptions">0</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Active users</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Paid/active plans</div>
                     </div>
                     
                     <div class="admin-stats-card">
                         <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-chart-line"></i> Platform Growth</div>
-                        <div class="admin-stats-value" id="stat-growth">+0%</div>
+                        <div class="admin-stats-value" id="stat-growth">0%</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">This month</div>
                     </div>
                     
                     <div class="admin-stats-card">
-                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-book-open"></i> Enrollments</div>
-                        <div class="admin-stats-value" id="stat-enrollments">0</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Total course enrollments</div>
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-cart-shopping"></i> Total Sales</div>
+                        <div class="admin-stats-value" id="stat-total-sales">0</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Completed transactions</div>
                     </div>
                 </div>
 
@@ -2164,11 +2164,32 @@ export class AdminDashboard {
     async _initAnalyticsLogic() {
         // Load analytics data
         const analytics = await adminManagementService.computeRealTimeAnalytics();
+
+        const revenue = Number(analytics.totalRevenue || 0);
+        const subscriptions = Number(analytics.activeSubscriptions || 0);
+        const growthRate = Number(analytics.platformGrowth?.userGrowthRate || 0);
+        const growthSign = growthRate > 0 ? '+' : '';
+        const totalSales = Number(analytics.totalSales || analytics.monthSales || 0);
         
-        document.getElementById('stat-revenue').textContent = `$${analytics.totalRevenue.toFixed(2)}`;
-        document.getElementById('stat-subscriptions').textContent = analytics.totalUsers;
-        document.getElementById('stat-growth').textContent = `+${analytics.platformGrowth.newUsersThisMonth}`;
-        document.getElementById('stat-enrollments').textContent = analytics.totalEnrollments;
+        document.getElementById('stat-revenue').textContent = `$${revenue.toFixed(2)}`;
+        document.getElementById('stat-subscriptions').textContent = subscriptions.toLocaleString();
+        document.getElementById('stat-growth').textContent = `${growthSign}${growthRate}%`;
+        document.getElementById('stat-total-sales').textContent = totalSales.toLocaleString();
+
+        const transactions = await adminManagementService.getRecentTransactions(30);
+        this._renderTransactionsList(transactions);
+
+        const filterInput = document.getElementById('filter-transactions');
+        if (filterInput) {
+            filterInput.addEventListener('input', () => {
+                const q = filterInput.value.toLowerCase().trim();
+                const filtered = transactions.filter(t => {
+                    const hay = `${t.transactionId || ''} ${t.type || ''} ${t.studentId || ''} ${t.instructorId || ''}`.toLowerCase();
+                    return hay.includes(q);
+                });
+                this._renderTransactionsList(filtered);
+            });
+        }
 
         // Add period filter listeners
         document.querySelectorAll('.stats-period-btn').forEach(btn => {
@@ -2181,6 +2202,37 @@ export class AdminDashboard {
 
         // Load default month view
         this._renderAnalyticsChart('month');
+    }
+
+    _renderTransactionsList(transactions) {
+        const list = document.getElementById('transactions-list');
+        if (!list) return;
+
+        if (!transactions || transactions.length === 0) {
+            list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No transactions available.</div>';
+            return;
+        }
+
+        list.innerHTML = transactions.map(t => {
+            const amount = Number(t.amount || 0);
+            const createdAt = t.createdAt?.seconds
+                ? new Date(t.createdAt.seconds * 1000).toLocaleString()
+                : (typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleString() : 'N/A');
+            const status = (t.status || 'unknown').toLowerCase();
+            const statusColor = status === 'completed' ? 'var(--color-success)' : status === 'failed' ? 'var(--color-error)' : 'var(--color-warning)';
+
+            return `
+            <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); flex-wrap:wrap;">
+                <div>
+                    <div style="font-weight:600; color:var(--text-primary);">${t.type || 'transaction'} <span class="text-muted" style="font-size:0.85rem;">(${t.transactionId || t.id || 'n/a'})</span></div>
+                    <div class="text-muted" style="font-size:0.85rem;">${createdAt}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:var(--space-3);">
+                    <span class="badge" style="background:rgba(0,0,0,0.08); color:${statusColor}; text-transform:capitalize;">${status}</span>
+                    <strong style="font-size:1rem; color:var(--text-primary);">$${amount.toFixed(2)}</strong>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     _renderAnalyticsChart(period) {
@@ -2225,6 +2277,17 @@ export class AdminDashboard {
                         <button class="btn btn-outline btn-sm" id="refresh-flagged-content"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     </div>
                     <div id="flagged-content-list">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Global Reviews Moderation -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-comments"></i> Global Reviews Moderation</h3>
+                        <button class="btn btn-outline btn-sm" id="refresh-global-reviews"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="global-reviews-list">
                         <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
                     </div>
                 </div>
@@ -2355,13 +2418,73 @@ export class AdminDashboard {
             });
         };
 
+        const loadGlobalReviews = async () => {
+            const list = document.getElementById('global-reviews-list');
+            if (!list) return;
+            list.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+
+            const reviews = await adminManagementService.getRecentReviews(40);
+            if (!reviews.length) {
+                list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No reviews found for moderation.</div>';
+                return;
+            }
+
+            list.innerHTML = reviews.map(r => {
+                const sanitizedText = (r.text || r.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const author = (r.authorName || r.userName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const courseId = (r.courseId || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const status = (r.status || 'pending').toLowerCase();
+                return `
+                <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); margin-bottom:var(--space-3);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-4); flex-wrap:wrap;">
+                        <div style="flex:1; min-width:260px;">
+                            <div style="display:flex; gap:var(--space-2); align-items:center; margin-bottom:var(--space-2);">
+                                <strong>${author}</strong>
+                                <span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">${courseId || 'Unknown course'}</span>
+                                <span class="badge" style="background:rgba(0,0,0,0.08); color:var(--text-muted); text-transform:capitalize;">${status}</span>
+                            </div>
+                            <p style="margin:0; color:var(--text-secondary);">${sanitizedText || '(no text)'}</p>
+                        </div>
+                        <div style="display:flex; gap:var(--space-2);">
+                            <button class="btn btn-success btn-sm approve-review" data-course-id="${r.courseId || ''}" data-review-id="${r.id}"><i class="fa-solid fa-check"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm hide-review" data-course-id="${r.courseId || ''}" data-review-id="${r.id}"><i class="fa-solid fa-eye-slash"></i> Hide</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            list.querySelectorAll('.approve-review').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const courseId = btn.dataset.courseId;
+                    const reviewId = btn.dataset.reviewId;
+                    if (!courseId || !reviewId) return showToast('Invalid review reference.', 'error');
+                    if (await adminManagementService.approveReview(courseId, reviewId)) {
+                        loadGlobalReviews();
+                    }
+                });
+            });
+
+            list.querySelectorAll('.hide-review').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const courseId = btn.dataset.courseId;
+                    const reviewId = btn.dataset.reviewId;
+                    if (!courseId || !reviewId) return showToast('Invalid review reference.', 'error');
+                    if (await adminManagementService.hideReview(courseId, reviewId)) {
+                        loadGlobalReviews();
+                    }
+                });
+            });
+        };
+
         // Initial loads
         loadPendingCourses();
         loadFlaggedContent();
+        loadGlobalReviews();
 
         // Refresh buttons
         document.getElementById('refresh-pending-courses').addEventListener('click', loadPendingCourses);
         document.getElementById('refresh-flagged-content').addEventListener('click', loadFlaggedContent);
+        document.getElementById('refresh-global-reviews').addEventListener('click', loadGlobalReviews);
 
         // Flag form
         document.getElementById('flag-content-form').addEventListener('submit', async (e) => {

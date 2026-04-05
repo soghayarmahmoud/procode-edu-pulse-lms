@@ -7,7 +7,7 @@
 import { db, isFirebaseConfigured } from './firebase-config.js';
 import {
     doc, setDoc, getDoc, updateDoc, deleteDoc, collection, getDocs,
-    query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove
+    query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, collectionGroup
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { showToast } from '../utils/dom.js';
 
@@ -235,20 +235,46 @@ class AdminManagementService {
         try {
             const usersSnap = await getDocs(collection(db, 'users'));
             const coursesSnap = await getDocs(collection(db, 'courses'));
+            let transactionsSnap = null;
+            try {
+                transactionsSnap = await getDocs(collection(db, 'transactions'));
+            } catch {
+                transactionsSnap = null;
+            }
             
             let totalUsers = 0;
             let activeUsers = 0;
             let instructors = 0;
             let totalEnrollments = 0;
             let totalRevenue = 0;
+            let activeSubscriptions = 0;
+            let newUsersThisMonth = 0;
+            let totalSales = 0;
+            let monthSales = 0;
+            const now = Date.now();
+            const monthAgo = now - (30 * 24 * 60 * 60 * 1000);
             
             usersSnap.forEach(doc => {
                 totalUsers++;
                 const data = doc.data();
-                if (data.status === 'active') activeUsers++;
+                const status = (data.status || 'active').toLowerCase();
+                if (status === 'active') activeUsers++;
                 if (data.isInstructor) instructors++;
-                if (data.enrollments?.length) {
+                if (data.enrollments && typeof data.enrollments === 'object') {
                     totalEnrollments += Object.values(data.enrollments).length;
+                }
+
+                const subStatus = (data.subscription?.status || data.subscriptionStatus || '').toLowerCase();
+                const planTier = (data.subscription?.plan || data.planTier || '').toLowerCase();
+                if (subStatus === 'active' || planTier === 'pro' || planTier === 'premium') {
+                    activeSubscriptions++;
+                }
+
+                const createdMs = data.createdAt?.seconds
+                    ? data.createdAt.seconds * 1000
+                    : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : NaN);
+                if (Number.isFinite(createdMs) && createdMs >= monthAgo) {
+                    newUsersThisMonth++;
                 }
             });
             
@@ -258,6 +284,26 @@ class AdminManagementService {
             if (analyticsSnap.exists()) {
                 totalRevenue = analyticsSnap.data().totalRevenue || 0;
             }
+
+            if (transactionsSnap) {
+                totalSales = transactionsSnap.docs.length;
+                transactionsSnap.forEach(d => {
+                    const t = d.data();
+                    const amount = Number(t.amount || 0);
+                    if (Number.isFinite(amount)) {
+                        totalRevenue += amount;
+                    }
+                    const txMs = t.createdAt?.seconds
+                        ? t.createdAt.seconds * 1000
+                        : (typeof t.createdAt === 'string' ? Date.parse(t.createdAt) : NaN);
+                    if (Number.isFinite(txMs) && txMs >= monthAgo) {
+                        monthSales++;
+                    }
+                });
+            }
+
+            const growthRateBase = Math.max(totalUsers - newUsersThisMonth, 1);
+            const userGrowthRate = Math.round((newUsersThisMonth / growthRateBase) * 1000) / 10;
             
             return {
                 totalUsers,
@@ -266,9 +312,13 @@ class AdminManagementService {
                 totalCourses: coursesSnap.docs.length,
                 totalEnrollments,
                 totalRevenue,
+                totalSales,
+                activeSubscriptions,
+                monthSales,
                 platformGrowth: {
-                    newUsersThisMonth: 0, // Set based on created dates
-                    enrollmentGrowthRate: 0 // Set based on historical data
+                    newUsersThisMonth,
+                    userGrowthRate,
+                    enrollmentGrowthRate: 0
                 }
             };
         } catch (e) {
@@ -478,6 +528,95 @@ class AdminManagementService {
         }
     }
 
+    /**
+     * Get recent transactions for analytics overview.
+     * @param {number} maxItems
+     * @returns {Promise<Array<object>>}
+     */
+    async getRecentTransactions(maxItems = 25) {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const transRef = collection(db, 'transactions');
+            const q = query(transRef, orderBy('createdAt', 'desc'), limit(maxItems));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) {
+            console.warn('AdminManagementService: getRecentTransactions failed:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Get recent course reviews globally for moderation.
+     * @param {number} maxItems
+     * @returns {Promise<Array<object>>}
+     */
+    async getRecentReviews(maxItems = 40) {
+        if (!isFirebaseConfigured()) return [];
+        try {
+            const reviewsRef = collectionGroup(db, 'reviews');
+            const q = query(reviewsRef, orderBy('updatedAt', 'desc'), limit(maxItems));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => {
+                const parentCourseId = d.ref.parent?.parent?.id || '';
+                return {
+                    id: d.id,
+                    courseId: parentCourseId,
+                    ...d.data()
+                };
+            });
+        } catch (e) {
+            console.warn('AdminManagementService: getRecentReviews failed:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Approve a review globally.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @returns {Promise<boolean>}
+     */
+    async approveReview(courseId, reviewId) {
+        if (!isFirebaseConfigured() || !courseId || !reviewId) return false;
+        try {
+            const ref = doc(db, 'course_reviews', courseId, 'reviews', reviewId);
+            await updateDoc(ref, {
+                status: 'approved',
+                updatedAt: serverTimestamp()
+            });
+            showToast('Review approved', 'success');
+            return true;
+        } catch (e) {
+            console.warn('AdminManagementService: approveReview failed:', e);
+            showToast('Failed to approve review', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Hide a review globally.
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @returns {Promise<boolean>}
+     */
+    async hideReview(courseId, reviewId) {
+        if (!isFirebaseConfigured() || !courseId || !reviewId) return false;
+        try {
+            const ref = doc(db, 'course_reviews', courseId, 'reviews', reviewId);
+            await updateDoc(ref, {
+                status: 'hidden',
+                updatedAt: serverTimestamp()
+            });
+            showToast('Review hidden', 'success');
+            return true;
+        } catch (e) {
+            console.warn('AdminManagementService: hideReview failed:', e);
+            showToast('Failed to hide review', 'error');
+            return false;
+        }
+    }
+
     // ================== SYSTEM SETTINGS ==================
 
     /**
@@ -630,8 +769,12 @@ class AdminManagementService {
             totalCourses: 0,
             totalEnrollments: 0,
             totalRevenue: 0,
+            totalSales: 0,
+            activeSubscriptions: 0,
+            monthSales: 0,
             platformGrowth: {
                 newUsersThisMonth: 0,
+                userGrowthRate: 0,
                 enrollmentGrowthRate: 0
             }
         };
