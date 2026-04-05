@@ -2350,7 +2350,8 @@ export class AdminDashboard {
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             // Attach event listeners
             list.querySelectorAll('.approve-course').forEach(btn => {
@@ -2396,7 +2397,8 @@ export class AdminDashboard {
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             // Attach event listeners
             list.querySelectorAll('.approve-flag').forEach(btn => {
