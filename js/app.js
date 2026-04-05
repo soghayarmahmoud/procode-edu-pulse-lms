@@ -489,7 +489,7 @@ function renderLoginPage() {
             window.location.hash = '/';
         } catch (err) {
             alert.classList.add('error', 'visible');
-            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
         }
@@ -511,7 +511,7 @@ function renderLoginPage() {
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.classList.add('error', 'visible');
-                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             }
         }
     });
@@ -601,7 +601,7 @@ function renderSignupPage() {
             window.location.hash = '/';
         } catch (err) {
             alert.classList.add('error', 'visible');
-            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
         }
@@ -624,13 +624,13 @@ function renderSignupPage() {
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.classList.add('error', 'visible');
-                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             }
         }
     });
 }
 
-function getAuthErrorMessage(code) {
+function getAuthErrorMessage(code, fallbackMessage = '') {
     const messages = {
         'auth/email-already-in-use': 'This email is already registered. Try signing in.',
         'auth/invalid-email': 'Please enter a valid email address.',
@@ -647,7 +647,14 @@ function getAuthErrorMessage(code) {
         'auth/user-disabled': 'This account has been disabled.',
         'auth/account-exists-with-different-credential': 'An account already exists with the same email address but different sign-in credentials.',
     };
-    return messages[code] || 'An error occurred. Please try again.';
+
+      if (messages[code]) return messages[code];
+
+      if (typeof fallbackMessage === 'string' && fallbackMessage.toLowerCase().includes('firebase is not configured')) {
+        return 'Firebase is not configured. Create a .env file from .env.example and add your Firebase project keys.';
+      }
+
+      return fallbackMessage || 'An error occurred. Please try again.';
 }
 
 // ══════════════════════════════════════════════
