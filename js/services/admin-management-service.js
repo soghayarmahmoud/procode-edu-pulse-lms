@@ -512,10 +512,10 @@ class AdminManagementService {
         if (!isFirebaseConfigured()) return false;
         try {
             const settingsRef = doc(db, 'system', 'settings');
-            await updateDoc(settingsRef, {
+            await setDoc(settingsRef, {
                 ...updates,
                 updatedAt: serverTimestamp()
-            });
+            }, { merge: true });
             this.systemSettingsCache = null; // Invalidate cache
             showToast('System settings updated', 'success');
             return true;

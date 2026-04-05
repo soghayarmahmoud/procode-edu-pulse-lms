@@ -2310,6 +2310,76 @@ export class AdminDashboard {
     _renderSettingsTab(container) {
         container.innerHTML = `
             <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+
+                <!-- Admin Control Core -->
+                <div class="card" style="padding:var(--space-8); border:1px solid rgba(0,120,212,0.35); box-shadow:0 0 0 1px rgba(0,120,212,0.12) inset;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-4); margin-bottom:var(--space-6); flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin:0 0 var(--space-2) 0;"><i class="fa-solid fa-shield-halved"></i> Admin Control Core</h3>
+                            <p class="text-muted" style="margin:0;">Centralized platform-wide switches for emergency and operational control.</p>
+                        </div>
+                        <span class="badge" style="background:rgba(0,120,212,0.12); color:var(--brand-primary);">High Authority Zone</span>
+                    </div>
+
+                    <div class="grid grid-2" style="gap:var(--space-4);">
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Maintenance Mode</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Block normal access while maintenance is active.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-maintenance-mode">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Allow New Registrations</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Turn student sign-ups on or off globally.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-allow-registrations">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Read-Only Mode</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Disable writes while keeping read access available.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-read-only-mode">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Require Email Verification</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Enforce verified email for privileged operations.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-require-email-verification">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-2" style="gap:var(--space-4); margin-top:var(--space-6);">
+                        <div class="input-group" style="margin:0;">
+                            <label>Platform Name</label>
+                            <input type="text" id="ctl-platform-name" class="input" placeholder="ProCode">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label>Support Contact Email</label>
+                            <input type="email" id="ctl-support-email" class="input" placeholder="support@yourplatform.com">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-6); justify-content:flex-end;">
+                        <button class="btn btn-outline" type="button" id="ctl-announce-maintenance"><i class="fa-solid fa-bullhorn"></i> Broadcast Maintenance Notice</button>
+                        <button class="btn btn-ghost" type="button" id="ctl-reset-core"><i class="fa-solid fa-rotate-left"></i> Reset Core Toggles</button>
+                        <button class="btn btn-primary" type="button" id="ctl-save-core"><i class="fa-solid fa-floppy-disk"></i> Save Admin Control Core</button>
+                    </div>
+                </div>
                 
                 <!-- Subscription Pricing -->
                 <div class="card" style="padding:var(--space-8);">
@@ -2322,7 +2392,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-basic" class="input" placeholder="9.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('basic')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-basic"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
 
                         <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); border-color:var(--brand-primary);">
@@ -2332,7 +2402,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-pro" class="input" placeholder="19.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('pro')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-pro"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
 
                         <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
@@ -2342,7 +2412,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-premium" class="input" placeholder="49.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('premium')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-premium"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
                     </div>
                 </div>
@@ -2417,6 +2487,29 @@ export class AdminDashboard {
     async _initSettingsLogic() {
         // Load current settings
         const settings = await adminManagementService.getSystemSettings();
+
+        const parsePrice = (id, fallback) => {
+            const value = parseFloat(document.getElementById(id).value);
+            return Number.isFinite(value) && value >= 0 ? value : fallback;
+        };
+
+        const buildPricingPayload = () => {
+            const currentPricing = settings.subscriptionPricing || {};
+            return {
+                basic: {
+                    ...(currentPricing.basic || {}),
+                    price: parsePrice('price-basic', currentPricing.basic?.price ?? 9.99)
+                },
+                pro: {
+                    ...(currentPricing.pro || {}),
+                    price: parsePrice('price-pro', currentPricing.pro?.price ?? 19.99)
+                },
+                premium: {
+                    ...(currentPricing.premium || {}),
+                    price: parsePrice('price-premium', currentPricing.premium?.price ?? 49.99)
+                }
+            };
+        };
         
         // Populate pricing
         if (settings.subscriptionPricing) {
@@ -2424,6 +2517,61 @@ export class AdminDashboard {
             document.getElementById('price-pro').value = settings.subscriptionPricing.pro?.price || '19.99';
             document.getElementById('price-premium').value = settings.subscriptionPricing.premium?.price || '49.99';
         }
+
+        // Populate Admin Control Core
+        document.getElementById('ctl-maintenance-mode').checked = !!settings.maintenanceMode;
+        document.getElementById('ctl-allow-registrations').checked = settings.allowNewRegistrations !== false;
+        document.getElementById('ctl-read-only-mode').checked = !!settings.readOnlyMode;
+        document.getElementById('ctl-require-email-verification').checked = !!settings.requireEmailVerification;
+        document.getElementById('ctl-platform-name').value = settings.platformName || 'ProCode';
+        document.getElementById('ctl-support-email').value = settings.supportEmail || '';
+
+        // Pricing save handlers
+        document.getElementById('save-price-basic').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+        document.getElementById('save-price-pro').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+        document.getElementById('save-price-premium').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+
+        // Admin Control Core handlers
+        document.getElementById('ctl-save-core').addEventListener('click', async () => {
+            const updates = {
+                maintenanceMode: document.getElementById('ctl-maintenance-mode').checked,
+                allowNewRegistrations: document.getElementById('ctl-allow-registrations').checked,
+                readOnlyMode: document.getElementById('ctl-read-only-mode').checked,
+                requireEmailVerification: document.getElementById('ctl-require-email-verification').checked,
+                platformName: document.getElementById('ctl-platform-name').value.trim() || 'ProCode',
+                supportEmail: document.getElementById('ctl-support-email').value.trim()
+            };
+            await adminManagementService.updateSystemSettings(updates);
+        });
+
+        document.getElementById('ctl-reset-core').addEventListener('click', () => {
+            document.getElementById('ctl-maintenance-mode').checked = false;
+            document.getElementById('ctl-allow-registrations').checked = true;
+            document.getElementById('ctl-read-only-mode').checked = false;
+            document.getElementById('ctl-require-email-verification').checked = false;
+            document.getElementById('ctl-platform-name').value = 'ProCode';
+            document.getElementById('ctl-support-email').value = '';
+            showToast('Core toggles reset locally. Click Save Admin Control Core to persist.', 'info');
+        });
+
+        document.getElementById('ctl-announce-maintenance').addEventListener('click', async () => {
+            const customText = prompt('Maintenance notice text:', 'Scheduled maintenance is in progress. Some features may be temporarily unavailable.');
+            if (!customText) return;
+            const ok = await adminManagementService.createAnnouncement({
+                title: 'Maintenance Notice',
+                text: customText,
+                type: 'warning'
+            });
+            if (ok) {
+                this._loadAnnouncements();
+            }
+        });
 
         // Populate banner
         if (settings.promotionalBanner) {
