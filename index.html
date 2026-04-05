@@ -85,8 +85,22 @@
   <!-- Service Worker Registration -->
   <script>
     const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-    if ('serviceWorker' in navigator && !isLocalhost) {
-      window.addEventListener('load', () => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        if (isLocalhost) {
+          // Prevent stale cached app code during local development.
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+            console.log('[SW] Localhost detected: old service workers and caches cleared.');
+          } catch (error) {
+            console.warn('[SW] Failed to clear localhost service worker/cache:', error);
+          }
+          return;
+        }
+
         navigator.serviceWorker.register('./sw.js')
           .then((registration) => {
             console.log('[SW] Service Worker registered successfully:', registration.scope);
