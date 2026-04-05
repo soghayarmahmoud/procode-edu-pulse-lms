@@ -30,11 +30,24 @@ const firebaseConfig = {
   measurementId: env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+function isRealValue(value, minLength = 1) {
+  if (typeof value !== 'string') return false;
+  const v = value.trim();
+  if (!v || v.length < minLength) return false;
+  const lower = v.toLowerCase();
+  if (lower.includes('your_') || lower.includes('replace') || lower.includes('placeholder')) return false;
+  return true;
+}
+
+function isLikelyFirebaseApiKey(value) {
+  return typeof value === 'string' && /^AIza[\w-]{20,}$/.test(value.trim());
+}
+
 const hasFirebaseConfig =
-  typeof firebaseConfig.apiKey === 'string' && firebaseConfig.apiKey.length > 10 &&
-  typeof firebaseConfig.authDomain === 'string' && firebaseConfig.authDomain.length > 0 &&
-  typeof firebaseConfig.projectId === 'string' && firebaseConfig.projectId.length > 0 &&
-  typeof firebaseConfig.appId === 'string' && firebaseConfig.appId.length > 0;
+  isLikelyFirebaseApiKey(firebaseConfig.apiKey) &&
+  isRealValue(firebaseConfig.authDomain, 3) &&
+  isRealValue(firebaseConfig.projectId, 3) &&
+  isRealValue(firebaseConfig.appId, 6);
 
 // Initialize Firebase only when config is present.
 // This keeps local/offline mode working without .env credentials.
