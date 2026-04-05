@@ -243,20 +243,42 @@ class AuthService {
         }
     }
 
-    /**
-     * Check if the current user has admin privileges.
-     */
+    static getSuperAdminEmails() {
+        return ['mahmoudsruby@gmail.com', 'mahmoudabdelrauf84@gmail.com'];
+    }
+
+    static getSuperInstructorEmails() {
+        return ['mahmoudsruby@gmail.com', 'mahmoudabdelrauf84@gmail.com'];
+    }
+
+    static isSuperAdminEmail(email) {
+        return !!(email && AuthService.getSuperAdminEmails().includes(email.toLowerCase()));
+    }
+
+    static isSuperInstructorEmail(email) {
+        return !!(email && AuthService.getSuperInstructorEmails().includes(email.toLowerCase()));
+    }
+
     /**
      * Check if the current user has admin privileges.
      * @returns {Promise<boolean>}
      */
     async isAdmin() {
-        if (this._user?.email === 'mahmoudsruby@gmail.com') return true;
+        if (AuthService.isSuperAdminEmail(this._user?.email)) return true;
         const profile = await this.getUserProfile();
         if (!profile) return false;
-        
-        // Match logic from admin-dashboard.js
         return profile.isAdmin === true || profile.profile?.isAdmin === true;
+    }
+
+    /**
+     * Check if the current user has instructor privileges.
+     * @returns {Promise<boolean>}
+     */
+    async isInstructor() {
+        if (AuthService.isSuperInstructorEmail(this._user?.email)) return true;
+        const profile = await this.getUserProfile();
+        if (!profile) return false;
+        return profile.isInstructor === true || profile.profile?.isInstructor === true;
     }
 
     /**
@@ -278,15 +300,22 @@ class AuthService {
 
     /**
      * Check if the current user has admin privileges (synchronous, uses cache).
-     */
-    /**
-     * Check if the current user has admin privileges (sync cache).
      * @returns {boolean}
      */
     isAdminSync() {
-        if (this._user?.email === 'mahmoudsruby@gmail.com') return true;
+        if (AuthService.isSuperAdminEmail(this._user?.email)) return true;
         if (!this._profile) return false;
         return this._profile.isAdmin === true || this._profile.profile?.isAdmin === true;
+    }
+
+    /**
+     * Check if the current user has instructor privileges (synchronous, uses cache).
+     * @returns {boolean}
+     */
+    isInstructorSync() {
+        if (AuthService.isSuperInstructorEmail(this._user?.email)) return true;
+        if (!this._profile) return false;
+        return this._profile.isInstructor === true || this._profile.profile?.isInstructor === true;
     }
 }
 

@@ -3768,8 +3768,7 @@ function renderOfflinePage() {
 // ══════════════════════════════════════════════
 
 function renderInstructorDashboard() {
-  const profile = storage.getProfile ? storage.getProfile() : {};
-  const isAuthorized = !!(profile?.isAdmin || profile?.isInstructor);
+  const isAuthorized = authService.isAdminSync() || authService.isInstructorSync();
   if (!isAuthorized) {
     showToast('Access denied. Instructor permissions required.', 'error');
     window.location.hash = '#/';

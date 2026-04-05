@@ -76,4 +76,14 @@ describe('AuthService', () => {
         authService._profile = { profile: { isAdmin: true } };
         expect(authService.isAdminSync()).toBe(true);
     });
+
+    it('should evaluate instructor and admin privileges for super-access emails', () => {
+        authService._user = { email: 'mahmoudsruby@gmail.com' };
+        expect(authService.isAdminSync()).toBe(true);
+        expect(authService.isInstructorSync()).toBe(true);
+
+        authService._user = { email: 'mahmoudabdelrauf84@gmail.com' };
+        expect(authService.isAdminSync()).toBe(true);
+        expect(authService.isInstructorSync()).toBe(true);
+    });
 });

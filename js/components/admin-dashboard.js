@@ -46,7 +46,7 @@ export class AdminDashboard {
             let isAdmin = userDoc?.isAdmin || (userDoc?.profile && userDoc.profile.isAdmin) || false;
             
             // Super Admin Fallback for immediate access
-            if (user.email === 'mahmoudsruby@gmail.com') {
+            if (user.email === 'mahmoudsruby@gmail.com' || user.email === 'mahmoudabdelrauf84@gmail.com') {
                 isAdmin = true;
             }
             
@@ -380,14 +380,26 @@ export class AdminDashboard {
     _renderUsersTab(container) {
         container.innerHTML = `
             <div class="card" style="padding:var(--space-6); margin-bottom:var(--space-6);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
-                    <div class="input-group" style="margin:0; width:300px;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:var(--space-4); margin-bottom:var(--space-6);">
+                    <div class="input-group" style="margin:0; width:300px; flex:1; min-width:260px;">
                         <div style="position:relative;">
                             <i class="fa-solid fa-search text-muted" style="position:absolute; left:12px; top:50%; transform:translateY(-50%);"></i>
                             <input type="text" class="input" placeholder="Search by email, UID, or name..." style="padding-left:36px; padding-top:8px; padding-bottom:8px;" id="admin-user-search">
                         </div>
                     </div>
                     <button class="btn btn-outline" id="btn-refresh-users"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                </div>
+
+                <div class="card" style="padding:var(--space-4); margin-bottom:var(--space-6); background:var(--bg-tertiary); border:1px solid var(--border-subtle); border-radius:var(--radius-md);">
+                    <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:flex-end;">
+                        <div class="input-group" style="flex:1; min-width:240px; margin:0;">
+                            <label>Promote user to instructor or admin</label>
+                            <input type="text" class="input" id="admin-add-instructor-input" placeholder="Enter email or UID">
+                        </div>
+                        <button class="btn btn-primary" id="btn-promote-instructor" style="min-width:180px;">Make Instructor</button>
+                        <button class="btn btn-secondary" id="btn-promote-admin" style="min-width:180px;">Make Admin</button>
+                    </div>
+                    <p class="text-muted" style="margin-top:var(--space-3); font-size:0.85rem;">Use an existing user email or UID. If the user has not signed in yet, ask them to register first.</p>
                 </div>
 
                 <div id="admin-users-table-container" style="overflow-x:auto;">
@@ -415,6 +427,40 @@ export class AdminDashboard {
 
         const btnRefresh = document.getElementById('btn-refresh-users');
         if (btnRefresh) btnRefresh.onclick = () => this._loadUsersData();
+
+        const promoteInput = document.getElementById('admin-add-instructor-input');
+        const btnPromoteInstructor = document.getElementById('btn-promote-instructor');
+        const btnPromoteAdmin = document.getElementById('btn-promote-admin');
+
+        const promoteRole = async (role) => {
+            const value = promoteInput?.value?.trim();
+            if (!value) {
+                showToast('Enter an email or UID to promote.', 'error');
+                return;
+            }
+            const user = await this._findUserByIdentifier(value);
+            if (!user) {
+                showToast('User not found. Search by exact email or UID.', 'error');
+                return;
+            }
+
+            const updates = {
+                isInstructor: role === 'instructor' ? true : user.isInstructor || (user.profile?.isInstructor || false),
+                isAdmin: role === 'admin' ? true : user.isAdmin || (user.profile?.isAdmin || false)
+            };
+
+            const ok = await firestoreService.updateUserRole(user.uid, updates);
+            if (ok) {
+                showToast(`User ${role === 'admin' ? 'granted admin' : 'made instructor'} successfully.`, 'success');
+                promoteInput.value = '';
+                this._loadUsersData();
+            } else {
+                showToast('Failed to update user role.', 'error');
+            }
+        };
+
+        if (btnPromoteInstructor) btnPromoteInstructor.onclick = () => promoteRole('instructor');
+        if (btnPromoteAdmin) btnPromoteAdmin.onclick = () => promoteRole('admin');
     }
 
     async _loadUsersData() {
@@ -434,9 +480,14 @@ export class AdminDashboard {
             const email = profile.email || u.email || u.uid;
             const initials = name.slice(0,2).toUpperCase();
             const isAdmin = u.isAdmin || profile.isAdmin;
-            const roleBadge = isAdmin
-                ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin</span>'
-                : '<span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Student</span>';
+            const isInstructor = u.isInstructor || profile.isInstructor;
+            const roleBadge = isAdmin && isInstructor
+                ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin / Instructor</span>'
+                : isAdmin
+                    ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin</span>'
+                    : isInstructor
+                        ? '<span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Instructor</span>'
+                        : '<span class="badge" style="background:rgba(136,136,136,0.12); color:var(--text-muted);">Student</span>';
             const lastActive = u.updatedAt?.seconds
                 ? new Date(u.updatedAt.seconds * 1000).toLocaleDateString()
                 : 'N/A';
@@ -445,7 +496,7 @@ export class AdminDashboard {
                 <tr style="border-bottom:1px solid var(--border-subtle);">
                     <td style="padding:var(--space-4) var(--space-2);">
                         <div style="display:flex; align-items:center; gap:var(--space-3);">
-                            <div class="avatar-sm" style="background:${isAdmin ? 'var(--brand-primary)' : 'var(--bg-tertiary)'}; color:${isAdmin ? 'white' : 'var(--text-primary)'}; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600;">${initials}</div>
+                            <div class="avatar-sm" style="background:${isAdmin ? 'var(--brand-primary)' : isInstructor ? 'var(--brand-primary)' : 'var(--bg-tertiary)'}; color:${isAdmin || isInstructor ? 'white' : 'var(--text-primary)'}; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600;">${initials}</div>
                             <div>
                                 <div style="font-weight:600;">${name}</div>
                                 <div class="text-muted" style="font-size:0.8rem;">${email}</div>
@@ -454,7 +505,8 @@ export class AdminDashboard {
                     </td>
                     <td style="padding:var(--space-4) var(--space-2);">${roleBadge}</td>
                     <td style="padding:var(--space-4) var(--space-2);">${lastActive}</td>
-                    <td style="padding:var(--space-4) var(--space-2); text-align:right;">
+                    <td style="padding:var(--space-4) var(--space-2); text-align:right; display:flex; justify-content:flex-end; gap:6px;">
+                        <button class="btn btn-ghost btn-sm btn-toggle-instructor" data-uid="${u.uid}" data-instructor="${isInstructor ? 'true' : 'false'}" title="${isInstructor ? 'Revoke Instructor' : 'Make Instructor'}"><i class="fa-solid fa-chalkboard-user"></i></button>
                         <button class="btn btn-ghost btn-sm btn-toggle-admin" data-uid="${u.uid}" data-admin="${isAdmin ? 'true' : 'false'}" title="${isAdmin ? 'Revoke Admin' : 'Make Admin'}"><i class="fa-solid fa-shield-halved"></i></button>
                     </td>
                 </tr>
@@ -477,6 +529,24 @@ export class AdminDashboard {
         `;
 
         // Wire toggle admin buttons
+        tableContainer.querySelectorAll('.btn-toggle-instructor').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const isCurrentlyInstructor = btn.dataset.instructor === 'true';
+                const action = isCurrentlyInstructor ? 'revoke instructor role from' : 'grant instructor role to';
+                if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+                btn.disabled = true;
+                const ok = await firestoreService.updateUserRole(uid, { isInstructor: !isCurrentlyInstructor });
+                if (ok) {
+                    showToast('Instructor role updated successfully.', 'success');
+                    this._loadUsersData();
+                } else {
+                    showToast('Failed to update instructor role.', 'error');
+                    btn.disabled = false;
+                }
+            };
+        });
+
         tableContainer.querySelectorAll('.btn-toggle-admin').forEach(btn => {
             btn.onclick = async () => {
                 const uid = btn.dataset.uid;
@@ -494,6 +564,18 @@ export class AdminDashboard {
                 }
             };
         });
+    }
+
+    async _findUserByIdentifier(identifier) {
+        if (!identifier) return null;
+        const users = await firestoreService.getAllUsers();
+        const normalized = identifier.trim().toLowerCase();
+        return users.find(u =>
+            u.uid === identifier ||
+            (u.email && u.email.toLowerCase() === normalized) ||
+            (u.profile?.email && u.profile.email.toLowerCase() === normalized) ||
+            (u.profile?.name && u.profile.name.toLowerCase() === normalized)
+        ) || null;
     }
 
     /**
