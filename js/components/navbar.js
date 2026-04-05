@@ -20,6 +20,7 @@ export function renderNavbar() {
     const currentHash = window.location.hash.slice(1) || '/';
     const user = authService.getCurrentUser();
     const isAdmin = authService.isAdminSync();
+    const isInstructor = authService.isInstructorSync();
     
     const _p = window.location.pathname;
     const _s = _p.split('/').filter(Boolean);
@@ -92,7 +93,7 @@ export function renderNavbar() {
               <div class="user-avatar-lg">${initial}</div>
               <div class="user-details">
                 <span class="user-name">${displayName}</span>
-                <span class="user-role">Student Learner</span>
+                <span class="user-role">${isAdmin ? 'Administrator' : isInstructor ? 'Instructor' : 'Student Learner'}</span>
               </div>
             </div>
             <div class="user-stats">
@@ -136,6 +137,7 @@ export function renderNavbar() {
               <a href="#/analytics" class="sidebar-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
               <a href="#/gamification" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Achievements</a>
               <a href="#/search" class="sidebar-link"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
+              ${isInstructor ? `<a href="#/instructor-dashboard" class="sidebar-link instructor-link"><i class="fa-solid fa-chalkboard-user"></i> Instructor Dashboard</a>` : ''}
               ${isAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
             </div>
           </div>
