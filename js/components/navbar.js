@@ -19,7 +19,7 @@ export function renderNavbar() {
 
     const currentHash = window.location.hash.slice(1) || '/';
     const user = authService.getCurrentUser();
-    const isAdmin = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+    const isSuperAdmin = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
     const isInstructor = authService.isInstructorSync();
     
     const _p = window.location.pathname;
@@ -59,7 +59,10 @@ export function renderNavbar() {
                   <i class="fa-solid fa-gem" style="color: #ffffff;"></i> ${storage.getGems()}
                </div>
             </a>
-            ${isAdmin ? `
+            ${isSuperAdmin ? `
+              <span style="font-size:11px; font-weight:700; color:#0a0a0a; background:#f6d365; border:1px solid #f0c14b; border-radius:999px; padding:4px 10px; letter-spacing:0.2px;">
+                <i class="fa-solid fa-shield-halved"></i> Super Admin
+              </span>
               <a href="#/admin" class="btn btn-sm btn-outline" style="font-size:var(--text-xs); border-radius: 20px;">
                 <i class="fa-solid fa-gauge-high"></i> Admin Panel
               </a>
@@ -99,7 +102,7 @@ export function renderNavbar() {
               <div class="user-avatar-lg">${initial}</div>
               <div class="user-details">
                 <span class="user-name">${displayName}</span>
-                <span class="user-role">${isAdmin ? 'Administrator' : isInstructor ? 'Instructor' : 'Student Learner'}</span>
+                <span class="user-role">${isSuperAdmin ? 'Super Admin' : isInstructor ? 'Instructor' : 'Student Learner'}</span>
               </div>
             </div>
             <div class="user-stats">
@@ -144,7 +147,7 @@ export function renderNavbar() {
               <a href="#/gamification" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Achievements</a>
               <a href="#/search" class="sidebar-link"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
               ${isInstructor ? `<a href="#/instructor-dashboard" class="sidebar-link instructor-link"><i class="fa-solid fa-chalkboard-user"></i> Instructor Dashboard</a>` : ''}
-              ${isAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
+              ${isSuperAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
             </div>
           </div>
         </div>

@@ -36,22 +36,13 @@ export class AdminDashboard {
             return;
         }
 
-        // Feature: Protected Admin Dashboard Sub-routing & Layout
-        // Strict Route Guard: query Firestore to verify administrator privileges.
+        // Admin UI is restricted to explicit super-admin email allowlist.
         this.containerContainer.innerHTML = '<div class="container" style="padding:var(--space-16);text-align:center;"><div class="spinner-sm"></div> Verifying Credentials...</div>';
-        
+
         try {
-            const userDoc = await firestoreService.getUserProfile(user.uid);
-            // Some profiles might have data nested under .profile
-            let isAdmin = userDoc?.isAdmin || (userDoc?.profile && userDoc.profile.isAdmin) || false;
-            
-            // Super Admin Fallback for immediate access
-            if (user.email === 'mahmoudsruby@gmail.com' || user.email === 'mahmoudabdelrauf84@gmail.com') {
-                isAdmin = true;
-            }
-            
-            if (!isAdmin) {
-                this._renderAccessDenied('Administrator privilege required.');
+            const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+            if (!hasSuperAccess) {
+                this._renderAccessDenied('Super admin account required.');
                 return;
             }
         } catch (err) {

@@ -4465,17 +4465,17 @@ async function startMainApp() {
     
     // ── Route Guards ──
     router.before(async (path) => {
-        const protectedRoutes = ['/admin', '/instructor-dashboard'];
-        if (protectedRoutes.some(r => path.startsWith(r))) {
-            const isAdmin = await authService.isAdmin();
-            if (!isAdmin) {
-                showToast('Restricted Access: Administrator privileges required.', 'error');
-                // Redirect to home if trying to access admin
-                window.location.hash = '#/';
-                return false;
-            }
+      const protectedRoutes = ['/admin', '/instructor-dashboard'];
+      if (protectedRoutes.some(r => path.startsWith(r))) {
+        const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+        if (!hasSuperAccess) {
+          showToast('Restricted Access: Super admin account required.', 'error');
+          // Redirect to home if trying to access admin panel routes
+          window.location.hash = '#/';
+          return false;
         }
-        return true;
+      }
+      return true;
     });
 
     router
