@@ -59,6 +59,11 @@ export function renderNavbar() {
                   <i class="fa-solid fa-gem" style="color: #ffffff;"></i> ${storage.getGems()}
                </div>
             </a>
+            ${isInstructor ? `
+              <a href="#/instructor-dashboard" class="btn btn-sm btn-outline" style="font-size:var(--text-xs); border-radius: 20px;">
+                <i class="fa-solid fa-chalkboard-user"></i> Instructor
+              </a>
+            ` : ''}
             ${isSuperAdmin ? `
               <span style="font-size:11px; font-weight:700; color:#0a0a0a; background:#f6d365; border:1px solid #f0c14b; border-radius:999px; padding:4px 10px; letter-spacing:0.2px;">
                 <i class="fa-solid fa-shield-halved"></i> Super Admin
