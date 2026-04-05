@@ -4465,17 +4465,25 @@ async function startMainApp() {
     
     // ── Route Guards ──
     router.before(async (path) => {
-      const protectedRoutes = ['/admin', '/instructor-dashboard'];
-      if (protectedRoutes.some(r => path.startsWith(r))) {
-        const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
-        if (!hasSuperAccess) {
-          showToast('Restricted Access: Super admin account required.', 'error');
-          // Redirect to home if trying to access admin panel routes
-          window.location.hash = '#/';
-          return false;
+        if (path.startsWith('/admin')) {
+            const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+            if (!hasSuperAccess) {
+                showToast('Restricted Access: Super admin account required.', 'error');
+                window.location.hash = '#/';
+                return false;
+            }
         }
-      }
-      return true;
+
+        if (path.startsWith('/instructor-dashboard')) {
+            const hasInstructorAccess = authService.isInstructorSync() || authService.isAdminSync();
+            if (!hasInstructorAccess) {
+                showToast('Restricted Access: Instructor permissions required.', 'error');
+                window.location.hash = '#/';
+                return false;
+            }
+        }
+
+        return true;
     });
 
     router
@@ -4505,11 +4513,7 @@ async function startMainApp() {
         .on('/pricing', () => transitionPage(renderPricingPage, '#/pricing'))
         .on('/subscription-success', () => transitionPage(renderSubscriptionSuccessPage, '#/subscription-success'))
         .on('/mentorship', () => transitionPage(renderMentorshipPage, '#/mentorship'))
-        .on('/instructor-dashboard', () => {
-            // Elevate to Admin Panel
-            showToast('Redirecting to Unified Admin Panel...', 'info');
-            window.location.hash = '#/admin';
-        })
+        .on('/instructor-dashboard', () => transitionPage(renderInstructorDashboard, '#/instructor-dashboard'))
         .on('/404', () => transitionPage(renderErrorPage, '#/404'))
         .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
         .on('*', () => transitionPage(renderErrorPage, window.location.hash));
