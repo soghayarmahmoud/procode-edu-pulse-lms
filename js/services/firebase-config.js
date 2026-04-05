@@ -11,30 +11,47 @@
 // 6. Copy your config values below
 // ============================================
 
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getAnalytics } from 'firebase/analytics';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js';
 
 // ─── YOUR FIREBASE CONFIG ───
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const analytics = getAnalytics(app);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+const hasFirebaseConfig =
+  typeof firebaseConfig.apiKey === 'string' && firebaseConfig.apiKey.length > 10 &&
+  typeof firebaseConfig.authDomain === 'string' && firebaseConfig.authDomain.length > 0 &&
+  typeof firebaseConfig.projectId === 'string' && firebaseConfig.projectId.length > 0 &&
+  typeof firebaseConfig.appId === 'string' && firebaseConfig.appId.length > 0;
+
+// Initialize Firebase only when config is present.
+// This keeps local/offline mode working without .env credentials.
+const app = hasFirebaseConfig ? initializeApp(firebaseConfig) : null;
+
+export const analytics = (() => {
+  if (!app) return null;
+  try {
+    return getAnalytics(app);
+  } catch {
+    return null;
+  }
+})();
+
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const storage = app ? getStorage(app) : null;
 
 // Check if Firebase is configured (not using placeholder values)
 /**
@@ -42,5 +59,5 @@ export const storage = getStorage(app);
  * @returns {boolean}
  */
 export function isFirebaseConfigured() {
-    return firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.apiKey.length > 10;
+  return hasFirebaseConfig;
 }
