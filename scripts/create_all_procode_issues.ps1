@@ -33,7 +33,7 @@ The current platform relies on a monolithic `app.js` (+4600 lines) with Vanilla 
 ### Labels
 refactor, architecture, priority-high
 "@
-Create-Issue -Title "[Refactor] Migrate Platform to React / Next.js for Scalability" -Body $body1 -Labels "refactor,architecture,priority-high"
+Create-Issue -Title "[Refactor] Migrate Platform to React / Next.js for Scalability" -Body $body1 -Labels "enhancement"
 
 # 2. Real-time Chat System between users
 $body2 = @"
@@ -49,7 +49,7 @@ Currently, communication is limited to comment threads inside lessons. An LMS li
 ### Suggested Solution
 Create a new `/chat` route or a slide-out drawer containing a 1-on-1 chat interface. Store messages inside a `/conversations` root collection in Firestore.
 "@
-Create-Issue -Title "[Feature] Real-time User-to-User Chat & Mentoring System" -Body $body2 -Labels "enhancement,feature"
+Create-Issue -Title "[Feature] Real-time User-to-User Chat & Mentoring System" -Body $body2 -Labels "enhancement"
 
 # 3. Full Admin Panel (Platform Moderation)
 $body3 = @"
@@ -68,7 +68,7 @@ Currently, to delete a bad user review or ban a user, an engineer has to manuall
 ### Suggested Solution
 Create an `/admin` route protected by a Firebase Custom Claim (`admin: true`). Build a dashboard tailored for moderators.
 "@
-Create-Issue -Title "[Feature] Full Platform Administrator Dashboard" -Body $body3 -Labels "enhancement,admin-cms"
+Create-Issue -Title "[Feature] Full Platform Administrator Dashboard" -Body $body3 -Labels "enhancement"
 
 # 4. Instructor Dashboard & Full CRUD
 $body4 = @"
@@ -83,7 +83,7 @@ Instructors need a robust dashboard to manage their teaching business. Currently
 ### Suggested Solution
 Expand the existing Instructor Dashboard. Implement a multi-step "Course Creator Wizard" that posts structured JSON into Firestore's `/courses` collection, and upload videos to Firebase Storage/Cloudinary.
 "@
-Create-Issue -Title "[Feature] Instructor Dashboard: Advanced CRUD & Content Management" -Body $body4 -Labels "enhancement,instructor-cms"
+Create-Issue -Title "[Feature] Instructor Dashboard: Advanced CRUD & Content Management" -Body $body4 -Labels "enhancement"
 
 # 5. Persistent Data System & Migration from LocalStorage
 $body5 = @"
@@ -102,7 +102,7 @@ Progress should resume exactly where the user left off, regardless of device.
 ### Technical Notes
 Throttle/debounce the database writes to avoid hitting Firebase quota limits.
 "@
-Create-Issue -Title "[Bug] Broken Data Persistence: Migrate State to Cloud Firestore" -Body $body5 -Labels "bug,data-integrity,priority-high"
+Create-Issue -Title "[Bug] Broken Data Persistence: Migrate State to Cloud Firestore" -Body $body5 -Labels "bug"
 
 # 6. Global Public Reviews System
 $body6 = @"
@@ -116,6 +116,6 @@ Course reviews are currently limited in scope. We need a global, public-facing r
 ### Suggested Solution
 Update Firestore structure to use distributed counters for course ratings. Build a dedicated section on the Course Details page showing a review distribution chart alongside written comments from enrolled students only.
 "@
-Create-Issue -Title "[Feature] Global Public Course Reviews & Ratings Engine" -Body $body6 -Labels "enhancement,UI/UX"
+Create-Issue -Title "[Feature] Global Public Course Reviews & Ratings Engine" -Body $body6 -Labels "enhancement"
 
 Write-Host "All comprehensive LMS feature issues generated successfully!"
