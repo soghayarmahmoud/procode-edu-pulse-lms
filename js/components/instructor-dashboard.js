@@ -39,7 +39,7 @@ export class InstructorDashboard {
                 <div class="container" style="padding-top:var(--space-10);padding-bottom:var(--space-16);">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:var(--space-10);">
                         <div>
-                            <span class="section-badge"><i class="fa-solid fa-chalkboard-user"></i> Admin Panel</span>
+                            <span class="section-badge"><i class="fa-solid fa-chalkboard-user"></i> Instructor Studio</span>
                             <h1 class="section-title">Instructor Dashboard</h1>
                         </div>
                     </div>
@@ -135,6 +135,68 @@ export class InstructorDashboard {
                                     <button class="btn btn-primary" id="btn-save-course" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Course</button>
                                 </div>
                             </form>
+
+                            <div style="margin-top:var(--space-8); border-top:1px solid var(--border-subtle); padding-top:var(--space-6);">
+                                <h4 style="margin-bottom:var(--space-4);"><i class="fa-solid fa-link"></i> Attach External Resource</h4>
+                                <form id="resource-builder-form" onsubmit="event.preventDefault();">
+                                    <div class="grid grid-2" style="gap:var(--space-4);">
+                                        <div class="input-group">
+                                            <label>Course ID</label>
+                                            <input type="text" id="resource-course-id" class="input" placeholder="e.g. react-native-pro" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Resource Type</label>
+                                            <select id="resource-type" class="input">
+                                                <option value="pdf">PDF</option>
+                                                <option value="github">GitHub</option>
+                                                <option value="link">External Link</option>
+                                            </select>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Resource Title</label>
+                                            <input type="text" id="resource-title" class="input" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Resource URL</label>
+                                            <input type="url" id="resource-url" class="input" placeholder="https://..." required>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:var(--space-4); display:flex; justify-content:flex-end;">
+                                        <button class="btn btn-outline" type="submit" id="btn-add-resource"><i class="fa-solid fa-paperclip"></i> Attach Resource</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div style="margin-top:var(--space-8); border-top:1px solid var(--border-subtle); padding-top:var(--space-6);">
+                                <h4 style="margin-bottom:var(--space-4);"><i class="fa-solid fa-circle-question"></i> Create Quiz</h4>
+                                <form id="quiz-builder-form" onsubmit="event.preventDefault();">
+                                    <div class="grid grid-2" style="gap:var(--space-4);">
+                                        <div class="input-group">
+                                            <label>Course ID</label>
+                                            <input type="text" id="quiz-course-id" class="input" placeholder="e.g. react-native-pro" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Quiz ID</label>
+                                            <input type="text" id="quiz-id" class="input" placeholder="e.g. react-basics-quiz" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Quiz Title</label>
+                                            <input type="text" id="quiz-title" class="input" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Passing Score (%)</label>
+                                            <input type="number" id="quiz-passing-score" class="input" min="0" max="100" value="70" required>
+                                        </div>
+                                    </div>
+                                    <div class="input-group" style="margin-top:var(--space-4);">
+                                        <label>Questions (JSON Array)</label>
+                                        <textarea id="quiz-questions-json" class="input textarea" rows="5" placeholder='[{"question":"What is JSX?","options":["A","B","C"],"answer":"A"}]' required></textarea>
+                                    </div>
+                                    <div style="margin-top:var(--space-4); display:flex; justify-content:flex-end;">
+                                        <button class="btn btn-primary" type="submit" id="btn-create-quiz"><i class="fa-solid fa-list-check"></i> Create Quiz</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                         </div>
 
@@ -186,8 +248,21 @@ export class InstructorDashboard {
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <label>YouTube Video ID</label>
-                                        <input type="text" id="lesson-youtube" class="input" placeholder="e.g. dQw4w9WgXcQ">
+                                        <label>Video Source</label>
+                                        <select id="lesson-video-source" class="input">
+                                            <option value="youtube">YouTube</option>
+                                            <option value="cloudinary">Cloudinary Upload</option>
+                                            <option value="vimeo">Vimeo</option>
+                                            <option value="external">External URL</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Video URL / ID</label>
+                                        <input type="text" id="lesson-video-url" class="input" placeholder="YouTube ID, Vimeo URL, or external video URL">
+                                        <div style="display:flex; gap:var(--space-2); margin-top:var(--space-2);">
+                                            <button type="button" class="btn btn-outline btn-sm" id="btn-upload-lesson-video"><i class="fa-solid fa-cloud-arrow-up"></i> Secure Upload</button>
+                                        </div>
+                                        <div id="lesson-video-status" class="text-xs text-muted" style="margin-top:6px;">No uploaded video selected</div>
                                     </div>
                                     <div class="input-group">
                                         <label>Duration (e.g. 10 min)</label>
@@ -474,6 +549,8 @@ export class InstructorDashboard {
      * @returns {void}
      */
     _attachEvents() {
+        const user = authService.getCurrentUser();
+
         // Handle pricing type toggle
         const priceRadios = document.querySelectorAll('input[name="course-type"]');
         const priceInputContainer = document.getElementById('price-input-container');
@@ -501,6 +578,50 @@ export class InstructorDashboard {
                 if (thumbnailStatus) {
                     thumbnailStatus.textContent = file ? `Selected: ${file.name}` : 'No file selected';
                 }
+            });
+        }
+
+        const videoSourceInput = document.getElementById('lesson-video-source');
+        const videoUrlInput = document.getElementById('lesson-video-url');
+        const videoStatus = document.getElementById('lesson-video-status');
+        const btnUploadVideo = document.getElementById('btn-upload-lesson-video');
+
+        if (videoSourceInput && videoUrlInput) {
+            videoSourceInput.addEventListener('change', () => {
+                const source = videoSourceInput.value;
+                if (source === 'youtube') {
+                    videoUrlInput.placeholder = 'YouTube video ID (e.g. dQw4w9WgXcQ)';
+                } else if (source === 'vimeo') {
+                    videoUrlInput.placeholder = 'Vimeo URL or video ID';
+                } else if (source === 'cloudinary') {
+                    videoUrlInput.placeholder = 'Cloudinary secure URL (auto-filled after upload)';
+                } else {
+                    videoUrlInput.placeholder = 'External HTTPS video URL';
+                }
+            });
+        }
+
+        if (btnUploadVideo) {
+            btnUploadVideo.addEventListener('click', async () => {
+                if (!videoSourceInput || videoSourceInput.value !== 'cloudinary') {
+                    showToast('Select Cloudinary Upload as the video source first.', 'warning');
+                    return;
+                }
+
+                btnUploadVideo.disabled = true;
+                if (videoStatus) videoStatus.textContent = 'Opening secure upload widget...';
+
+                await mediaService.openVideoUploadWidget({}, (info) => {
+                    if (videoUrlInput) videoUrlInput.value = info?.secure_url || '';
+                    if (videoStatus) videoStatus.textContent = info?.secure_url ? `Uploaded: ${info.original_filename || 'video'}` : 'Upload completed';
+                    showToast('Video uploaded successfully.', 'success');
+                }, (progress) => {
+                    if (videoStatus && progress?.percent != null) {
+                        videoStatus.textContent = `Uploading... ${Math.round(progress.percent)}%`;
+                    }
+                });
+
+                btnUploadVideo.disabled = false;
             });
         }
 
@@ -534,6 +655,8 @@ export class InstructorDashboard {
                     totalLessons: parseInt(document.getElementById('course-total-lessons').value, 10),
                     thumbnail: thumbnailUrl || '',
                     isDynamic: true, // Flag to identify cloud courses
+                    instructorId: user?.uid || null,
+                    instructorEmail: user?.email || null,
                     pricing: {
                         type: courseType, // 'free' or 'premium'
                         price: coursePrice // 0 for free, price in USD for premium
@@ -601,11 +724,15 @@ export class InstructorDashboard {
                     courseId: courseIdVal,
                     title: document.getElementById('lesson-title').value.trim(),
                     type: document.getElementById('lesson-type').value,
-                    youtubeId: document.getElementById('lesson-youtube').value.trim(),
+                    videoSource: document.getElementById('lesson-video-source').value,
+                    videoUrl: document.getElementById('lesson-video-url').value.trim(),
+                    youtubeId: document.getElementById('lesson-video-source').value === 'youtube' ? document.getElementById('lesson-video-url').value.trim() : '',
                     duration: document.getElementById('lesson-duration').value.trim(),
                     order: parseInt(document.getElementById('lesson-order').value, 10),
                     content: document.getElementById('lesson-content').value.trim(),
-                    isDynamic: true
+                    isDynamic: true,
+                    instructorId: user?.uid || null,
+                    instructorEmail: user?.email || null
                 };
 
                 const success = await firestoreService.saveDynamicLesson(lessonData);
@@ -620,6 +747,7 @@ export class InstructorDashboard {
                         displayVal.style.color = '';
                     }
                     document.getElementById('lesson-course-id').value = '';
+                    document.getElementById('lesson-video-url').value = '';
                     const allOpts = document.querySelectorAll('#lesson-course-options .custom-select-option');
                     allOpts.forEach(opt => opt.style.background = 'transparent');
                 } else {
@@ -668,6 +796,75 @@ export class InstructorDashboard {
         const refreshBtn = document.getElementById('btn-refresh-content');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this._loadManageContent());
+        }
+
+        const resourceForm = document.getElementById('resource-builder-form');
+        const addResourceBtn = document.getElementById('btn-add-resource');
+        if (resourceForm && addResourceBtn) {
+            addResourceBtn.addEventListener('click', async () => {
+                if (!resourceForm.checkValidity()) return;
+
+                const courseId = document.getElementById('resource-course-id').value.trim();
+                const payload = {
+                    title: document.getElementById('resource-title').value.trim(),
+                    url: document.getElementById('resource-url').value.trim(),
+                    type: document.getElementById('resource-type').value,
+                    addedBy: user?.uid || null
+                };
+
+                addResourceBtn.disabled = true;
+                addResourceBtn.innerHTML = '<div class="spinner-sm"></div> Attaching...';
+
+                const ok = await instructorService.addResource(courseId, payload);
+                if (ok) {
+                    resourceForm.reset();
+                    showToast('Resource attached successfully.', 'success');
+                }
+
+                addResourceBtn.disabled = false;
+                addResourceBtn.innerHTML = '<i class="fa-solid fa-paperclip"></i> Attach Resource';
+            });
+        }
+
+        const quizForm = document.getElementById('quiz-builder-form');
+        const createQuizBtn = document.getElementById('btn-create-quiz');
+        if (quizForm && createQuizBtn) {
+            createQuizBtn.addEventListener('click', async () => {
+                if (!quizForm.checkValidity()) return;
+
+                let parsedQuestions = [];
+                try {
+                    parsedQuestions = JSON.parse(document.getElementById('quiz-questions-json').value.trim());
+                    if (!Array.isArray(parsedQuestions)) {
+                        throw new Error('Questions must be a JSON array.');
+                    }
+                } catch (err) {
+                    showToast(err.message || 'Invalid quiz JSON format.', 'error');
+                    return;
+                }
+
+                const courseId = document.getElementById('quiz-course-id').value.trim();
+                const quizData = {
+                    id: document.getElementById('quiz-id').value.trim(),
+                    title: document.getElementById('quiz-title').value.trim(),
+                    passingScore: Number(document.getElementById('quiz-passing-score').value || 70),
+                    questions: parsedQuestions,
+                    instructorId: user?.uid || null,
+                    instructorEmail: user?.email || null
+                };
+
+                createQuizBtn.disabled = true;
+                createQuizBtn.innerHTML = '<div class="spinner-sm"></div> Creating...';
+
+                const quizId = await instructorService.createQuiz(courseId, quizData);
+                if (quizId) {
+                    quizForm.reset();
+                    showToast('Quiz created and linked to course.', 'success');
+                }
+
+                createQuizBtn.disabled = false;
+                createQuizBtn.innerHTML = '<i class="fa-solid fa-list-check"></i> Create Quiz';
+            });
         }
     }
 
@@ -851,7 +1048,8 @@ export class InstructorDashboard {
         document.getElementById('lesson-id').value = lesson.id || '';
         document.getElementById('lesson-title').value = lesson.title || '';
         document.getElementById('lesson-type').value = lesson.type || 'theory';
-        document.getElementById('lesson-youtube').value = lesson.youtubeId || '';
+        document.getElementById('lesson-video-source').value = lesson.videoSource || (lesson.youtubeId ? 'youtube' : 'external');
+        document.getElementById('lesson-video-url').value = lesson.videoUrl || lesson.youtubeId || '';
         document.getElementById('lesson-duration').value = lesson.duration || '';
         document.getElementById('lesson-order').value = lesson.order || 1;
         document.getElementById('lesson-content').value = lesson.content || '';
@@ -938,57 +1136,93 @@ export class InstructorDashboard {
             return;
         }
 
-        container.innerHTML = interactions.map(interaction => {
-            const sanitizedCourseName = interaction.courseName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const sanitizedAuthorName = (interaction.authorName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const sanitizedText = (interaction.text || interaction.comment || 'No text').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `
-            <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
-                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
-                    <div style="flex:1;">
-                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${sanitizedCourseName}</strong></p>
-                        <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${sanitizedAuthorName}</h4>
-                        <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
-                            ${[...Array(5)].map((_, i) => `<i class="fa-solid fa-star" style="color:${i < (interaction.rating || 0) ? 'var(--color-success)' : 'var(--border-subtle)'}; font-size:0.8rem;"></i>`).join('')}
-                            <span style="font-size:0.85rem; color:var(--text-muted);">${interaction.rating || 0}/5</span>
-                        </div>
-                        <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${sanitizedText}</p>
+        const escapeHtml = (value) => String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        const cardsHtml = interactions.map((interaction) => {
+            const sanitizedCourseName = escapeHtml(interaction.courseName);
+            const sanitizedAuthorName = escapeHtml(interaction.authorName || 'Anonymous');
+            const sanitizedText = escapeHtml(interaction.text || interaction.comment || 'No text');
+            const interactionType = interaction.type === 'comment' ? 'Lesson Comment' : 'Course Review';
+            const lessonTitle = escapeHtml(interaction.lessonTitle || '');
+            const rating = Number(interaction.rating || 0);
+
+            const stars = Array.from({ length: 5 }, (_, i) => {
+                const color = i < rating ? 'var(--color-success)' : 'var(--border-subtle)';
+                return `<i class="fa-solid fa-star" style="color:${color}; font-size:0.8rem;"></i>`;
+            }).join('');
+
+            const repliesHtml = (interaction.replies || []).map((reply) => {
+                const sanitizedReplyAuthor = escapeHtml(reply.authorName || 'You');
+                const sanitizedReplyText = escapeHtml(reply.text || '');
+                return `
+                    <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sanitizedReplyAuthor}</p>
+                        <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${sanitizedReplyText}</p>
                     </div>
-                    <button class="btn btn-outline btn-sm reply-button" data-course-id="${interaction.courseId}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Reply</button>
-                </div>
-                ${interaction.replies && interaction.replies.length > 0 ? `
+                `;
+            }).join('');
+
+            const contextLine = interaction.type === 'comment'
+                ? `<span style="font-size:0.8rem; color:var(--text-muted);">${lessonTitle}</span>`
+                : '';
+
+            const repliesSection = repliesHtml
+                ? `
                     <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-subtle);">
                         <p style="margin:0 0 var(--space-3) 0; font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-comments"></i> Your replies:</p>
-                        <div style="display:flex; flex-direction:column; gap:var(--space-2);">
-                            ${interaction.replies.map(reply => {
-                                const sanitizedReplyAuthor = (reply.authorName || 'You').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                const sanitizedReplyText = (reply.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                return `
-                                <div style="padding:var(--space-3); background:rgba(0,120,212,0.05); border-radius:var(--radius-md);">
-                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sanitizedReplyAuthor}</p>
-                                    <p style="margin:var(--space-1) 0 0 0; color:var(--text-primary); font-size:0.9rem;">${sanitizedReplyText}</p>
-                                </div>
-                            `}).join('')}
+                        <div style="display:flex; flex-direction:column; gap:var(--space-2);">${repliesHtml}</div>
+                    </div>
+                `
+                : '';
+
+            return `
+                <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border-left:3px solid var(--brand-primary); margin-bottom:var(--space-4);">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:var(--space-4);">
+                        <div style="flex:1;">
+                            <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><strong>${sanitizedCourseName}</strong> · ${interactionType}</p>
+                            ${contextLine}
+                            <h4 style="margin:var(--space-2) 0 0 0; color:var(--text-primary);">${sanitizedAuthorName}</h4>
+                            <div style="display:flex; gap:var(--space-2); margin:var(--space-2) 0;">
+                                ${stars}
+                                <span style="font-size:0.85rem; color:var(--text-muted);">${rating}/5</span>
+                            </div>
+                            <p style="margin:var(--space-2) 0 0 0; color:var(--text-secondary); font-size:0.9rem;">${sanitizedText}</p>
                         </div>
                     </div>
-                ` : ''}
-            </div>
-        `).join('');
+                    <div style="margin-top:var(--space-3); display:flex; gap:var(--space-2);">
+                        <textarea class="input textarea" rows="2" data-reply-input="${interaction.reviewId}" placeholder="Write a direct reply to this student..."></textarea>
+                        <button class="btn btn-outline btn-sm reply-button" data-type="${interaction.type || 'review'}" data-course-id="${interaction.courseId}" data-lesson-id="${interaction.lessonId || ''}" data-review-id="${interaction.reviewId}"><i class="fa-solid fa-reply"></i> Send</button>
+                    </div>
+                    ${repliesSection}
+                </div>
+            `;
+        });
+
+        container.innerHTML = cardsHtml.join('');
 
         // Attach reply listeners
         container.querySelectorAll('.reply-button').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const replyText = prompt('Enter your reply:');
+                const input = container.querySelector(`[data-reply-input="${btn.dataset.reviewId}"]`);
+                const replyText = input?.value?.trim();
                 if (replyText) {
-                    const success = await instructorService.replyToReview(btn.dataset.courseId, btn.dataset.reviewId, {
+                    btn.disabled = true;
+                    const success = await instructorService.replyToInteraction({
+                        type: btn.dataset.type || 'review',
+                        courseId: btn.dataset.courseId,
+                        lessonId: btn.dataset.lessonId || null,
+                        interactionId: btn.dataset.reviewId,
+                        replyData: {
                         authorId: user.uid,
                         authorName: user.displayName || 'Instructor',
                         authorEmail: user.email,
                         text: replyText
+                        }
                     });
                     if (success) {
                         this._loadInteractions();
                     }
+                    btn.disabled = false;
                 }
             });
         });
@@ -1011,10 +1245,10 @@ export class InstructorDashboard {
 
         document.getElementById('stat-total-earnings').textContent = `$${earnings.totalEarnings}`;
         document.getElementById('stat-total-enrollments').textContent = enrollments;
-        document.getElementById('stat-active-courses').textContent = courses.filter(c => c.status === 'approved').length;
+        document.getElementById('stat-active-courses').textContent = courses.filter(c => (c.status || 'published') !== 'archived').length;
 
         // Load earnings by course
-        const earningsByCoursee = await instructorService.getEarningsByCoursee(user.uid);
+        const earningsByCoursee = await instructorService.getEarningsByCourse(user.uid);
         this._renderEarningsByCoursee(earningsByCoursee);
 
         // Load student breakdown

@@ -5,7 +5,7 @@ import {googleAI} from "@genkit-ai/google-genai";
 // function from a Genkit action. It automatically implements streaming if your flow does.
 // The https library also has other utility methods such as hasClaim, which verifies that
 // a caller's token has a specific claim (optionally matching a specific value)
-import { onCallGenkit, hasClaim } from "firebase-functions/https";
+import { onCallGenkit } from "firebase-functions/https";
 
 // Gemini Developer API models and Vertex Express Mode models depend on an API key.
 // API keys should be stored in Cloud Secret Manager so that access to these

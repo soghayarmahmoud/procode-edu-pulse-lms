@@ -19,7 +19,7 @@ export function renderNavbar() {
 
     const currentHash = window.location.hash.slice(1) || '/';
     const user = authService.getCurrentUser();
-    const isAdmin = authService.isAdminSync();
+    const isSuperAdmin = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
     const isInstructor = authService.isInstructorSync();
     
     const _p = window.location.pathname;
@@ -54,10 +54,21 @@ export function renderNavbar() {
           ${user ? `
             <a href="#/profile" class="user-mini-profile" style="display:flex; align-items:center; gap:var(--space-3); padding: var(--space-1) var(--space-2); background: var(--bg-tertiary); border-radius: 30px; border: 1px solid var(--border-subtle); text-decoration: none; transition: all 0.2s; cursor: pointer;">
                <div class="user-avatar-sm" style="width: 28px; height: 28px; font-size: 10px;">${initial}</div>
+              <span style="font-size: var(--text-xs); font-weight: 600; color: var(--text-primary); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
                <div class="nav-gems" style="font-size: var(--text-xs); font-weight: bold; color: #ffffff !important; display: flex; align-items: center; gap: 4px;">
                   <i class="fa-solid fa-gem" style="color: #ffffff;"></i> ${storage.getGems()}
                </div>
             </a>
+            ${isInstructor ? `
+              <a href="#/instructor-dashboard" class="btn btn-sm btn-outline" style="font-size:var(--text-xs); border-radius: 20px;">
+                <i class="fa-solid fa-chalkboard-user"></i> Instructor
+              </a>
+            ` : ''}
+            ${isSuperAdmin ? `
+              <a href="#/admin" class="btn btn-sm btn-outline" style="font-size:var(--text-xs); border-radius: 20px;">
+                <i class="fa-solid fa-gauge-high"></i> Admin Panel
+              </a>
+            ` : ''}
           ` : `
             <a href="#/login" class="btn btn-sm btn-primary" style="font-size:var(--text-xs); border-radius: 20px;">
               Sign In
@@ -93,7 +104,7 @@ export function renderNavbar() {
               <div class="user-avatar-lg">${initial}</div>
               <div class="user-details">
                 <span class="user-name">${displayName}</span>
-                <span class="user-role">${isAdmin ? 'Administrator' : isInstructor ? 'Instructor' : 'Student Learner'}</span>
+                <span class="user-role">${isSuperAdmin ? 'Super Admin' : isInstructor ? 'Instructor' : 'Student Learner'}</span>
               </div>
             </div>
             <div class="user-stats">
@@ -138,7 +149,7 @@ export function renderNavbar() {
               <a href="#/gamification" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Achievements</a>
               <a href="#/search" class="sidebar-link"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
               ${isInstructor ? `<a href="#/instructor-dashboard" class="sidebar-link instructor-link"><i class="fa-solid fa-chalkboard-user"></i> Instructor Dashboard</a>` : ''}
-              ${isAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
+              ${isSuperAdmin ? `<a href="#/admin" class="sidebar-link admin-link"><i class="fa-solid fa-gauge-high"></i> Admin Panel</a>` : ''}
             </div>
           </div>
         </div>

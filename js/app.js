@@ -489,7 +489,7 @@ function renderLoginPage() {
             window.location.hash = '/';
         } catch (err) {
             alert.classList.add('error', 'visible');
-            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
         }
@@ -511,7 +511,7 @@ function renderLoginPage() {
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.classList.add('error', 'visible');
-                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             }
         }
     });
@@ -601,7 +601,7 @@ function renderSignupPage() {
             window.location.hash = '/';
         } catch (err) {
             alert.classList.add('error', 'visible');
-            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+            alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
         }
@@ -624,13 +624,13 @@ function renderSignupPage() {
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 alert.classList.add('error', 'visible');
-                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code)}`;
+                alert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${getAuthErrorMessage(err.code, err.message)}`;
             }
         }
     });
 }
 
-function getAuthErrorMessage(code) {
+function getAuthErrorMessage(code, fallbackMessage = '') {
     const messages = {
         'auth/email-already-in-use': 'This email is already registered. Try signing in.',
         'auth/invalid-email': 'Please enter a valid email address.',
@@ -647,7 +647,14 @@ function getAuthErrorMessage(code) {
         'auth/user-disabled': 'This account has been disabled.',
         'auth/account-exists-with-different-credential': 'An account already exists with the same email address but different sign-in credentials.',
     };
-    return messages[code] || 'An error occurred. Please try again.';
+
+      if (messages[code]) return messages[code];
+
+      if (typeof fallbackMessage === 'string' && fallbackMessage.toLowerCase().includes('firebase is not configured')) {
+        return 'Firebase is not configured. Create a .env file from .env.example and add your Firebase project keys.';
+      }
+
+      return fallbackMessage || 'An error occurred. Please try again.';
 }
 
 // ══════════════════════════════════════════════
@@ -4428,6 +4435,14 @@ showToast('New update available.', 'info');`)}
 
 async function startMainApp() {
     renderNavbar();
+
+  if (!window.__authNavbarSyncBound) {
+    authService.onAuthChange(() => {
+      renderNavbar();
+    });
+    window.__authNavbarSyncBound = true;
+  }
+
     await loadData();
     setupGlobalSearch();
 
@@ -4450,16 +4465,24 @@ async function startMainApp() {
     
     // ── Route Guards ──
     router.before(async (path) => {
-        const protectedRoutes = ['/admin', '/instructor-dashboard'];
-        if (protectedRoutes.some(r => path.startsWith(r))) {
-            const isAdmin = await authService.isAdmin();
-            if (!isAdmin) {
-                showToast('Restricted Access: Administrator privileges required.', 'error');
-                // Redirect to home if trying to access admin
+        if (path.startsWith('/admin')) {
+            const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+            if (!hasSuperAccess) {
+                showToast('Restricted Access: Super admin account required.', 'error');
                 window.location.hash = '#/';
                 return false;
             }
         }
+
+        if (path.startsWith('/instructor-dashboard')) {
+            const hasInstructorAccess = authService.isInstructorSync() || authService.isAdminSync();
+            if (!hasInstructorAccess) {
+                showToast('Restricted Access: Instructor permissions required.', 'error');
+                window.location.hash = '#/';
+                return false;
+            }
+        }
+
         return true;
     });
 
@@ -4490,11 +4513,7 @@ async function startMainApp() {
         .on('/pricing', () => transitionPage(renderPricingPage, '#/pricing'))
         .on('/subscription-success', () => transitionPage(renderSubscriptionSuccessPage, '#/subscription-success'))
         .on('/mentorship', () => transitionPage(renderMentorshipPage, '#/mentorship'))
-        .on('/instructor-dashboard', () => {
-            // Elevate to Admin Panel
-            showToast('Redirecting to Unified Admin Panel...', 'info');
-            window.location.hash = '#/admin';
-        })
+        .on('/instructor-dashboard', () => transitionPage(renderInstructorDashboard, '#/instructor-dashboard'))
         .on('/404', () => transitionPage(renderErrorPage, '#/404'))
         .on('/offline', () => transitionPage(renderOfflinePage, '#/offline'))
         .on('*', () => transitionPage(renderErrorPage, window.location.hash));

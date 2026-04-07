@@ -1,0 +1,15 @@
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: 'js/**/*.js'
+      - any-glob-to-any-file: '*.js'
+
+styles:
+  - changed-files:
+      - any-glob-to-any-file: 'css/**/*.css'
+      - any-glob-to-any-file: '*.css'
+      - any-glob-to-any-file: '**/*.html'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'
+      - any-glob-to-any-file: 'LICENSE'

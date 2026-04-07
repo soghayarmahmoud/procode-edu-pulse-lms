@@ -36,22 +36,13 @@ export class AdminDashboard {
             return;
         }
 
-        // Feature: Protected Admin Dashboard Sub-routing & Layout
-        // Strict Route Guard: query Firestore to verify administrator privileges.
+        // Admin UI is restricted to explicit super-admin email allowlist.
         this.containerContainer.innerHTML = '<div class="container" style="padding:var(--space-16);text-align:center;"><div class="spinner-sm"></div> Verifying Credentials...</div>';
-        
+
         try {
-            const userDoc = await firestoreService.getUserProfile(user.uid);
-            // Some profiles might have data nested under .profile
-            let isAdmin = userDoc?.isAdmin || (userDoc?.profile && userDoc.profile.isAdmin) || false;
-            
-            // Super Admin Fallback for immediate access
-            if (user.email === 'mahmoudsruby@gmail.com' || user.email === 'mahmoudabdelrauf84@gmail.com') {
-                isAdmin = true;
-            }
-            
-            if (!isAdmin) {
-                this._renderAccessDenied('Administrator privilege required.');
+            const hasSuperAccess = authService.hasSuperAdminAccessSync ? authService.hasSuperAdminAccessSync() : false;
+            if (!hasSuperAccess) {
+                this._renderAccessDenied('Super admin account required.');
                 return;
             }
         } catch (err) {
@@ -481,6 +472,7 @@ export class AdminDashboard {
             const initials = name.slice(0,2).toUpperCase();
             const isAdmin = u.isAdmin || profile.isAdmin;
             const isInstructor = u.isInstructor || profile.isInstructor;
+            const status = (u.status || 'active').toLowerCase();
             const roleBadge = isAdmin && isInstructor
                 ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Admin / Instructor</span>'
                 : isAdmin
@@ -488,6 +480,11 @@ export class AdminDashboard {
                     : isInstructor
                         ? '<span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">Instructor</span>'
                         : '<span class="badge" style="background:rgba(136,136,136,0.12); color:var(--text-muted);">Student</span>';
+            const statusBadge = status === 'banned'
+                ? '<span class="badge" style="background:rgba(231,76,60,0.1); color:var(--color-error);">Banned</span>'
+                : status === 'suspended'
+                    ? '<span class="badge" style="background:rgba(243,156,18,0.14); color:var(--color-warning);">Suspended</span>'
+                    : '<span class="badge" style="background:rgba(39,174,96,0.12); color:var(--color-success);">Active</span>';
             const lastActive = u.updatedAt?.seconds
                 ? new Date(u.updatedAt.seconds * 1000).toLocaleDateString()
                 : 'N/A';
@@ -504,10 +501,15 @@ export class AdminDashboard {
                         </div>
                     </td>
                     <td style="padding:var(--space-4) var(--space-2);">${roleBadge}</td>
+                    <td style="padding:var(--space-4) var(--space-2);">${statusBadge}</td>
                     <td style="padding:var(--space-4) var(--space-2);">${lastActive}</td>
                     <td style="padding:var(--space-4) var(--space-2); text-align:right; display:flex; justify-content:flex-end; gap:6px;">
+                        <button class="btn btn-ghost btn-sm btn-promote-instructor-row" data-uid="${u.uid}" title="Promote to Instructor"><i class="fa-solid fa-arrow-up-right-dots"></i></button>
                         <button class="btn btn-ghost btn-sm btn-toggle-instructor" data-uid="${u.uid}" data-instructor="${isInstructor ? 'true' : 'false'}" title="${isInstructor ? 'Revoke Instructor' : 'Make Instructor'}"><i class="fa-solid fa-chalkboard-user"></i></button>
                         <button class="btn btn-ghost btn-sm btn-toggle-admin" data-uid="${u.uid}" data-admin="${isAdmin ? 'true' : 'false'}" title="${isAdmin ? 'Revoke Admin' : 'Make Admin'}"><i class="fa-solid fa-shield-halved"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-suspend-user" data-uid="${u.uid}" title="Suspend user" style="color:var(--color-warning);"><i class="fa-solid fa-user-clock"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-ban-user" data-uid="${u.uid}" title="Ban user" style="color:var(--color-error);"><i class="fa-solid fa-user-slash"></i></button>
+                        <button class="btn btn-ghost btn-sm btn-restore-user" data-uid="${u.uid}" title="Restore user" style="color:var(--color-success);"><i class="fa-solid fa-user-check"></i></button>
                     </td>
                 </tr>
             `;
@@ -519,6 +521,7 @@ export class AdminDashboard {
                     <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">
                         <th style="padding:var(--space-3) var(--space-2);">User</th>
                         <th style="padding:var(--space-3) var(--space-2);">Role</th>
+                        <th style="padding:var(--space-3) var(--space-2);">Status</th>
                         <th style="padding:var(--space-3) var(--space-2);">Last Active</th>
                         <th style="padding:var(--space-3) var(--space-2); text-align:right;">Actions</th>
                     </tr>
@@ -560,6 +563,70 @@ export class AdminDashboard {
                     this._loadUsersData();
                 } else {
                     showToast('Failed to update user role.', 'error');
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-promote-instructor-row').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                if (!confirm('Promote this user to instructor?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.elevateUserRole(uid, 'instructor');
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-suspend-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const daysInput = prompt('Suspend for how many days?', '7');
+                if (daysInput === null) return;
+                const days = parseInt(daysInput, 10);
+                if (!Number.isFinite(days) || days <= 0) {
+                    showToast('Please enter a valid number of days.', 'error');
+                    return;
+                }
+                const reason = prompt('Suspension reason (optional):', '') || '';
+                btn.disabled = true;
+                const ok = await adminManagementService.suspendUser(uid, days, reason);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-ban-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const reason = prompt('Ban reason (optional):', '') || '';
+                if (!confirm('This will ban the user account. Continue?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.banUser(uid, reason);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
+                    btn.disabled = false;
+                }
+            };
+        });
+
+        tableContainer.querySelectorAll('.btn-restore-user').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                if (!confirm('Restore this user to active status?')) return;
+                btn.disabled = true;
+                const ok = await adminManagementService.restoreUser(uid);
+                if (ok) {
+                    this._loadUsersData();
+                } else {
                     btn.disabled = false;
                 }
             };
@@ -2035,21 +2102,21 @@ export class AdminDashboard {
                     </div>
                     
                     <div class="admin-stats-card">
-                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Total Subscriptions</div>
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-users"></i> Active Subscriptions</div>
                         <div class="admin-stats-value" id="stat-subscriptions">0</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Active users</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Paid/active plans</div>
                     </div>
                     
                     <div class="admin-stats-card">
                         <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-chart-line"></i> Platform Growth</div>
-                        <div class="admin-stats-value" id="stat-growth">+0%</div>
+                        <div class="admin-stats-value" id="stat-growth">0%</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">This month</div>
                     </div>
                     
                     <div class="admin-stats-card">
-                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-book-open"></i> Enrollments</div>
-                        <div class="admin-stats-value" id="stat-enrollments">0</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Total course enrollments</div>
+                        <div class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-cart-shopping"></i> Total Sales</div>
+                        <div class="admin-stats-value" id="stat-total-sales">0</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">Completed transactions</div>
                     </div>
                 </div>
 
@@ -2088,11 +2155,32 @@ export class AdminDashboard {
     async _initAnalyticsLogic() {
         // Load analytics data
         const analytics = await adminManagementService.computeRealTimeAnalytics();
+
+        const revenue = Number(analytics.totalRevenue || 0);
+        const subscriptions = Number(analytics.activeSubscriptions || 0);
+        const growthRate = Number(analytics.platformGrowth?.userGrowthRate || 0);
+        const growthSign = growthRate > 0 ? '+' : '';
+        const totalSales = Number(analytics.totalSales || analytics.monthSales || 0);
         
-        document.getElementById('stat-revenue').textContent = `$${analytics.totalRevenue.toFixed(2)}`;
-        document.getElementById('stat-subscriptions').textContent = analytics.totalUsers;
-        document.getElementById('stat-growth').textContent = `+${analytics.platformGrowth.newUsersThisMonth}`;
-        document.getElementById('stat-enrollments').textContent = analytics.totalEnrollments;
+        document.getElementById('stat-revenue').textContent = `$${revenue.toFixed(2)}`;
+        document.getElementById('stat-subscriptions').textContent = subscriptions.toLocaleString();
+        document.getElementById('stat-growth').textContent = `${growthSign}${growthRate}%`;
+        document.getElementById('stat-total-sales').textContent = totalSales.toLocaleString();
+
+        const transactions = await adminManagementService.getRecentTransactions(30);
+        this._renderTransactionsList(transactions);
+
+        const filterInput = document.getElementById('filter-transactions');
+        if (filterInput) {
+            filterInput.addEventListener('input', () => {
+                const q = filterInput.value.toLowerCase().trim();
+                const filtered = transactions.filter(t => {
+                    const hay = `${t.transactionId || ''} ${t.type || ''} ${t.studentId || ''} ${t.instructorId || ''}`.toLowerCase();
+                    return hay.includes(q);
+                });
+                this._renderTransactionsList(filtered);
+            });
+        }
 
         // Add period filter listeners
         document.querySelectorAll('.stats-period-btn').forEach(btn => {
@@ -2105,6 +2193,37 @@ export class AdminDashboard {
 
         // Load default month view
         this._renderAnalyticsChart('month');
+    }
+
+    _renderTransactionsList(transactions) {
+        const list = document.getElementById('transactions-list');
+        if (!list) return;
+
+        if (!transactions || transactions.length === 0) {
+            list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No transactions available.</div>';
+            return;
+        }
+
+        list.innerHTML = transactions.map(t => {
+            const amount = Number(t.amount || 0);
+            const createdAt = t.createdAt?.seconds
+                ? new Date(t.createdAt.seconds * 1000).toLocaleString()
+                : (typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleString() : 'N/A');
+            const status = (t.status || 'unknown').toLowerCase();
+            const statusColor = status === 'completed' ? 'var(--color-success)' : status === 'failed' ? 'var(--color-error)' : 'var(--color-warning)';
+
+            return `
+            <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); flex-wrap:wrap;">
+                <div>
+                    <div style="font-weight:600; color:var(--text-primary);">${t.type || 'transaction'} <span class="text-muted" style="font-size:0.85rem;">(${t.transactionId || t.id || 'n/a'})</span></div>
+                    <div class="text-muted" style="font-size:0.85rem;">${createdAt}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:var(--space-3);">
+                    <span class="badge" style="background:rgba(0,0,0,0.08); color:${statusColor}; text-transform:capitalize;">${status}</span>
+                    <strong style="font-size:1rem; color:var(--text-primary);">$${amount.toFixed(2)}</strong>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     _renderAnalyticsChart(period) {
@@ -2149,6 +2268,17 @@ export class AdminDashboard {
                         <button class="btn btn-outline btn-sm" id="refresh-flagged-content"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     </div>
                     <div id="flagged-content-list">
+                        <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
+                    </div>
+                </div>
+
+                <!-- Global Reviews Moderation -->
+                <div class="card" style="padding:var(--space-8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+                        <h3 style="margin:0;"><i class="fa-solid fa-comments"></i> Global Reviews Moderation</h3>
+                        <button class="btn btn-outline btn-sm" id="refresh-global-reviews"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="global-reviews-list">
                         <div style="text-align:center; padding:var(--space-4); color:var(--text-muted);"><div class="spinner-sm"></div></div>
                     </div>
                 </div>
@@ -2211,7 +2341,8 @@ export class AdminDashboard {
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             // Attach event listeners
             list.querySelectorAll('.approve-course').forEach(btn => {
@@ -2257,7 +2388,8 @@ export class AdminDashboard {
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             // Attach event listeners
             list.querySelectorAll('.approve-flag').forEach(btn => {
@@ -2279,13 +2411,73 @@ export class AdminDashboard {
             });
         };
 
+        const loadGlobalReviews = async () => {
+            const list = document.getElementById('global-reviews-list');
+            if (!list) return;
+            list.innerHTML = '<div style="text-align:center; padding:var(--space-4);"><div class="spinner-sm"></div></div>';
+
+            const reviews = await adminManagementService.getRecentReviews(40);
+            if (!reviews.length) {
+                list.innerHTML = '<div class="text-muted text-center" style="padding:var(--space-4);">No reviews found for moderation.</div>';
+                return;
+            }
+
+            list.innerHTML = reviews.map(r => {
+                const sanitizedText = (r.text || r.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const author = (r.authorName || r.userName || 'Anonymous').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const courseId = (r.courseId || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const status = (r.status || 'pending').toLowerCase();
+                return `
+                <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); margin-bottom:var(--space-3);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-4); flex-wrap:wrap;">
+                        <div style="flex:1; min-width:260px;">
+                            <div style="display:flex; gap:var(--space-2); align-items:center; margin-bottom:var(--space-2);">
+                                <strong>${author}</strong>
+                                <span class="badge" style="background:rgba(0,120,212,0.1); color:var(--brand-primary);">${courseId || 'Unknown course'}</span>
+                                <span class="badge" style="background:rgba(0,0,0,0.08); color:var(--text-muted); text-transform:capitalize;">${status}</span>
+                            </div>
+                            <p style="margin:0; color:var(--text-secondary);">${sanitizedText || '(no text)'}</p>
+                        </div>
+                        <div style="display:flex; gap:var(--space-2);">
+                            <button class="btn btn-success btn-sm approve-review" data-course-id="${r.courseId || ''}" data-review-id="${r.id}"><i class="fa-solid fa-check"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm hide-review" data-course-id="${r.courseId || ''}" data-review-id="${r.id}"><i class="fa-solid fa-eye-slash"></i> Hide</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            list.querySelectorAll('.approve-review').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const courseId = btn.dataset.courseId;
+                    const reviewId = btn.dataset.reviewId;
+                    if (!courseId || !reviewId) return showToast('Invalid review reference.', 'error');
+                    if (await adminManagementService.approveReview(courseId, reviewId)) {
+                        loadGlobalReviews();
+                    }
+                });
+            });
+
+            list.querySelectorAll('.hide-review').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const courseId = btn.dataset.courseId;
+                    const reviewId = btn.dataset.reviewId;
+                    if (!courseId || !reviewId) return showToast('Invalid review reference.', 'error');
+                    if (await adminManagementService.hideReview(courseId, reviewId)) {
+                        loadGlobalReviews();
+                    }
+                });
+            });
+        };
+
         // Initial loads
         loadPendingCourses();
         loadFlaggedContent();
+        loadGlobalReviews();
 
         // Refresh buttons
         document.getElementById('refresh-pending-courses').addEventListener('click', loadPendingCourses);
         document.getElementById('refresh-flagged-content').addEventListener('click', loadFlaggedContent);
+        document.getElementById('refresh-global-reviews').addEventListener('click', loadGlobalReviews);
 
         // Flag form
         document.getElementById('flag-content-form').addEventListener('submit', async (e) => {
@@ -2310,6 +2502,76 @@ export class AdminDashboard {
     _renderSettingsTab(container) {
         container.innerHTML = `
             <div class="grid" style="grid-template-columns: 1fr; gap:var(--space-8);">
+
+                <!-- Admin Control Core -->
+                <div class="card" style="padding:var(--space-8); border:1px solid rgba(0,120,212,0.35); box-shadow:0 0 0 1px rgba(0,120,212,0.12) inset;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-4); margin-bottom:var(--space-6); flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin:0 0 var(--space-2) 0;"><i class="fa-solid fa-shield-halved"></i> Admin Control Core</h3>
+                            <p class="text-muted" style="margin:0;">Centralized platform-wide switches for emergency and operational control.</p>
+                        </div>
+                        <span class="badge" style="background:rgba(0,120,212,0.12); color:var(--brand-primary);">High Authority Zone</span>
+                    </div>
+
+                    <div class="grid grid-2" style="gap:var(--space-4);">
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Maintenance Mode</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Block normal access while maintenance is active.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-maintenance-mode">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Allow New Registrations</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Turn student sign-ups on or off globally.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-allow-registrations">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Read-Only Mode</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Disable writes while keeping read access available.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-read-only-mode">
+                            </div>
+                        </div>
+
+                        <div style="padding:var(--space-4); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                                <div>
+                                    <div style="font-weight:600;">Require Email Verification</div>
+                                    <div class="text-muted" style="font-size:0.85rem;">Enforce verified email for privileged operations.</div>
+                                </div>
+                                <input type="checkbox" id="ctl-require-email-verification">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-2" style="gap:var(--space-4); margin-top:var(--space-6);">
+                        <div class="input-group" style="margin:0;">
+                            <label>Platform Name</label>
+                            <input type="text" id="ctl-platform-name" class="input" placeholder="ProCode">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label>Support Contact Email</label>
+                            <input type="email" id="ctl-support-email" class="input" placeholder="support@yourplatform.com">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-6); justify-content:flex-end;">
+                        <button class="btn btn-outline" type="button" id="ctl-announce-maintenance"><i class="fa-solid fa-bullhorn"></i> Broadcast Maintenance Notice</button>
+                        <button class="btn btn-ghost" type="button" id="ctl-reset-core"><i class="fa-solid fa-rotate-left"></i> Reset Core Toggles</button>
+                        <button class="btn btn-primary" type="button" id="ctl-save-core"><i class="fa-solid fa-floppy-disk"></i> Save Admin Control Core</button>
+                    </div>
+                </div>
                 
                 <!-- Subscription Pricing -->
                 <div class="card" style="padding:var(--space-8);">
@@ -2322,7 +2584,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-basic" class="input" placeholder="9.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('basic')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-basic"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
 
                         <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle); border-color:var(--brand-primary);">
@@ -2332,7 +2594,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-pro" class="input" placeholder="19.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('pro')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-pro"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
 
                         <div style="padding:var(--space-6); background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
@@ -2342,7 +2604,7 @@ export class AdminDashboard {
                                 <input type="number" id="price-premium" class="input" placeholder="49.99" style="width:120px;" step="0.01">
                                 <span style="color:var(--text-muted);">/month</span>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" onclick="this.updatePricing('premium')"><i class="fa-solid fa-save"></i> Save</button>
+                            <button class="btn btn-primary btn-sm" style="margin-top:var(--space-4); width:100%;" id="save-price-premium"><i class="fa-solid fa-save"></i> Save</button>
                         </div>
                     </div>
                 </div>
@@ -2417,6 +2679,29 @@ export class AdminDashboard {
     async _initSettingsLogic() {
         // Load current settings
         const settings = await adminManagementService.getSystemSettings();
+
+        const parsePrice = (id, fallback) => {
+            const value = parseFloat(document.getElementById(id).value);
+            return Number.isFinite(value) && value >= 0 ? value : fallback;
+        };
+
+        const buildPricingPayload = () => {
+            const currentPricing = settings.subscriptionPricing || {};
+            return {
+                basic: {
+                    ...(currentPricing.basic || {}),
+                    price: parsePrice('price-basic', currentPricing.basic?.price ?? 9.99)
+                },
+                pro: {
+                    ...(currentPricing.pro || {}),
+                    price: parsePrice('price-pro', currentPricing.pro?.price ?? 19.99)
+                },
+                premium: {
+                    ...(currentPricing.premium || {}),
+                    price: parsePrice('price-premium', currentPricing.premium?.price ?? 49.99)
+                }
+            };
+        };
         
         // Populate pricing
         if (settings.subscriptionPricing) {
@@ -2424,6 +2709,61 @@ export class AdminDashboard {
             document.getElementById('price-pro').value = settings.subscriptionPricing.pro?.price || '19.99';
             document.getElementById('price-premium').value = settings.subscriptionPricing.premium?.price || '49.99';
         }
+
+        // Populate Admin Control Core
+        document.getElementById('ctl-maintenance-mode').checked = !!settings.maintenanceMode;
+        document.getElementById('ctl-allow-registrations').checked = settings.allowNewRegistrations !== false;
+        document.getElementById('ctl-read-only-mode').checked = !!settings.readOnlyMode;
+        document.getElementById('ctl-require-email-verification').checked = !!settings.requireEmailVerification;
+        document.getElementById('ctl-platform-name').value = settings.platformName || 'ProCode';
+        document.getElementById('ctl-support-email').value = settings.supportEmail || '';
+
+        // Pricing save handlers
+        document.getElementById('save-price-basic').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+        document.getElementById('save-price-pro').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+        document.getElementById('save-price-premium').addEventListener('click', async () => {
+            await adminManagementService.updatePricing(buildPricingPayload());
+        });
+
+        // Admin Control Core handlers
+        document.getElementById('ctl-save-core').addEventListener('click', async () => {
+            const updates = {
+                maintenanceMode: document.getElementById('ctl-maintenance-mode').checked,
+                allowNewRegistrations: document.getElementById('ctl-allow-registrations').checked,
+                readOnlyMode: document.getElementById('ctl-read-only-mode').checked,
+                requireEmailVerification: document.getElementById('ctl-require-email-verification').checked,
+                platformName: document.getElementById('ctl-platform-name').value.trim() || 'ProCode',
+                supportEmail: document.getElementById('ctl-support-email').value.trim()
+            };
+            await adminManagementService.updateSystemSettings(updates);
+        });
+
+        document.getElementById('ctl-reset-core').addEventListener('click', () => {
+            document.getElementById('ctl-maintenance-mode').checked = false;
+            document.getElementById('ctl-allow-registrations').checked = true;
+            document.getElementById('ctl-read-only-mode').checked = false;
+            document.getElementById('ctl-require-email-verification').checked = false;
+            document.getElementById('ctl-platform-name').value = 'ProCode';
+            document.getElementById('ctl-support-email').value = '';
+            showToast('Core toggles reset locally. Click Save Admin Control Core to persist.', 'info');
+        });
+
+        document.getElementById('ctl-announce-maintenance').addEventListener('click', async () => {
+            const customText = prompt('Maintenance notice text:', 'Scheduled maintenance is in progress. Some features may be temporarily unavailable.');
+            if (!customText) return;
+            const ok = await adminManagementService.createAnnouncement({
+                title: 'Maintenance Notice',
+                text: customText,
+                type: 'warning'
+            });
+            if (ok) {
+                this._loadAnnouncements();
+            }
+        });
 
         // Populate banner
         if (settings.promotionalBanner) {

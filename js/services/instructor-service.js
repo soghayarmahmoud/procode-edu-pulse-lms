@@ -7,7 +7,7 @@
 import { db, storage, isFirebaseConfigured } from './firebase-config.js';
 import {
     doc, setDoc, getDoc, updateDoc, collection, getDocs, deleteDoc,
-    query, where, orderBy, serverTimestamp, arrayUnion, arrayRemove
+    query, where, orderBy, serverTimestamp, arrayUnion, arrayRemove, collectionGroup
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { showToast } from '../utils/dom.js';
 
@@ -32,13 +32,16 @@ class InstructorService {
     async getInstructorCourses(instructorId) {
         if (!isFirebaseConfigured() || !instructorId) return [];
         try {
+            const dynamicRef = collection(db, 'dynamic_courses');
+            const dynamicQ = query(dynamicRef, where('instructorId', '==', instructorId));
+            const dynamicSnap = await getDocs(dynamicQ);
+            const dynamicCourses = dynamicSnap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'dynamic_courses' }));
+            if (dynamicCourses.length > 0) return dynamicCourses;
+
             const coursesRef = collection(db, 'courses');
-            const q = query(coursesRef, where('instructorId', '==', instructorId));
-            const snap = await getDocs(q);
-            return snap.docs.map(d => ({
-                id: d.id,
-                ...d.data()
-            }));
+            const coursesQ = query(coursesRef, where('instructorId', '==', instructorId));
+            const coursesSnap = await getDocs(coursesQ);
+            return coursesSnap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'courses' }));
         } catch (e) {
             console.warn('InstructorService: getInstructorCourses failed:', e);
             return [];
@@ -165,9 +168,9 @@ class InstructorService {
         if (!isFirebaseConfigured() || !courseId) return false;
         try {
             const resourceId = `res_${Date.now()}`;
-            const courseRef = doc(db, 'courses', courseId);
+            const dynamicCourseRef = doc(db, 'dynamic_courses', courseId);
             
-            await updateDoc(courseRef, {
+            await updateDoc(dynamicCourseRef, {
                 resources: arrayUnion({
                     id: resourceId,
                     ...resource,
@@ -179,9 +182,23 @@ class InstructorService {
             showToast('Resource added', 'success');
             return true;
         } catch (e) {
-            console.warn('InstructorService: addResource failed:', e);
-            showToast('Failed to add resource', 'error');
-            return false;
+            try {
+                const courseRef = doc(db, 'courses', courseId);
+                await updateDoc(courseRef, {
+                    resources: arrayUnion({
+                        id: `res_${Date.now()}`,
+                        ...resource,
+                        addedAt: new Date().toISOString()
+                    }),
+                    updatedAt: serverTimestamp()
+                });
+                showToast('Resource added', 'success');
+                return true;
+            } catch (fallbackError) {
+                console.warn('InstructorService: addResource failed:', fallbackError);
+                showToast('Failed to add resource', 'error');
+                return false;
+            }
         }
     }
 
@@ -195,7 +212,7 @@ class InstructorService {
         if (!isFirebaseConfigured() || !courseId) return null;
         try {
             const quizId = `quiz_${Date.now()}`;
-            const quizRef = doc(db, 'quizzes', quizId);
+            const quizRef = doc(db, 'dynamic_quizzes', quizId);
             
             await setDoc(quizRef, {
                 ...quizData,
@@ -206,11 +223,19 @@ class InstructorService {
             });
             
             // Add quiz reference to course
-            const courseRef = doc(db, 'courses', courseId);
-            await updateDoc(courseRef, {
-                quizzes: arrayUnion(quizId),
-                updatedAt: serverTimestamp()
-            });
+            try {
+                const dynamicCourseRef = doc(db, 'dynamic_courses', courseId);
+                await updateDoc(dynamicCourseRef, {
+                    quizzes: arrayUnion(quizId),
+                    updatedAt: serverTimestamp()
+                });
+            } catch {
+                const courseRef = doc(db, 'courses', courseId);
+                await updateDoc(courseRef, {
+                    quizzes: arrayUnion(quizId),
+                    updatedAt: serverTimestamp()
+                });
+            }
             
             showToast('Quiz created', 'success');
             return quizId;
@@ -240,15 +265,48 @@ class InstructorService {
                 
                 snap.docs.forEach(d => {
                     interactions.push({
+                        type: 'review',
                         courseId: course.id,
                         courseName: course.title,
                         reviewId: d.id,
                         ...d.data()
                     });
                 });
+
+                const lessonsRef = collection(db, 'dynamic_lessons');
+                const lessonsQ = query(lessonsRef, where('courseId', '==', course.id));
+                const lessonsSnap = await getDocs(lessonsQ);
+
+                for (const lessonDoc of lessonsSnap.docs) {
+                    const lesson = lessonDoc.data();
+                    const commentsRef = collection(db, 'lesson_comments');
+                    const commentsQ = query(commentsRef, where('lessonId', '==', lesson.id));
+                    const commentsSnap = await getDocs(commentsQ);
+
+                    commentsSnap.docs.forEach(commentDoc => {
+                        const c = commentDoc.data();
+                        interactions.push({
+                            type: 'comment',
+                            courseId: course.id,
+                            courseName: course.title,
+                            lessonId: lesson.id,
+                            lessonTitle: lesson.title || lesson.id,
+                            reviewId: commentDoc.id,
+                            authorName: c.authorName,
+                            text: c.content || c.text || '',
+                            createdAt: c.createdAt || null,
+                            rating: 0,
+                            replies: c.replies || []
+                        });
+                    });
+                }
             }
-            
-            return interactions;
+
+            return interactions.sort((a, b) => {
+                const aTime = typeof a.createdAt === 'number' ? a.createdAt : (a.createdAt?.seconds || 0);
+                const bTime = typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt?.seconds || 0);
+                return bTime - aTime;
+            });
         } catch (e) {
             console.warn('InstructorService: getInstructorCourseInteractions failed:', e);
             return [];
@@ -286,6 +344,44 @@ class InstructorService {
     }
 
     /**
+     * Reply to a review or lesson comment.
+     * @param {object} payload
+     * @param {'review'|'comment'} payload.type
+     * @param {string} payload.courseId
+     * @param {string} payload.interactionId
+     * @param {string} [payload.lessonId]
+     * @param {object} payload.replyData
+     * @returns {Promise<boolean>}
+     */
+    async replyToInteraction(payload) {
+        const { type, courseId, interactionId, lessonId, replyData } = payload || {};
+        if (!isFirebaseConfigured() || !interactionId) return false;
+
+        if (type === 'comment') {
+            try {
+                const commentRef = doc(db, 'lesson_comments', interactionId);
+                await updateDoc(commentRef, {
+                    replies: arrayUnion({
+                        id: `reply_${Date.now()}`,
+                        ...replyData,
+                        lessonId: lessonId || null,
+                        createdAt: serverTimestamp()
+                    }),
+                    updatedAt: serverTimestamp()
+                });
+                showToast('Reply posted', 'success');
+                return true;
+            } catch (e) {
+                console.warn('InstructorService: replyToInteraction(comment) failed:', e);
+                showToast('Failed to post reply', 'error');
+                return false;
+            }
+        }
+
+        return this.replyToReview(courseId, interactionId, replyData);
+    }
+
+    /**
      * Get reviews for specific course.
      * @param {string} courseId
      * @returns {Promise<Array<object>>}
@@ -317,15 +413,9 @@ class InstructorService {
     async getEarningsSummary(instructorId, period = 'month') {
         if (!isFirebaseConfigured() || !instructorId) return {};
         try {
-            const transRef = collection(db, 'transactions');
-            const q = query(
-                transRef,
-                where('instructorId', '==', instructorId),
-                orderBy('createdAt', 'desc')
-            );
-            
-            const snap = await getDocs(q);
-            const transactions = snap.docs.map(d => d.data());
+            const courses = await this.getInstructorCourses(instructorId);
+            const courseMap = new Map(courses.map(c => [c.id, c]));
+            const transactions = await this._listInstructorTransactions(instructorId, courseMap);
             
             return this._calculateEarningsSummary(transactions, period);
         } catch (e) {
@@ -343,23 +433,17 @@ class InstructorService {
         if (!isFirebaseConfigured() || !instructorId) return [];
         try {
             const courses = await this.getInstructorCourses(instructorId);
+            const courseMap = new Map(courses.map(c => [c.id, c]));
+            const transactions = await this._listInstructorTransactions(instructorId, courseMap);
             const earnings = [];
             
             for (const course of courses) {
-                const transRef = collection(db, 'transactions');
-                const q = query(
-                    transRef,
-                    where('courseId', '==', course.id),
-                    where('instructorId', '==', instructorId)
-                );
-                
-                const snap = await getDocs(q);
+                const snapData = transactions.filter(t => t.courseId === course.id);
                 let totalRevenue = 0;
-                let studentCount = new Set();
+                const studentCount = new Set();
                 
-                snap.docs.forEach(doc => {
-                    const data = doc.data();
-                    totalRevenue += data.amount || 0;
+                snapData.forEach((data) => {
+                    totalRevenue += this._resolveTransactionAmount(data, course);
                     if (data.studentId) studentCount.add(data.studentId);
                 });
                 
@@ -368,15 +452,19 @@ class InstructorService {
                     courseName: course.title,
                     totalRevenue,
                     enrolledStudents: studentCount.size,
-                    revenuePerStudent: studentCount.size > 0 ? (totalRevenue / studentCount.size).toFixed(2) : 0
+                    revenuePerStudent: studentCount.size > 0 ? Number((totalRevenue / studentCount.size).toFixed(2)) : 0
                 });
             }
             
-            return earnings;
+            return earnings.sort((a, b) => b.totalRevenue - a.totalRevenue);
         } catch (e) {
             console.warn('InstructorService: getEarningsByCoursee failed:', e);
             return [];
         }
+    }
+
+    async getEarningsByCourse(instructorId) {
+        return this.getEarningsByCoursee(instructorId);
     }
 
     /**
@@ -387,21 +475,20 @@ class InstructorService {
     async getStudentEarningsBreakdown(instructorId) {
         if (!isFirebaseConfigured() || !instructorId) return [];
         try {
-            const transRef = collection(db, 'transactions');
-            const q = query(
-                transRef,
-                where('instructorId', '==', instructorId),
-                orderBy('createdAt', 'desc')
-            );
-            
-            const snap = await getDocs(q);
+            const courses = await this.getInstructorCourses(instructorId);
+            const courseMap = new Map(courses.map(c => [c.id, c]));
+            const transactions = await this._listInstructorTransactions(instructorId, courseMap);
             const studentMap = {};
             
-            snap.docs.forEach(doc => {
-                const data = doc.data();
-                if (!studentMap[data.studentId]) {
-                    studentMap[data.studentId] = {
-                        studentId: data.studentId,
+            transactions.forEach((data) => {
+                const sid = data.studentId || data.userId || 'unknown';
+                if (sid === 'unknown') return;
+
+                const course = courseMap.get(data.courseId);
+                const amount = this._resolveTransactionAmount(data, course);
+                if (!studentMap[sid]) {
+                    studentMap[sid] = {
+                        studentId: sid,
                         studentName: data.studentName || 'Unknown',
                         studentEmail: data.studentEmail || '',
                         totalSpent: 0,
@@ -410,15 +497,15 @@ class InstructorService {
                     };
                 }
                 
-                studentMap[data.studentId].totalSpent += data.amount || 0;
-                if (data.courseId) studentMap[data.studentId].coursesPurchased.add(data.courseId);
-                studentMap[data.studentId].lastPurchaseDate = data.createdAt;
+                studentMap[sid].totalSpent += amount;
+                if (data.courseId) studentMap[sid].coursesPurchased.add(data.courseId);
+                studentMap[sid].lastPurchaseDate = data.createdAt || data.purchaseDate || null;
             });
             
             return Object.values(studentMap).map(s => ({
                 ...s,
                 coursesPurchased: s.coursesPurchased.size
-            }));
+            })).sort((a, b) => b.totalSpent - a.totalSpent);
         } catch (e) {
             console.warn('InstructorService: getStudentEarningsBreakdown failed:', e);
             return [];
@@ -434,13 +521,18 @@ class InstructorService {
         if (!isFirebaseConfigured() || !instructorId) return 0;
         try {
             const courses = await this.getInstructorCourses(instructorId);
-            let totalEnrollments = 0;
-            
-            for (const course of courses) {
-                totalEnrollments += course.totalEnrollments || 0;
-            }
-            
-            return totalEnrollments;
+            const courseMap = new Map(courses.map(c => [c.id, c]));
+            const transactions = await this._listInstructorTransactions(instructorId, courseMap);
+            const uniquePairs = new Set();
+
+            transactions.forEach((t) => {
+                const sid = t.studentId || t.userId;
+                if (sid && t.courseId) uniquePairs.add(`${sid}:${t.courseId}`);
+            });
+
+            if (uniquePairs.size > 0) return uniquePairs.size;
+
+            return courses.reduce((sum, c) => sum + (Number(c.totalEnrollments || 0) || 0), 0);
         } catch (e) {
             console.warn('InstructorService: getTotalEnrollments failed:', e);
             return 0;
@@ -506,7 +598,7 @@ class InstructorService {
             filteredTransactions = transactions.filter(t => new Date(t.createdAt) >= yearAgo);
         }
         
-        const totalEarnings = filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalEarnings = filteredTransactions.reduce((sum, t) => sum + (Number(t.amount || 0) || 0), 0);
         const totalTransactions = filteredTransactions.length;
         const averageTransactionAmount = totalTransactions > 0 ? (totalEarnings / totalTransactions).toFixed(2) : 0;
         
@@ -531,6 +623,64 @@ class InstructorService {
             period: 'month',
             currency: 'USD'
         };
+    }
+
+    async _listInstructorTransactions(instructorId, courseMap) {
+        const courseIds = Array.from(courseMap.keys());
+        if (!courseIds.length) return [];
+
+        const normalized = [];
+
+        try {
+            const transRef = collection(db, 'transactions');
+            const txQ = query(transRef, where('instructorId', '==', instructorId));
+            const txSnap = await getDocs(txQ);
+            txSnap.forEach((d) => {
+                const row = d.data();
+                if (!row.courseId || !courseMap.has(row.courseId)) return;
+                const course = courseMap.get(row.courseId);
+                normalized.push({
+                    ...row,
+                    amount: this._resolveTransactionAmount(row, course),
+                    studentId: row.studentId || row.userId || '',
+                    createdAt: row.createdAt || row.purchaseDate || null
+                });
+            });
+        } catch (e) {
+            console.warn('InstructorService: transactions lookup fallback path engaged:', e);
+        }
+
+        if (normalized.length > 0) return normalized;
+
+        try {
+            const purchasesRef = collectionGroup(db, 'purchases');
+            const purchasesSnap = await getDocs(purchasesRef);
+            purchasesSnap.forEach((d) => {
+                const row = d.data();
+                if (!row.courseId || !courseMap.has(row.courseId)) return;
+                const course = courseMap.get(row.courseId);
+                normalized.push({
+                    ...row,
+                    amount: this._resolveTransactionAmount(row, course),
+                    studentId: row.studentId || row.userId || '',
+                    createdAt: row.createdAt || row.purchaseDate || null
+                });
+            });
+            return normalized;
+        } catch (e) {
+            console.warn('InstructorService: purchases collectionGroup fallback failed:', e);
+            return [];
+        }
+    }
+
+    _resolveTransactionAmount(transaction, course) {
+        const fromTx = Number(transaction?.amount || 0);
+        if (!Number.isNaN(fromTx) && fromTx > 0) return fromTx;
+
+        const fromCourse = Number(course?.pricing?.price || course?.price || 0);
+        if (!Number.isNaN(fromCourse) && fromCourse > 0) return fromCourse;
+
+        return 0;
     }
 }
 

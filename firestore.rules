@@ -1,12 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper: Is the user an administrator?
-    // Checks email token natively, then document flags
-    function isAdmin() {
-      return request.auth != null && (
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Is current user one of super admins?
+    function isSuperAdmin() {
+      return isSignedIn() && (
         request.auth.token.email == "mahmoudsruby@gmail.com" ||
+        request.auth.token.email == "mahmoudabdelrauf84@gmail.com"
+      );
+    }
+
+    // Helper: Is the user an administrator?
+    // Checks super-admin email first, then user document flags.
+    function isAdmin() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.profile.isAdmin == true
       );
@@ -24,9 +35,15 @@ service cloud.firestore {
     // Course Reviews: Nested structure /course_reviews/{courseId}/reviews/{reviewId}
     match /course_reviews/{courseId}/reviews/{reviewId} {
       allow read: if true; // Publicly readable
-      allow create: if request.auth != null; // Registered users can review
-      allow update, delete: if request.auth != null && 
+      allow create: if isSignedIn(); // Registered users can review
+      allow update, delete: if isSignedIn() && 
         (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
+    // Public catalog (optional) + admin lifecycle moderation.
+    match /courses/{courseId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // Dynamic CMS Content: Public read for free courses, purchased access for premium
@@ -39,22 +56,22 @@ service cloud.firestore {
     match /dynamic_lessons/{lessonId} {
       allow read: if resource.data.courseId == null ||
         get(/databases/$(database)/documents/dynamic_courses/$(resource.data.courseId)).data.pricing.type == 'free' ||
-        (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
+        (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
       allow write: if isAdmin();
     }
 
     match /dynamic_challenges/{challengeId} {
       allow read: if resource.data.courseId == null ||
         get(/databases/$(database)/documents/dynamic_courses/$(resource.data.courseId)).data.pricing.type == 'free' ||
-        (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
+        (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.purchasedCourses.hasAny([resource.data.courseId]));
       allow write: if isAdmin();
     }
 
     // Discussions: Public read, authenticated write
     match /discussions/{threadId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
-      allow delete: if request.auth != null && (
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn() && (
         request.auth.uid == resource.data.authorId || isAdmin()
       );
     }
@@ -62,15 +79,39 @@ service cloud.firestore {
     // Lesson Comments: Public read, authenticated write
     match /lesson_comments/{commentId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
-      allow delete: if request.auth != null && (
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn() && (
         request.auth.uid == resource.data.authorId || isAdmin()
       );
     }
 
     // User purchases: Private to user
     match /users/{userId}/purchases/{purchaseId} {
-      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Admin analytics + settings
+    match /system/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Platform announcements are public read, admin managed.
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Moderation queue is admin only.
+    match /moderation_queue/{flagId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Revenue transactions: create on payment webhook/backend, admin read.
+    match /transactions/{transactionId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() || isAdmin();
+      allow update, delete: if isAdmin();
     }
 
     // Default Deny: All other collections are private
