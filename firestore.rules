@@ -23,6 +23,15 @@ service cloud.firestore {
       );
     }
 
+    // Helper: Is the user an instructor?
+    function isInstructor() {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isInstructor == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.profile.isInstructor == true ||
+        isAdmin()
+      );
+    }
+
     // User Profiles: Users can only read their own, Admins can do both.
     // Fixed privilege escalation bug: users cannot modify their own isAdmin field.
     match /users/{userId} {
@@ -43,7 +52,9 @@ service cloud.firestore {
     // Public catalog (optional) + admin lifecycle moderation.
     match /courses/{courseId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create: if isSignedIn() && isInstructor();
+      allow update: if isSignedIn() && (resource.data.instructorId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
     }
 
     // Dynamic CMS Content: Public read for free courses, purchased access for premium

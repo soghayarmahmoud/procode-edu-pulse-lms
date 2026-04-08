@@ -49,36 +49,60 @@ export class VideoPlayer {
         this.onTimeUpdate = options.onTimeUpdate || null;
         this._timeInterval = null;
 
-        const isUrl = videoId && (videoId.startsWith('http') || videoId.includes('/'));
+        const videoType = this._detectVideoType(videoId);
         
-        if (isUrl) {
-            this._createNativePlayer();
-        } else {
+        if (videoType === 'youtube') {
             loadYTAPI();
             if (apiReady) {
                 this._createPlayer();
             } else {
                 onReadyCallbacks.push(() => this._createPlayer());
             }
+        } else if (videoType === 'cloudinary') {
+            this._createCloudinaryPlayer();
+        } else {
+            this._createNativePlayer();
         }
     }
 
     /**
-     * Create a native video element player.
+     * Detect video type based on URL or ID.
+     * @param {string} videoId
+     * @returns {string} 'youtube' | 'cloudinary' | 'native'
+     */
+    _detectVideoType(videoId) {
+        if (!videoId) return 'native';
+        
+        if (videoId.includes('youtube.com') || videoId.includes('youtu.be') || (!videoId.includes('/') && !videoId.includes('.'))) {
+            return 'youtube';
+        }
+        
+        if (videoId.includes('cloudinary.com')) {
+            return 'cloudinary';
+        }
+        
+        return 'native';
+    }
+
+    /**
+     * Create a Cloudinary video player.
      * @returns {void}
      */
-    _createNativePlayer() {
+    _createCloudinaryPlayer() {
         const container = document.getElementById(this.containerId);
         if (!container) return;
 
+        // Add transformations for better streaming
+        const transformedUrl = this.videoId.replace('/upload/', '/upload/f_auto:video,q_auto/');
+
         container.innerHTML = `
-            <video id="${this.containerId}-native" class="video-native" controls style="width:100%; height:100%; border-radius:var(--radius-lg); overflow:hidden;">
-                <source src="${this.videoId}" type="video/mp4">
+            <video id="${this.containerId}-cloudinary" class="video-cloudinary" controls style="width:100%; height:100%; border-radius:var(--radius-lg); overflow:hidden;">
+                <source src="${transformedUrl}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         `;
 
-        this.videoElement = document.getElementById(`${this.containerId}-native`);
+        this.videoElement = document.getElementById(`${this.containerId}-cloudinary`);
         this.videoElement.onplay = () => this._startTimeTracking();
         this.videoElement.onpause = () => this._stopTimeTracking();
         this.videoElement.onended = () => {

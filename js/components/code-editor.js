@@ -37,19 +37,35 @@ export class CodeEditor {
             const viewVer = '6.16.0';
             const deps = `?deps=@codemirror/state@${stateVer},@codemirror/view@${viewVer}`;
 
-            const { EditorView, ViewPlugin } = await import(`https://esm.sh/@codemirror/view@${viewVer}?deps=@codemirror/state@${stateVer}`);
-            const { EditorState } = await import(`https://esm.sh/@codemirror/state@${stateVer}`);
-            const { basicSetup } = await import(`https://esm.sh/@codemirror/basic-setup${deps}`);
-            const { html } = await import(`https://esm.sh/@codemirror/lang-html@6.4.5${deps}`);
-            const { css } = await import(`https://esm.sh/@codemirror/lang-css@6.2.1${deps}`);
-            const { javascript } = await import(`https://esm.sh/@codemirror/lang-javascript@6.1.9${deps}`);
-            const { python } = await import(`https://esm.sh/@codemirror/lang-python@6.1.3${deps}`);
-            const { java } = await import(`https://esm.sh/@codemirror/lang-java@6.0.1${deps}`);
-            const { cpp } = await import(`https://esm.sh/@codemirror/lang-cpp@6.0.2${deps}`);
-            const { php } = await import(`https://esm.sh/@codemirror/lang-php@6.0.1${deps}`);
-            const { rust } = await import(`https://esm.sh/@codemirror/lang-rust@6.0.1${deps}`);
-            const { sql } = await import(`https://esm.sh/@codemirror/lang-sql@6.5.4${deps}`);
-            const { oneDark } = await import(`https://esm.sh/@codemirror/theme-one-dark@6.1.2${deps}`);
+            const viewUrl = `https://esm.sh/@codemirror/view@${viewVer}?deps=@codemirror/state@${stateVer}`;
+            const stateUrl = `https://esm.sh/@codemirror/state@${stateVer}`;
+            const basicSetupUrl = `https://esm.sh/@codemirror/basic-setup${deps}`;
+            const htmlUrl = `https://esm.sh/@codemirror/lang-html@6.4.5${deps}`;
+            const cssUrl = `https://esm.sh/@codemirror/lang-css@6.2.1${deps}`;
+            const jsUrl = `https://esm.sh/@codemirror/lang-javascript@6.1.9${deps}`;
+            const pythonUrl = `https://esm.sh/@codemirror/lang-python@6.1.3${deps}`;
+            const javaUrl = `https://esm.sh/@codemirror/lang-java@6.0.1${deps}`;
+            const cppUrl = `https://esm.sh/@codemirror/lang-cpp@6.0.2${deps}`;
+            const phpUrl = `https://esm.sh/@codemirror/lang-php@6.0.1${deps}`;
+            const rustUrl = `https://esm.sh/@codemirror/lang-rust@6.0.1${deps}`;
+            const sqlUrl = `https://esm.sh/@codemirror/lang-sql@6.5.4${deps}`;
+            const themeUrl = `https://esm.sh/@codemirror/theme-one-dark@6.1.2${deps}`;
+
+            const [{ EditorView, ViewPlugin }, { EditorState }, { basicSetup }, { html }, { css }, { javascript }, { python }, { java }, { cpp }, { php }, { rust }, { sql }, { oneDark }] = await Promise.all([
+                import(viewUrl),
+                import(stateUrl),
+                import(basicSetupUrl),
+                import(htmlUrl),
+                import(cssUrl),
+                import(jsUrl),
+                import(pythonUrl),
+                import(javaUrl),
+                import(cppUrl),
+                import(phpUrl),
+                import(rustUrl),
+                import(sqlUrl),
+                import(themeUrl)
+            ]);
 
             const langMap = { 
                 html, 
