@@ -5,7 +5,7 @@
   </a>
 </p>
 
-<h1 align="center">🚀 ProCode EduPulse</h1>
+<h1 align="center"> ProCode EduPulse</h1>
 
 <p align="center">
   <strong>The Ultimate Open-Source Learning Management System for Modern Coding Education.</strong><br>
@@ -44,9 +44,9 @@ ProCode EduPulse is a state-of-the-art **Single Page Application (SPA)** built w
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🎓 For Students
+###  For Students
 | Feature | Description |
 | :--- | :--- |
 | **Embedded IDE** | Multi-language editor powered by **CodeMirror 6** with live preview. |
@@ -54,7 +54,7 @@ ProCode EduPulse is a state-of-the-art **Single Page Application (SPA)** built w
 | **Gamified Progress** | Earn XP, unlock badges, and climb the leaderboard as you learn. |
 | **Project Portfolio** | Every challenge you complete is automatically added to your dev portfolio. |
 
-### 🛡️ For Instructors
+###  For Instructors
 | Feature | Description |
 | :--- | :--- |
 | **Unified CMS** | A powerful dashboard to create courses, lessons, and challenges. |
@@ -65,7 +65,7 @@ ProCode EduPulse is a state-of-the-art **Single Page Application (SPA)** built w
 
 ---
 
-## 🏗️ Technical Architecture
+##  Technical Architecture
 
 The platform follows a modular service-based architecture, ensuring high scalability and maintainability without the need for complex frameworks.
 
@@ -115,7 +115,7 @@ To unlock the full potential of the platform:
 
 ---
 
-## 🛠️ Admin Course Content & Media Management
+##  Admin Course Content & Media Management
 
 The Admin Panel now includes built-in support for full course and lesson management with media uploads:
 
