@@ -23,6 +23,15 @@ import { renderAdvancedSearch } from './components/advanced-search.js';
 import { renderCertificates } from './components/certificates.js';
 import { renderFooter, initPWAInstall } from './components/footer.js';
 
+// New modular imports
+import { store } from '../src/store/store.js';
+import { loadData } from '../src/api/data.js';
+import { getCourseLessonCount, formatCommentTime } from '../src/utils/helpers.js';
+import { initLessonComments } from '../src/utils/comments.js';
+import { transitionPage } from '../src/utils/transition.js';
+import { renderLoginPage, renderSignupPage } from '../src/pages/auth.js';
+import { getAuthErrorMessage } from '../src/utils/auth.js';
+
 // ── Base Path Helper (GitHub Pages compatibility) ──
 function getBasePath() {
     const path = window.location.pathname;
@@ -35,29 +44,7 @@ function getBasePath() {
     return './';
 }
 
-// ── Data Cache ──
-let coursesData = null;
-let lessonsData = null;
-let quizzesData = null;
-let challengesData = null;
-let roadmapsData = null;
-let docsData = null;
-let modulesData = null;
 
-function getCourseLessonCount(courseId, fallback = 0) {
-  const count = (lessonsData || []).filter(lesson => lesson.courseId === courseId).length;
-  return count || fallback;
-}
-
-function formatCommentTime(ts) {
-  try {
-    return new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-  } catch {
-    return '';
-  }
-}
-
-function initLessonComments(lessonId) {
   const list = document.getElementById('lesson-comments-list');
   const input = document.getElementById('lesson-comment-input');
   const postBtn = document.getElementById('lesson-comment-post');
@@ -115,7 +102,7 @@ function initLessonComments(lessonId) {
     }
     postBtn.disabled = false;
   });
-}
+
 
 async function loadData() {
     const base = getBasePath();
