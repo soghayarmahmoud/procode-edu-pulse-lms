@@ -6,7 +6,15 @@
 
 import { storage } from './storage.js';
 import { showToast } from '../utils/dom.js';
-import { CLOUDINARY_CONFIG } from '../config/env.js';
+import { 
+    initCloudinaryWidget,
+    openCloudinaryUploadWidget,
+    openCloudinaryImageUploadWidget,
+    getOptimizedVideoUrl,
+    getVideoThumbnail,
+    getImageThumbnail,
+    CLOUDINARY_CONFIG
+} from './cloudinary-config.js';
 
 /**
  * Enhanced Cloudinary media upload service.
@@ -17,155 +25,33 @@ class MediaService {
      */
     constructor() {
         this.configKey = 'cloudinary_config';
-        this.scriptUrl = 'https://upload-widget.cloudinary.com/global/all.js';
-        this.isScriptLoaded = false;
+        this.isInitialized = false;
         this.uploadProgress = {};
     }
 
     /**
-     * Get the current Cloudinary configuration from storage or env.js.
-     * @returns {{cloudName: string, uploadPreset: string, apiKey: string}}
+     * Get the current Cloudinary configuration.
+     * @returns {{cloud_name: string, api_key: string, upload_preset_video: string, upload_preset_image: string}}
      */
     getConfig() {
-        const local = storage._get(this.configKey) || {};
-        return {
-            cloudName: CLOUDINARY_CONFIG.cloudName || local.cloudName || '',
-            uploadPreset: CLOUDINARY_CONFIG.uploadPreset || local.uploadPreset || '',
-            apiKey: CLOUDINARY_CONFIG.apiKey || local.apiKey || ''
-        };
+        return CLOUDINARY_CONFIG;
     }
 
     /**
-     * Save the Cloudinary configuration (overrides env values only in current session).
-     * @param {string} cloudName
-     * @param {string} uploadPreset
-     * @returns {boolean}
-     */
-    saveConfig(cloudName, uploadPreset) {
-        if (!cloudName || !uploadPreset) {
-            showToast('Cloud Name and Upload Preset are required.', 'error');
-            return false;
-        }
-        storage._set(this.configKey, { cloudName, uploadPreset });
-        showToast('Cloudinary configuration updated for this session!', 'success');
-        return true;
-    }
-
-    /**
-     * Dynamically load the Cloudinary Upload Widget script.
+     * Initialize Cloudinary widget SDK.
      * @returns {Promise<boolean>}
      */
-    async loadWidgetScript() {
-        if (this.isScriptLoaded) return true;
+    async initialize() {
+        if (this.isInitialized) return true;
         
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = this.scriptUrl;
-            script.type = 'text/javascript';
-            script.onload = () => {
-                this.isScriptLoaded = true;
-                resolve(true);
-            };
-            script.onerror = () => {
-                showToast('Failed to load Cloudinary library.', 'error');
-                reject(new Error('Cloudinary script load failed'));
-            };
-            document.head.appendChild(script);
-        });
-    }
-
-    /**
-     * Open the Cloudinary Upload Widget for images/general media.
-     * @param {object} [options={}] Custom widget options.
-     * @param {(info: object) => void} [callback] Called on success.
-     * @returns {Promise<void>}
-     */
-    async openUploadWidget(options = {}, callback) {
-        const config = this.getConfig();
-        if (!config.cloudName || !config.uploadPreset) {
-            showToast('Please configure Cloudinary in the Admin Settings first.', 'warning');
-            return;
-        }
-
         try {
-            await this.loadWidgetScript();
-            
-            const widget = window.cloudinary.createUploadWidget({
-                cloudName: config.cloudName,
-                uploadPreset: config.uploadPreset,
-                ...options
-            }, (error, result) => {
-                if (!error && result && result.event === "success") { 
-                    console.log('Done! Here is the image info: ', result.info); 
-                    if (callback) callback(result.info);
-                } else if (error) {
-                    console.error('Upload Error:', error);
-                }
-            });
-
-            widget.open();
+            await initCloudinaryWidget();
+            this.isInitialized = true;
+            return true;
         } catch (err) {
-            console.error('Could not initialize Cloudinary Widget:', err);
-        }
-    }
-
-    /**
-     * Open upload widget specifically for video uploads.
-     * @param {object} [options={}] Custom widget options.
-     * @param {(info: object) => void} [callback] Called on success.
-     * @param {(progress: object) => void} [progressCallback] Called during upload.
-     * @returns {Promise<void>}
-     */
-    async openVideoUploadWidget(options = {}, callback, progressCallback) {
-        const config = this.getConfig();
-        if (!config.cloudName || !config.uploadPreset) {
-            showToast('Please configure Cloudinary in the Admin Settings first.', 'warning');
-            return;
-        }
-
-        try {
-            await this.loadWidgetScript();
-            
-            const defaultVideoOptions = {
-                resourceType: 'video',
-                maxFileSize: 500000000, // 500 MB
-                maxFiles: 1,
-                clientAllowedFormats: ['mp4', 'mov', 'avi', 'mkv', 'webm'],
-                showAdvancedOptions: false,
-                cropping: false,
-                multiple: false,
-                defaultSource: 'local',
-                showPoweredBy: false,
-                tags: ['instructor-video', 'course-content']
-            };
-
-            const mergedOptions = {
-                cloudName: config.cloudName,
-                uploadPreset: config.uploadPreset,
-                ...defaultVideoOptions,
-                ...options
-            };
-
-            const widget = window.cloudinary.createUploadWidget(mergedOptions, (error, result) => {
-                if (!error && result && result.event === "success") { 
-                    console.log('Video uploaded successfully:', result.info);
-                    if (callback) callback(result.info);
-                } else if (error) {
-                    console.error('Upload Error:', error);
-                    showToast(`Upload failed: ${error.statusText || 'Unknown error'}`, 'error');
-                }
-            });
-
-            // Track progress
-            if (progressCallback) {
-                widget.on('queues-end', () => progressCallback({ status: 'completed', percent: 100 }));
-                widget.on('upload-added', () => progressCallback({ status: 'uploading', percent: 0 }));
-            }
-
-            widget.open();
-        } catch (err) {
-            console.error('Could not initialize Video Upload Widget:', err);
-            showToast('Failed to initialize video upload', 'error');
+            console.error('Failed to initialize Cloudinary:', err);
+            showToast('Failed to initialize Cloudinary. Please try again.', 'error');
+            return false;
         }
     }
 

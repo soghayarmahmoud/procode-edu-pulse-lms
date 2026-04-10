@@ -45,9 +45,11 @@ function getBasePath() {
 }
 
 async function syncReviewsInBackground() {
-    if (!isFirebaseConfigured() || !coursesData || coursesData.length === 0) return;
-    
     try {
+        // Fix: Use store.state.courses instead of undefined coursesData
+        const coursesData = store.state.courses || [];
+        if (!isFirebaseConfigured() || !coursesData || coursesData.length === 0) return;
+        
         const allReviews = {};
         // Use a subset or limit parallel calls to avoid hitting quotas
         const limitedCourses = coursesData.slice(0, 15); 
@@ -3996,14 +3998,38 @@ showToast('New update available.', 'info');`)}
 async function startMainApp() {
     renderNavbar();
 
-  if (!window.__authNavbarSyncBound) {
-    authService.onAuthChange(() => {
-      renderNavbar();
-    });
-    window.__authNavbarSyncBound = true;
-  }
+    if (!window.__authNavbarSyncBound) {
+        authService.onAuthChange(() => {
+            renderNavbar();
+        });
+        window.__authNavbarSyncBound = true;
+    }
 
+    // Global data variables for all render functions
+    window.coursesData = [];
+    window.lessonsData = [];
+    window.modulesData = [];
+    window.quizzesData = [];
+    window.challengesData = [];
+    
+    // Load data and setup store subscription
     await loadData();
+    
+    // Subscribe to store changes and update globals
+    store.subscribe((newState) => {
+        window.coursesData = newState.courses || [];
+        window.lessonsData = newState.lessons || [];
+        window.modulesData = newState.modules || [];
+        window.quizzesData = newState.quizzes || [];
+        window.challengesData = newState.challenges || [];
+    });
+    
+    // Initial update from store
+    window.coursesData = store.state.courses || [];
+    window.lessonsData = store.state.lessons || [];
+    window.modulesData = store.state.modules || [];
+    window.quizzesData = store.state.quizzes || [];
+    window.challengesData = store.state.challenges || [];
     setupGlobalSearch();
 
     // Time tracking interval (only count when page is visible)
@@ -4166,13 +4192,29 @@ async function initApp() {
     }
 }
 
-// Boot
-initApp().catch(err => {
+// Boot with timeout safety
+const initTimeout = setTimeout(() => {
+    console.error('❌ App initialization timeout after 30 seconds');
+    document.getElementById('app').innerHTML = `
+    <div class="container" style="padding:var(--space-16);text-align:center;margin-top:50px">
+      <h1><i class="fa-solid fa-triangle-exclamation"></i> Loading Timeout</h1>
+      <p>The app took too long to initialize. Please refresh the page or check your internet connection.</p>
+      <button onclick="location.reload()" class="btn btn-primary" style="margin-top:20px">Reload</button>
+    </div>
+    `;
+}, 30000);
+
+initApp().then(() => {
+    clearTimeout(initTimeout);
+    console.log('✅ App initialized successfully');
+}).catch(err => {
+    clearTimeout(initTimeout);
     console.error('Failed to initialize app:', err);
     document.getElementById('app').innerHTML = `
-    <div class="container" style="padding:var(--space-16);text-align:center">
+    <div class="container" style="padding:var(--space-16);text-align:center;margin-top:50px">
       <h1><i class="fa-solid fa-triangle-exclamation"></i> Failed to load</h1>
       <p>Please check the console for errors and ensure data files are accessible.</p>
+      <button onclick="location.reload()" class="btn btn-primary" style="margin-top:20px">Reload</button>
     </div>
-  `;
+    `;
 });
