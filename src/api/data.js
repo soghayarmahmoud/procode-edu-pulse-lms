@@ -16,6 +16,11 @@ function getBasePath() {
 }
 
 export async function loadData() {
+    // Safety timeout to prevent infinite loading
+    const loadTimeout = setTimeout(() => {
+        console.warn('⚠️ loadData timeout after 15 seconds');
+    }, 15000);
+    
     const base = getBasePath();
     const manifest = [
         { key: 'courses', file: 'courses.json' },
@@ -109,6 +114,9 @@ export async function loadData() {
             roadmaps: store.state.roadmaps || [],
             modules: store.state.modules || []
         });
+    } finally {
+        clearTimeout(loadTimeout);
+        console.log('✅ loadData completed');
     }
 }
 

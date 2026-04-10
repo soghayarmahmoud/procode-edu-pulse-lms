@@ -236,8 +236,8 @@ class AuthService {
             const existing = Object.values(users).find(u => u.provider === 'google-local');
             const userRecord = existing || {
                 uid: `local_google_${Date.now()}`,
-                email: 'local.google.user@procode.local',
-                displayName: 'Local Google User',
+                email: 'user@gmail.com',
+                displayName: 'Google User', // Neutral name instead of "Local Google User"
                 password: null,
                 provider: 'google-local',
                 createdAt: Date.now()
@@ -339,13 +339,29 @@ class AuthService {
 
     /**
      * Get user display name.
-     */
-    /**
-     * Get user display name.
      * @returns {string}
      */
     getDisplayName() {
-        return this._user?.displayName || this._user?.email?.split('@')[0] || 'Student';
+        if (this._user?.displayName && this._user.displayName !== 'Local Google User') {
+            return this._user.displayName;
+        }
+        
+        // Get from cached profile if available
+        if (this._profile?.name) {
+            return this._profile.name;
+        }
+        if (this._profile?.profile?.name) {
+            return this._profile.profile.name;
+        }
+        
+        // Fall back to email username
+        const emailName = this._user?.email?.split('@')[0];
+        if (emailName && emailName.length> 0) {
+            // Capitalize first letter
+            return emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        }
+        
+        return '';
     }
 
     /**
