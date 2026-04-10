@@ -1,9 +1,11 @@
 // ============================================
 // ProCode EduPulse — localStorage Persistence
+// Updated for Issue #117: Cloud-First Data Strategy
 // ============================================
 
 import { authService } from './auth-service.js';
 import { firestoreService } from './firestore-service.js';
+import { progressSyncService } from './progress-sync.js';
 
 const STORAGE_PREFIX = 'procode_';
 
@@ -59,7 +61,8 @@ class StorageService {
     }
 
     /**
-     * Sync a local key to Firestore.
+     * Sync a local key to Firestore using the progress sync service.
+     * This uses debouncing to prevent excessive writes.
      * @param {string} key
      * @param {any} value
      * @returns {void}
@@ -68,38 +71,9 @@ class StorageService {
         const uid = authService.getUid();
         if (!uid) return;
 
-        // Run sync asynchronously to not block UI
-        setTimeout(() => {
-            switch (key) {
-                case 'profile':
-                    firestoreService.saveUserProfile(uid, value);
-                    break;
-                case 'progress':
-                    firestoreService.saveProgress(uid, value);
-                    break;
-                case 'notes':
-                    firestoreService.saveNotes(uid, value);
-                    break;
-                case 'submissions':
-                    firestoreService.saveSubmissions(uid, value);
-                    break;
-                case 'enrollments':
-                    firestoreService.saveEnrollments(uid, value);
-                    break;
-                case 'certifications':
-                    firestoreService.saveCertifications(uid, value);
-                    break;
-                case 'active_time':
-                    firestoreService.saveActivityTime(uid, value);
-                    break;
-                case 'daily_activity':
-                    firestoreService.saveDailyActivity(uid, value);
-                    break;
-                case 'bookmarks':
-                    firestoreService.saveBookmarks(uid, value);
-                    break;
-            }
-        }, 0);
+        // Use progress sync service for debounced writes (Issue #117)
+        // This prevents excessive Firestore writes while ensuring persistence
+        progressSyncService.queueUpdate(key, value);
     }
 
     /**
@@ -152,7 +126,10 @@ class StorageService {
 
     /**
      * Restore all localStorage data from Firestore (hydration).
+     * DEPRECATED: Use appHydrationService instead for complete app hydration.
+     * This method is kept for backward compatibility.
      * @returns {Promise<boolean>}
+     * @deprecated
      */
     async hydrateFromCloud() {
         const uid = authService.getUid();
