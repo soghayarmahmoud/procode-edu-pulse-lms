@@ -1,6 +1,9 @@
 // ============================================
 // ProCode EduPulse — YouTube Video Player
+// Updated for Issue #117: Timestamp Syncing
 // ============================================
+
+import { progressSyncService } from '../services/progress-sync.js';
 
 let playerInstance = null;
 let apiReady = false;
@@ -38,7 +41,7 @@ export class VideoPlayer {
      * Create a VideoPlayer instance.
      * @param {string} containerId
      * @param {string} videoId
-     * @param {{onReady?: Function, onStateChange?: Function, onTimeUpdate?: Function}} [options={}]
+     * @param {{onReady?: Function, onStateChange?: Function, onTimeUpdate?: Function, courseId?: string, lessonId?: string}} [options={}]
      */
     constructor(containerId, videoId, options = {}) {
         this.containerId = containerId;
@@ -48,6 +51,11 @@ export class VideoPlayer {
         this.videoElement = null; // for native video
         this.onTimeUpdate = options.onTimeUpdate || null;
         this._timeInterval = null;
+        this._syncInterval = null;
+        
+        // Track course/lesson for syncing
+        this.courseId = options.courseId || null;
+        this.lessonId = options.lessonId || null;
 
         const videoType = this._detectVideoType(videoId);
         
@@ -173,27 +181,47 @@ export class VideoPlayer {
     }
 
     /**
-     * Start time tracking callback.
+     * Start time tracking callback and sync.
      * @returns {void}
      */
     _startTimeTracking() {
         this._stopTimeTracking();
+        
+        // Track time updates (UI updates every second)
         this._timeInterval = setInterval(() => {
             if (this.onTimeUpdate) {
                 const time = this.getCurrentTime();
                 this.onTimeUpdate(time);
             }
         }, 1000);
+
+        // Sync to Firestore every 15 seconds (throttled)
+        this._syncInterval = setInterval(() => {
+            if (this.courseId && this.lessonId) {
+                const currentTime = this.getCurrentTime();
+                const duration = this.getDuration();
+                progressSyncService.syncVideoTimestamp(
+                    this.courseId,
+                    this.lessonId,
+                    currentTime,
+                    duration
+                );
+            }
+        }, 15000);
     }
 
     /**
-     * Stop time tracking callback.
+     * Stop time tracking callback and sync.
      * @returns {void}
      */
     _stopTimeTracking() {
         if (this._timeInterval) {
             clearInterval(this._timeInterval);
             this._timeInterval = null;
+        }
+        if (this._syncInterval) {
+            clearInterval(this._syncInterval);
+            this._syncInterval = null;
         }
     }
 
@@ -204,6 +232,15 @@ export class VideoPlayer {
     getCurrentTime() {
         if (this.videoElement) return this.videoElement.currentTime;
         return this.player ? (this.player.getCurrentTime ? this.player.getCurrentTime() : 0) : 0;
+    }
+
+    /**
+     * Get video duration in seconds.
+     * @returns {number}
+     */
+    getDuration() {
+        if (this.videoElement) return this.videoElement.duration;
+        return this.player ? (this.player.getDuration ? this.player.getDuration() : 0) : 0;
     }
 
     /**
@@ -238,11 +275,24 @@ export class VideoPlayer {
     }
 
     /**
-     * Destroy the player instance.
+     * Destroy the player instance and force sync final state.
      * @returns {void}
      */
-    destroy() {
+    async destroy() {
         this._stopTimeTracking();
+        
+        // Force final sync before destroying
+        if (this.courseId && this.lessonId) {
+            const currentTime = this.getCurrentTime();
+            const duration = this.getDuration();
+            await progressSyncService.syncVideoTimestamp(
+                this.courseId,
+                this.lessonId,
+                currentTime,
+                duration
+            );
+        }
+        
         if (this.videoElement) {
             this.videoElement.onplay = null;
             this.videoElement.onpause = null;

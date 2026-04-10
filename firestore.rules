@@ -101,6 +101,19 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
+    // User progress tracking: Private to user
+    // Issue #117: Progress data is the single source of truth
+    match /users/{userId}/progress/{courseId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Video timestamps: Nested under progress for efficient video tracking
+    match /users/{userId}/progress/{courseId}/lessons/{lessonId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     // Admin analytics + settings
     match /system/{docId} {
       allow read: if isAdmin();

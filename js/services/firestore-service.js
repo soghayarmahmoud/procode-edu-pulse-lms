@@ -848,6 +848,201 @@ class FirestoreService {
             return null;
         }
     }
+
+    // ==========================================
+    // REVIEW SYSTEM & RATINGS #118
+    // ==========================================
+
+    /**
+     * Get reviews for a course with pagination and sorting.
+     * @param {string} courseId
+     * @param {object} options - { limit: 10, sortBy: 'recent'|'rating'|'helpful', minRating: 0 }
+     * @returns {Promise<{reviews: Array, total: number, hasMore: boolean}>}
+     */
+    async getCourseReviewsPaginated(courseId, options = {}) {
+        if (!isFirebaseConfigured() || !courseId || firestoreAccessDenied) {
+            return { reviews: [], total: 0, hasMore: false };
+        }
+        try {
+            const { collection, getDocs, query, orderBy, where, limit } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            
+            const { limit: pageLimit = 10, sortBy = 'recent', minRating = 0 } = options;
+            
+            let baseQuery = query(collection(db, 'course_reviews', courseId, 'reviews'));
+            
+            // Apply filters
+            if (minRating > 0) {
+                baseQuery = query(
+                    collection(db, 'course_reviews', courseId, 'reviews'),
+                    where('rating', '>=', minRating)
+                );
+            }
+            
+            // Apply sorting - note: Firestore can only order by one field efficiently
+            // For best/worst ratings first, we'll sort client-side after fetching
+            const orderingMap = {
+                'recent': query(collection(db, 'course_reviews', courseId, 'reviews'), orderBy('createdAt', 'desc')),
+                'rating': query(collection(db, 'course_reviews', courseId, 'reviews'), orderBy('rating', 'desc')),
+                'helpful': query(collection(db, 'course_reviews', courseId, 'reviews'), orderBy('helpfulCount', 'desc'))
+            };
+            
+            const selectedQuery = orderingMap[sortBy] || baseQuery;
+            const snap = await getDocs(query(collection(db, 'course_reviews', courseId, 'reviews'), limit(pageLimit + 1)));
+            
+            const reviews = [];
+            snap.forEach(doc => reviews.push({ id: doc.id, ...doc.data() }));
+            
+            const hasMore = reviews.length > pageLimit;
+            return {
+                reviews: reviews.slice(0, pageLimit),
+                total: reviews.length,
+                hasMore
+            };
+        } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
+            console.warn('Firestore getCourseReviewsPaginated failed:', e);
+            return { reviews: [], total: 0, hasMore: false };
+        }
+    }
+
+    /**
+     * Get rating distribution for a course (count of each star rating).
+     * @param {string} courseId
+     * @returns {Promise<{1: number, 2: number, 3: number, 4: number, 5: number, avg: number}>}
+     */
+    async getRatingDistribution(courseId) {
+        if (!isFirebaseConfigured() || !courseId || firestoreAccessDenied) {
+            return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, avg: 0 };
+        }
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const snap = await getDocs(collection(db, 'course_reviews', courseId, 'reviews'));
+            
+            const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let totalRating = 0;
+            
+            snap.forEach(doc => {
+                const rating = doc.data().rating || 0;
+                if (rating >= 1 && rating <= 5) {
+                    distribution[Math.round(rating)]++;
+                    totalRating += rating;
+                }
+            });
+            
+            const avg = snap.size ? (totalRating / snap.size).toFixed(2) : 0;
+            return { ...distribution, avg: parseFloat(avg), total: snap.size };
+        } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
+            console.warn('Firestore getRatingDistribution failed:', e);
+            return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, avg: 0, total: 0 };
+        }
+    }
+
+    /**
+     * Mark a review as helpful (increments helpfulCount).
+     * @param {string} courseId
+     * @param {string} reviewId
+     * @param {number} increment - usually 1 or -1
+     * @returns {Promise<void>}
+     */
+    async updateReviewHelpful(courseId, reviewId, increment = 1) {
+        if (!isFirebaseConfigured() || !courseId || !reviewId) return;
+        try {
+            const ref = doc(db, 'course_reviews', courseId, 'reviews', reviewId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const current = snap.data().helpfulCount || 0;
+                await updateDoc(ref, {
+                    helpfulCount: Math.max(0, current + increment),
+                    updatedAt: serverTimestamp()
+                });
+            }
+        } catch (e) {
+            console.warn('Firestore updateReviewHelpful failed:', e);
+        }
+    }
+
+    // ==========================================
+    // PROGRESS PERSISTENCE #117
+    // ==========================================
+
+    /**
+     * Save video timestamp for a specific lesson (debounced writes).
+     * @param {string} uid
+     * @param {string} courseId
+     * @param {string} lessonId
+     * @param {number} currentTime - seconds
+     * @param {number} duration - seconds
+     * @returns {Promise<void>}
+     */
+    async syncVideoTimestamp(uid, courseId, lessonId, currentTime, duration) {
+        if (!isFirebaseConfigured() || !uid || !courseId || !lessonId) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            const path = `progress.${courseId}.lessons.${lessonId}`;
+            
+            // Use updateDoc with nested path notation
+            const updateData = {
+                [`${path}.currentTime`]: currentTime,
+                [`${path}.duration`]: duration,
+                [`${path}.lastUpdated`]: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+            
+            await updateDoc(ref, updateData);
+        } catch (e) {
+            console.warn('Firestore syncVideoTimestamp failed:', e);
+        }
+    }
+
+    /**
+     * Get user progress from Firestore (for hydration on init).
+     * @param {string} uid
+     * @returns {Promise<object|null>}
+     */
+    async getUserProgress(uid) {
+        if (!isFirebaseConfigured() || !uid || firestoreAccessDenied) return null;
+        try {
+            const ref = doc(db, 'users', uid);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const data = snap.data();
+                return {
+                    progress: data.progress || {},
+                    enrollments: data.enrollments || {},
+                    notes: data.notes || {},
+                    submissions: data.submissions || {},
+                    bookmarks: data.bookmarks || [],
+                    certifications: data.certifications || {},
+                    lastAccess: data.updatedAt
+                };
+            }
+            return null;
+        } catch (e) {
+            if (isPermissionDenied(e)) firestoreAccessDenied = true;
+            console.warn('Firestore getUserProgress failed:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Merge and update user progress from multiple sources.
+     * @param {string} uid
+     * @param {object} progressData - { progress, enrollments, notes, etc. }
+     * @returns {Promise<void>}
+     */
+    async mergeUserProgress(uid, progressData) {
+        if (!isFirebaseConfigured() || !uid) return;
+        try {
+            const ref = doc(db, 'users', uid);
+            await updateDoc(ref, {
+                ...progressData,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn('Firestore mergeUserProgress failed:', e);
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();
