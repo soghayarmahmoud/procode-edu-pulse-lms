@@ -1,5 +1,5 @@
 /* ============================================
-   ProCode EduPulse — Footer Styles
+   ProCode EduPulse — Footer Styles (Enhanced)
    ============================================ */
 
 .footer {
@@ -7,19 +7,36 @@
     border-top: 1px solid var(--border-subtle);
     padding: var(--space-16) 0 0 0;
     margin-top: var(--space-16);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Subtle gradient overlay */
+.footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--brand-gradient);
+    opacity: 0.5;
+}
+
+/* ── Footer Grid ── */
 .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 2fr;
+    grid-template-columns: 2.2fr 1fr 1fr 1.8fr;
     gap: var(--space-12);
     margin-bottom: var(--space-12);
+    align-items: start;
 }
 
+/* ── Brand Section ── */
 .footer-brand-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
+    gap: var(--space-5);
 }
 
 .footer-logo {
@@ -28,55 +45,78 @@
     gap: var(--space-3);
     font-size: var(--text-xl);
     font-weight: var(--font-bold);
+    font-family: var(--font-display);
     color: var(--text-primary);
     text-decoration: none;
+    letter-spacing: -0.02em;
+    transition: opacity var(--transition-fast);
+}
+
+.footer-logo:hover {
+    opacity: 0.85;
 }
 
 .footer-logo img {
     height: 36px;
+    border-radius: 8px;
+}
+
+.footer-logo-pro {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .footer-tagline {
-    color: var(--text-secondary);
-    line-height: 1.6;
-    max-width: 300px;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    max-width: 280px;
 }
 
+/* ── Social Icons ── */
 .footer-socials {
     display: flex;
-    gap: var(--space-4);
+    gap: var(--space-3);
+    margin-top: var(--space-2);
 }
 
 .footer-socials a {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
     background: var(--bg-tertiary);
-    color: var(--text-secondary);
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s;
+    transition: all var(--transition-base);
     text-decoration: none;
     border: 1px solid var(--border-subtle);
+    font-size: 0.95rem;
 }
 
 .footer-socials a:hover {
-    background: var(--brand-primary);
+    background: var(--brand-gradient);
     color: white;
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 120, 212, 0.3);
+    box-shadow: 0 6px 16px rgba(79, 142, 247, 0.35);
+    border-color: transparent;
 }
 
+/* ── Footer Column Titles ── */
 .footer-title {
     color: var(--text-primary);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: var(--font-bold);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: var(--space-6);
+    letter-spacing: 1.5px;
+    margin-bottom: var(--space-5);
+    font-family: var(--font-primary);
 }
 
+/* ── Footer Links ── */
 .footer-links {
     list-style: none;
     padding: 0;
@@ -86,17 +126,33 @@
 }
 
 .footer-links a {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-decoration: none;
-    transition: color 0.2s;
     font-size: var(--text-sm);
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.footer-links a::before {
+    content: '';
+    width: 0;
+    height: 1px;
+    background: var(--brand-primary-light);
+    transition: width var(--transition-fast);
 }
 
 .footer-links a:hover {
     color: var(--brand-primary-light);
+    transform: translateX(4px);
 }
 
-/* App Section */
+.footer-links a:hover::before {
+    width: 12px;
+}
+
+/* ── App / Install Section ── */
 .footer-app-section {
     background: var(--bg-tertiary);
     padding: var(--space-6);
@@ -105,12 +161,34 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    position: relative;
+    overflow: hidden;
+}
+
+.footer-app-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--brand-gradient);
+    opacity: 0.6;
+}
+
+.footer-app-title {
+    font-size: var(--text-xs);
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
 }
 
 .footer-app-text {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .footer-install-btn {
@@ -118,46 +196,52 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--brand-primary);
+    padding: var(--space-3) var(--space-5);
+    background: var(--brand-gradient);
     color: white;
     border: none;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     font-weight: var(--font-bold);
+    font-size: var(--text-sm);
     cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 10px 20px rgba(0, 120, 212, 0.2);
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 16px rgba(79, 142, 247, 0.3);
+    font-family: var(--font-primary);
 }
 
 .footer-install-btn:hover {
-    background: #0086ea;
     transform: translateY(-2px);
-    box-shadow: 0 15px 30px rgba(0, 120, 212, 0.3);
+    box-shadow: 0 8px 24px rgba(79, 142, 247, 0.4);
+}
+
+.footer-install-btn i {
+    font-size: 1.1rem;
 }
 
 .footer-app-badges {
     display: flex;
     gap: var(--space-4);
-    margin-top: var(--space-2);
+    margin-top: var(--space-1);
+    flex-wrap: wrap;
 }
 
 .badge-item {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     font-weight: var(--font-medium);
 }
 
 .badge-item i {
     color: var(--color-success);
+    font-size: 0.8rem;
 }
 
-/* Footer Bottom */
+/* ── Footer Bottom Bar ── */
 .footer-bottom {
     border-top: 1px solid var(--border-subtle);
-    padding: var(--space-8) 0;
     background: var(--bg-primary);
 }
 
@@ -165,49 +249,94 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: var(--space-6) 0;
     color: var(--text-muted);
     font-size: var(--text-xs);
+    gap: var(--space-6);
+}
+
+.footer-bottom-content p {
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1;
 }
 
 .footer-bottom-links {
     display: flex;
     gap: var(--space-6);
+    flex-wrap: wrap;
 }
 
 .footer-bottom-links a {
     color: var(--text-muted);
     text-decoration: none;
+    font-size: var(--text-xs);
+    transition: color var(--transition-fast);
+    letter-spacing: 0.01em;
 }
 
 .footer-bottom-links a:hover {
     color: var(--text-secondary);
 }
 
-/* Responsiveness */
-@media (max-width: 1024px) {
+/* ── Responsiveness ── */
+@media (max-width: 1200px) {
     .footer-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: var(--space-8);
+    }
+
+    .footer-app-section {
+        grid-column: 1 / -1;
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    .footer {
+        padding: var(--space-12) 0 0 0;
+        margin-top: var(--space-12);
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-8);
+    }
+
+    .footer-brand-section {
+        grid-column: 1 / -1;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-tagline {
+        text-align: center;
+        max-width: 100%;
+    }
+
+    .footer-socials {
+        justify-content: center;
+    }
+
+    .footer-app-section {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 480px) {
     .footer-grid {
         grid-template-columns: 1fr;
-        gap: var(--space-10);
+        gap: var(--space-8);
     }
-    
+
     .footer-bottom-content {
         flex-direction: column;
         gap: var(--space-4);
         text-align: center;
+        padding: var(--space-5) 0;
     }
-    
-    .footer-brand-section {
-        align-items: center;
-        text-align: center;
-    }
-    
-    .footer-tagline {
-        margin: 0 auto;
+
+    .footer-bottom-links {
+        justify-content: center;
+        gap: var(--space-4);
     }
 }
