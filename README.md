@@ -65,36 +65,6 @@ ProCode EduPulse is a state-of-the-art **Single Page Application (SPA)** built w
 
 ---
 
-##  Technical Architecture
-
-The platform follows a modular service-based architecture, ensuring high scalability and maintainability without the need for complex frameworks.
-
-```mermaid
-graph TD
-    A[Router (Hash-based)] --> B(Page Renderers)
-    B --> C{Component Library}
-    C --> D[CodeEditor (CodeMirror 6)]
-    C --> E[VideoPlayer (Custom HTML5)]
-    C --> F[QuizEngine]
-    B --> G[Services Layer]
-    G --> H[Firebase Auth/Firestore]
-    G --> I[Piston API (Remote Exec)]
-    G --> J[Gemini API (AI Insights)]
-```
-
----
-
-## 🚀 Getting Started
-
-### 1. Simple Launch (Local)
-```bash
-# Clone the repository
-git clone https://github.com/soghayarmahmoud/procode-edu-pulse-lms.git
-
-# Navigate and serve
-cd procode-edu-pulse-lms
-npx serve .
-```
 
 ### 2. Integration Setup
 To unlock the full potential of the platform:
