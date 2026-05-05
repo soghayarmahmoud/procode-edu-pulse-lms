@@ -430,8 +430,25 @@ class FirestoreService {
         if (!isFirebaseConfigured()) return null;
         try {
             const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            
+            // Get users data
             const usersSnap = await getDocs(collection(db, 'users'));
             const totalUsers = usersSnap.size;
+            
+            // Get courses data (from dynamic_courses or courses collection)
+            let coursesSnap;
+            try {
+                coursesSnap = await getDocs(collection(db, 'dynamic_courses'));
+            } catch (e) {
+                // Fallback to regular courses collection if dynamic_courses doesn't exist
+                try {
+                    coursesSnap = await getDocs(collection(db, 'courses'));
+                } catch (e2) {
+                    coursesSnap = null;
+                }
+            }
+            const totalCourses = coursesSnap ? coursesSnap.size : 0;
+            
             let totalEnrollments = 0;
             let courseCountMap = {};
             let dailyActive = {};
@@ -449,10 +466,10 @@ class FirestoreService {
                     dailyActive[day] = (dailyActive[day] || 0) + 1;
                 }
             });
-            const mostPopular = Object.entries(courseCountMap).sort((a,b)=>b[1]-a[1]).map(e=>({courseId:e[0],count:e[1]}));
+            const mostPopular = Object.entries(courseCountMap).sort((a,b)=>b[1]-a[1]).slice(0, 5).map(e=>({courseId:e[0],count:e[1]}));
             return {
                 totalUsers,
-                totalCourses: coursesData ? coursesData.length : null,
+                totalCourses,
                 totalEnrollments,
                 mostPopularCourses: mostPopular,
                 dailyActiveUsers: dailyActive
@@ -1041,6 +1058,129 @@ class FirestoreService {
             });
         } catch (e) {
             console.warn('Firestore mergeUserProgress failed:', e);
+        }
+    }
+
+    /**
+     * Add a document to a collection (generic method).
+     * @param {string} collectionPath - Path like 'payments' or 'users/{uid}/purchases'
+     * @param {object} data - Document data
+     * @returns {Promise<string|null>} - Document ID or null on error
+     */
+    async addDocument(collectionPath, data) {
+        if (!isFirebaseConfigured() || !collectionPath) return null;
+        try {
+            const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const colRef = collection(db, ...collectionPath.split('/').filter(Boolean));
+            const docRef = await addDoc(colRef, {
+                ...data,
+                createdAt: serverTimestamp()
+            });
+            return docRef.id;
+        } catch (e) {
+            console.error(`Error adding document to ${collectionPath}:`, e);
+            return null;
+        }
+    }
+
+    /**
+     * Get a single document (generic method).
+     * @param {string} collectionPath - Path like 'users'
+     * @param {string} docId - Document ID
+     * @returns {Promise<object|null>} - Document data or null
+     */
+    async getDocument(collectionPath, docId) {
+        if (!isFirebaseConfigured() || !collectionPath || !docId) return null;
+        try {
+            const { doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, collectionPath, docId);
+            const snap = await getDoc(ref);
+            return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        } catch (e) {
+            console.error(`Error getting document from ${collectionPath}/${docId}:`, e);
+            return null;
+        }
+    }
+
+    /**
+     * Update a document (generic method).
+     * @param {string} collectionPath - Path like 'users'
+     * @param {string} docId - Document ID
+     * @param {object} data - Data to update
+     * @returns {Promise<boolean>} - Success status
+     */
+    async updateDocument(collectionPath, docId, data) {
+        if (!isFirebaseConfigured() || !collectionPath || !docId) return false;
+        try {
+            const { doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, collectionPath, docId);
+            await updateDoc(ref, {
+                ...data,
+                updatedAt: serverTimestamp()
+            });
+            return true;
+        } catch (e) {
+            console.error(`Error updating document in ${collectionPath}/${docId}:`, e);
+            return false;
+        }
+    }
+
+    /**
+     * Get all documents in a collection (generic method).
+     * @param {string} collectionPath - Path like 'payments' or 'users/{uid}/purchases'
+     * @returns {Promise<Array<object>>} - Array of documents
+     */
+    async getCollection(collectionPath) {
+        if (!isFirebaseConfigured() || !collectionPath) return [];
+        try {
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const colRef = collection(db, ...collectionPath.split('/').filter(Boolean));
+            const snap = await getDocs(colRef);
+            return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error(`Error getting collection ${collectionPath}:`, e);
+            return [];
+        }
+    }
+
+    /**
+     * Get documents with a where clause (generic method).
+     * @param {string} collectionPath - Collection path
+     * @param {string} field - Field to filter on
+     * @param {string} operator - Operator like '==', '<', '>', 'array-contains'
+     * @param {any} value - Value to filter
+     * @returns {Promise<Array<object>>} - Array of matching documents
+     */
+    async getCollectionWhere(collectionPath, field, operator, value) {
+        if (!isFirebaseConfigured() || !collectionPath) return [];
+        try {
+            const { collection, getDocs, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const colRef = collection(db, ...collectionPath.split('/').filter(Boolean));
+            const q = query(colRef, where(field, operator, value));
+            const snap = await getDocs(q);
+            return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error(`Error getting collection ${collectionPath} with where clause:`, e);
+            return [];
+        }
+    }
+
+    /**
+     * Delete a document (generic method).
+     * @param {string} collectionPath - Path like 'users'
+     * @param {string} docId - Document ID
+     * @returns {Promise<boolean>} - Success status
+     */
+    async deleteDocument(collectionPath, docId) {
+        if (!isFirebaseConfigured() || !collectionPath || !docId) return false;
+        try {
+            const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+            const ref = doc(db, collectionPath, docId);
+            await deleteDoc(ref);
+            return true;
+        } catch (e) {
+            console.error(`Error deleting document from ${collectionPath}/${docId}:`, e);
+            return false;
         }
     }
 }
