@@ -33,7 +33,7 @@ export class SidebarComponent {
     render() {
         const courseProgress = storage.getCourseProgress(this.course.id);
         const completedCount = courseProgress.completedLessons.length;
-        const totalLessons = this.course.totalLessons;
+        const totalLessons = this.lessons.length;
         const percent = Math.round((completedCount / totalLessons) * 100);
 
         // build module + lesson list if modules provided
